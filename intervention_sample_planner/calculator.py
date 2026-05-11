@@ -22,6 +22,7 @@ SUPPORTED_STUDY_DESIGNS = {
     "one_group_pre_post",
 }
 SUPPORTED_ANALYSIS_MODES = {"plan", "evaluate"}
+SUPPORTED_WORKFLOW_PATHS = {"plan_study", "evaluate_done", "evaluate_against_plan"}
 
 
 @dataclass(slots=True)
@@ -30,6 +31,7 @@ class StudyConfig:
 
     study_name: str = "Untitled intervention study"
     language: str = "en"
+    workflow_path: str = "plan_study"
     study_design: str = "parallel_two_group"
     analysis_mode: str = "plan"
     analysis_unit: str = "person"
@@ -63,7 +65,17 @@ class StudyConfig:
     observed_control_n: int | None = None
     observed_intervention_n: int | None = None
     observed_total_n: int | None = None
+    observed_control_events: int | None = None
+    observed_intervention_events: int | None = None
     observed_effect_size: float | None = None
+
+    had_planned_sample: bool = False
+    planned_control_n: int | None = None
+    planned_intervention_n: int | None = None
+    planned_total_n: int | None = None
+    planned_effect_size: float | None = None
+    planned_alpha: float | None = None
+    planned_power: float | None = None
 
     intervention_label: str = "Intervention"
     control_label: str = "Control"
@@ -91,15 +103,31 @@ class SensitivityRow:
 
 
 @dataclass(slots=True)
+class EvaluationTarget:
+    label: str
+    required_control: int
+    required_intervention: int
+    required_total: int
+    additional_control: int
+    additional_intervention: int
+    additional_total: int
+    achieved: bool
+
+
+@dataclass(slots=True)
 class ObservedAnalysis:
     observed_control: int
     observed_intervention: int
     observed_total: int
     observed_effect_size: float
+    observed_control_rate: float | None
+    observed_intervention_rate: float | None
     z_statistic: float
     p_value: float
     achieved_power: float
     method: str
+    benchmark_targets: list[EvaluationTarget] = field(default_factory=list)
+    planned_targets: list[EvaluationTarget] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -137,6 +165,8 @@ def config_to_dict(config: StudyConfig) -> dict[str, Any]:
 def config_from_dict(data: dict[str, Any]) -> StudyConfig:
     valid_fields = StudyConfig.__dataclass_fields__.keys()
     cleaned = {key: value for key, value in data.items() if key in valid_fields}
+    if "workflow_path" not in cleaned:
+        cleaned["workflow_path"] = _workflow_from_legacy_fields(cleaned)
     return StudyConfig(**cleaned)
 
 
@@ -154,6 +184,7 @@ def load_config(path: str | Path) -> StudyConfig:
 
 
 def calculate_plan(config: StudyConfig) -> SamplePlan:
+    _normalize_workflow(config)
     _validate_config(config)
     alpha_adjusted = config.alpha / config.primary_comparisons
     z_alpha = _z_alpha(alpha_adjusted, config.alternative)
@@ -216,7 +247,30 @@ def render_report(plan: SamplePlan, language: str | None = None) -> str:
     return _render_pt(plan) if lang == "pt" else _render_en(plan)
 
 
+def _workflow_from_legacy_fields(data: dict[str, Any]) -> str:
+    if data.get("analysis_mode") == "evaluate":
+        return "evaluate_against_plan" if data.get("had_planned_sample") else "evaluate_done"
+    return "plan_study"
+
+
+def _normalize_workflow(config: StudyConfig) -> None:
+    if config.workflow_path == "plan_study":
+        config.analysis_mode = "plan"
+        config.had_planned_sample = False
+    elif config.workflow_path == "evaluate_done":
+        config.analysis_mode = "evaluate"
+        config.had_planned_sample = False
+    elif config.workflow_path == "evaluate_against_plan":
+        config.analysis_mode = "evaluate"
+        config.had_planned_sample = True
+
+
 def _validate_config(config: StudyConfig) -> None:
+    if config.workflow_path not in SUPPORTED_WORKFLOW_PATHS:
+        raise PlanningError(
+            f"workflow_path must be one of: {', '.join(sorted(SUPPORTED_WORKFLOW_PATHS))}."
+        )
+    _normalize_workflow(config)
     if config.language not in SUPPORTED_LANGUAGES:
         raise PlanningError("language must be 'en' or 'pt'.")
     if config.study_design not in SUPPORTED_STUDY_DESIGNS:
@@ -279,13 +333,63 @@ def _validate_observed_inputs(config: StudyConfig) -> None:
             )
         if config.observed_control_n <= 1 or config.observed_intervention_n <= 1:
             raise PlanningError("Observed group sizes must be at least 2.")
-    if config.observed_effect_size is None:
-        raise PlanningError("observed_effect_size is required in achieved-result mode.")
     if config.study_design == "parallel_two_group" and config.outcome_type == "binary":
-        if not 0 < abs(config.observed_effect_size) < 1:
-            raise PlanningError("For binary achieved-result mode, observed_effect_size must be a proportion difference.")
+        has_events = (
+            config.observed_control_events is not None
+            and config.observed_intervention_events is not None
+        )
+        if has_events:
+            assert config.observed_control_n is not None
+            assert config.observed_intervention_n is not None
+            if not 0 <= config.observed_control_events <= config.observed_control_n:
+                raise PlanningError("observed_control_events must be between 0 and observed_control_n.")
+            if not 0 <= config.observed_intervention_events <= config.observed_intervention_n:
+                raise PlanningError(
+                    "observed_intervention_events must be between 0 and observed_intervention_n."
+                )
+            control_rate = config.observed_control_events / config.observed_control_n
+            intervention_rate = config.observed_intervention_events / config.observed_intervention_n
+            if control_rate == intervention_rate:
+                raise PlanningError("Observed event rates are equal; no binary effect was observed.")
+        elif config.observed_effect_size is None:
+            raise PlanningError(
+                "For binary achieved-result mode, provide observed event counts or an observed proportion difference."
+            )
+        elif not 0 < abs(config.observed_effect_size) < 1:
+            raise PlanningError(
+                "For binary achieved-result mode, observed_effect_size must be a proportion difference."
+            )
+    elif config.observed_effect_size is None:
+        raise PlanningError("observed_effect_size is required in achieved-result mode.")
     elif config.observed_effect_size == 0:
         raise PlanningError("observed_effect_size cannot be zero in achieved-result mode.")
+
+    if config.had_planned_sample:
+        has_planned_size = (
+            bool(config.planned_total_n)
+            if config.study_design == "one_group_pre_post"
+            else bool(config.planned_total_n)
+            or (bool(config.planned_control_n) and bool(config.planned_intervention_n))
+        )
+        if not has_planned_size:
+            raise PlanningError(
+                "When comparing with a previous plan, provide planned sample sizes or load a saved plan."
+            )
+        if config.planned_alpha is not None and not 0 < config.planned_alpha < 1:
+            raise PlanningError("planned_alpha must be between 0 and 1.")
+        if config.planned_power is not None and not 0 < config.planned_power < 1:
+            raise PlanningError("planned_power must be between 0 and 1.")
+        if config.planned_effect_size is not None and config.planned_effect_size <= 0:
+            raise PlanningError("planned_effect_size must be positive.")
+        if config.study_design == "one_group_pre_post":
+            if config.planned_total_n is not None and config.planned_total_n <= 1:
+                raise PlanningError("planned_total_n must be at least 2.")
+        elif (
+            config.planned_control_n is not None
+            and config.planned_intervention_n is not None
+            and (config.planned_control_n <= 1 or config.planned_intervention_n <= 1)
+        ):
+            raise PlanningError("planned group sizes must be at least 2.")
 
 
 def _z_alpha(alpha: float, alternative: str) -> float:
@@ -488,49 +592,215 @@ def _achieved_power(
 def _observed_analysis(config: StudyConfig, z_alpha: float) -> ObservedAnalysis | None:
     if config.analysis_mode != "evaluate":
         return None
-    effect = abs(config.observed_effect_size or 0.0)
     if config.study_design == "one_group_pre_post":
+        effect = abs(config.observed_effect_size or 0.0)
         n_total = int(config.observed_total_n or 0)
+        groups = GroupSizes(0, n_total)
         z_stat = effect * math.sqrt(n_total)
+        achieved_power = _clamp(NORMAL.cdf(z_stat - z_alpha), 0.0, 1.0)
         return ObservedAnalysis(
             observed_control=0,
             observed_intervention=n_total,
             observed_total=n_total,
             observed_effect_size=effect,
+            observed_control_rate=None,
+            observed_intervention_rate=None,
             z_statistic=z_stat,
             p_value=_p_value(z_stat, config.alternative),
-            achieved_power=_clamp(NORMAL.cdf(z_stat - z_alpha), 0.0, 1.0),
+            achieved_power=achieved_power,
             method="Approximate paired standardized-mean-change evaluation",
+            benchmark_targets=_evaluation_targets(config, effect, groups, z_alpha),
+            planned_targets=_planned_targets(config, groups),
         )
     control = int(config.observed_control_n or 0)
     intervention = int(config.observed_intervention_n or 0)
+    groups = GroupSizes(control, intervention)
     total = control + intervention
     k = intervention / control
+    control_rate: float | None = None
+    intervention_rate: float | None = None
     if config.study_design == "pretest_posttest_control":
+        effect = abs(config.observed_effect_size or 0.0)
         base = math.sqrt(control / (1 + 1 / k))
         efficiency_gain = 1 / math.sqrt(max(0.05, 1 - config.pre_post_correlation**2))
         z_stat = effect * base * efficiency_gain
+        achieved_power = _clamp(NORMAL.cdf(z_stat - z_alpha), 0.0, 1.0)
         method = "Approximate pre-test/post-test with control evaluation"
     elif config.outcome_type == "continuous":
+        effect = abs(config.observed_effect_size or 0.0)
         z_stat = effect * math.sqrt(control / (1 + 1 / k))
+        achieved_power = _clamp(NORMAL.cdf(z_stat - z_alpha), 0.0, 1.0)
         method = "Approximate two-group continuous evaluation"
     else:
-        p0 = config.proportion_control
-        p1 = _clamp(p0 + effect, 0.001, 0.999)
+        if config.observed_control_events is not None and config.observed_intervention_events is not None:
+            p0 = config.observed_control_events / control
+            p1 = config.observed_intervention_events / intervention
+            control_rate = p0
+            intervention_rate = p1
+            effect = abs(p1 - p0)
+        else:
+            effect = abs(config.observed_effect_size or 0.0)
+            p0 = config.proportion_control
+            p1 = _clamp(p0 + effect, 0.001, 0.999)
+            control_rate = p0
+            intervention_rate = p1
         p_bar = (p0 + p1) / 2
-        pooled = (1 + 1 / k) * p_bar * (1 - p_bar)
+        pooled = max((1 + 1 / k) * p_bar * (1 - p_bar), 1e-12)
+        unpooled = max(p0 * (1 - p0) + p1 * (1 - p1) / k, 1e-12)
         z_stat = math.sqrt(control) * effect / math.sqrt(pooled)
+        z_beta = (math.sqrt(control) * effect - z_alpha * math.sqrt(pooled)) / math.sqrt(unpooled)
+        achieved_power = _clamp(NORMAL.cdf(z_beta), 0.0, 1.0)
         method = "Approximate two-group proportion-difference evaluation"
     return ObservedAnalysis(
         observed_control=control,
         observed_intervention=intervention,
         observed_total=total,
         observed_effect_size=effect,
+        observed_control_rate=control_rate,
+        observed_intervention_rate=intervention_rate,
         z_statistic=z_stat,
         p_value=_p_value(z_stat, config.alternative),
-        achieved_power=_clamp(NORMAL.cdf(z_stat - z_alpha), 0.0, 1.0),
+        achieved_power=achieved_power,
         method=method,
+        benchmark_targets=_evaluation_targets(
+            config,
+            effect,
+            groups,
+            z_alpha,
+            control_rate=control_rate,
+            intervention_rate=intervention_rate,
+        ),
+        planned_targets=_planned_targets(config, groups),
     )
+
+
+def _evaluation_targets(
+    config: StudyConfig,
+    effect_size: float,
+    observed_groups: GroupSizes,
+    z_alpha: float,
+    control_rate: float | None = None,
+    intervention_rate: float | None = None,
+) -> list[EvaluationTarget]:
+    targets: list[EvaluationTarget] = []
+    for alpha in (0.05, 0.10):
+        adjusted = alpha / config.primary_comparisons
+        required = _required_groups_for_z(
+            config,
+            effect_size,
+            observed_groups,
+            _z_alpha(adjusted, config.alternative),
+            control_rate,
+            intervention_rate,
+        )
+        targets.append(_target_gap(f"p < {alpha:.2f}", required, observed_groups))
+    for desired_power in (0.80, 0.90):
+        required = _required_groups_for_power(
+            config,
+            effect_size,
+            observed_groups,
+            z_alpha,
+            desired_power,
+            control_rate,
+            intervention_rate,
+        )
+        targets.append(_target_gap(f"power >= {desired_power:.0%}", required, observed_groups))
+    return targets
+
+
+def _required_groups_for_z(
+    config: StudyConfig,
+    effect_size: float,
+    observed_groups: GroupSizes,
+    z_required: float,
+    control_rate: float | None,
+    intervention_rate: float | None,
+) -> GroupSizes:
+    if config.study_design == "one_group_pre_post":
+        total = math.ceil((z_required / effect_size) ** 2)
+        return GroupSizes(0, max(2, total))
+    k = _observed_ratio(config, observed_groups)
+    if config.study_design == "pretest_posttest_control":
+        efficiency_gain = 1 / math.sqrt(max(0.05, 1 - config.pre_post_correlation**2))
+        control = math.ceil(((z_required / (effect_size * efficiency_gain)) ** 2) * (1 + 1 / k))
+    elif config.outcome_type == "continuous":
+        control = math.ceil((z_required / effect_size) ** 2 * (1 + 1 / k))
+    else:
+        p0 = control_rate if control_rate is not None else config.proportion_control
+        p1 = intervention_rate if intervention_rate is not None else _clamp(p0 + effect_size, 0.001, 0.999)
+        p_bar = (p0 + p1) / 2
+        pooled = max((1 + 1 / k) * p_bar * (1 - p_bar), 1e-12)
+        control = math.ceil((z_required * math.sqrt(pooled) / effect_size) ** 2)
+    return GroupSizes(max(2, control), max(2, math.ceil(control * k)))
+
+
+def _required_groups_for_power(
+    config: StudyConfig,
+    effect_size: float,
+    observed_groups: GroupSizes,
+    z_alpha: float,
+    desired_power: float,
+    control_rate: float | None,
+    intervention_rate: float | None,
+) -> GroupSizes:
+    z_power = NORMAL.inv_cdf(desired_power)
+    if config.study_design == "one_group_pre_post":
+        total = math.ceil(((z_alpha + z_power) / effect_size) ** 2)
+        return GroupSizes(0, max(2, total))
+    k = _observed_ratio(config, observed_groups)
+    if config.study_design == "pretest_posttest_control":
+        adjusted_effect = effect_size / math.sqrt(max(0.05, 1 - config.pre_post_correlation**2))
+        control = math.ceil(((z_alpha + z_power) / adjusted_effect) ** 2 * (1 + 1 / k))
+    elif config.outcome_type == "continuous":
+        control = math.ceil(((z_alpha + z_power) / effect_size) ** 2 * (1 + 1 / k))
+    else:
+        p0 = control_rate if control_rate is not None else config.proportion_control
+        p1 = intervention_rate if intervention_rate is not None else _clamp(p0 + effect_size, 0.001, 0.999)
+        p_bar = (p0 + p1) / 2
+        pooled = max((1 + 1 / k) * p_bar * (1 - p_bar), 1e-12)
+        unpooled = max(p0 * (1 - p0) + p1 * (1 - p1) / k, 1e-12)
+        numerator = z_alpha * math.sqrt(pooled) + z_power * math.sqrt(unpooled)
+        control = math.ceil((numerator / effect_size) ** 2)
+    return GroupSizes(max(2, control), max(2, math.ceil(control * k)))
+
+
+def _planned_targets(config: StudyConfig, observed_groups: GroupSizes) -> list[EvaluationTarget]:
+    if not config.had_planned_sample:
+        return []
+    if config.study_design == "one_group_pre_post":
+        if not config.planned_total_n:
+            return []
+        required = GroupSizes(0, config.planned_total_n)
+    elif config.planned_control_n and config.planned_intervention_n:
+        required = GroupSizes(config.planned_control_n, config.planned_intervention_n)
+    elif config.planned_total_n:
+        k = _observed_ratio(config, observed_groups)
+        control = max(2, math.ceil(config.planned_total_n / (1 + k)))
+        required = GroupSizes(control, max(2, config.planned_total_n - control))
+    else:
+        return []
+    return [_target_gap("planned sample", required, observed_groups)]
+
+
+def _target_gap(label: str, required: GroupSizes, observed: GroupSizes) -> EvaluationTarget:
+    additional_control = max(0, required.control - observed.control)
+    additional_intervention = max(0, required.intervention - observed.intervention)
+    return EvaluationTarget(
+        label=label,
+        required_control=required.control,
+        required_intervention=required.intervention,
+        required_total=required.total,
+        additional_control=additional_control,
+        additional_intervention=additional_intervention,
+        additional_total=additional_control + additional_intervention,
+        achieved=additional_control == 0 and additional_intervention == 0,
+    )
+
+
+def _observed_ratio(config: StudyConfig, observed_groups: GroupSizes) -> float:
+    if observed_groups.control > 0 and observed_groups.intervention > 0:
+        return observed_groups.intervention / observed_groups.control
+    return max(config.allocation_ratio, 1e-9)
 
 
 def _p_value(z_stat: float, alternative: str) -> float:
@@ -611,14 +881,52 @@ def _build_suggestions(
             suggestions.append(
                 "Design corrections increased the valid target substantially. Revisit clustering assumptions and consider operational alternatives."
             )
-    if observed_analysis and observed_analysis.p_value > config.alpha:
-        suggestions.append(
-            "A non-significant achieved result does not prove the intervention has no effect. Report the observed effect and discuss precision, not only significance."
-        )
-    if observed_analysis and observed_analysis.achieved_power < 0.8:
-        suggestions.append(
-            "The achieved sample appears underpowered for the observed effect size. A larger replication may be more informative than a binary significant/non-significant interpretation."
-        )
+    if observed_analysis:
+        if observed_analysis.p_value <= 0.05:
+            suggestions.append(
+                "The achieved p-value is below the conventional 0.05 benchmark. Interpret it together with the observed effect size, design limits, and data quality."
+            )
+        elif observed_analysis.p_value <= 0.10:
+            suggestions.append(
+                "The achieved p-value is below 0.10 but not 0.05. This is usually exploratory evidence, not a strong confirmatory result."
+            )
+        else:
+            suggestions.append(
+                "A non-significant achieved result does not prove the intervention has no effect. Report the observed effect and discuss precision, not only significance."
+            )
+        if observed_analysis.achieved_power >= 0.8:
+            suggestions.append(
+                "The achieved sample reaches the common 80% power benchmark for the observed effect size."
+            )
+        else:
+            suggestions.append(
+                "The achieved sample appears underpowered for the observed effect size. A larger replication may be more informative than a binary significant/non-significant interpretation."
+            )
+        for target in observed_analysis.benchmark_targets:
+            if target.achieved:
+                suggestions.append(f"Benchmark reached for {target.label}.")
+            else:
+                suggestions.append(
+                    f"To reach {target.label} with the observed effect and allocation, add about "
+                    f"{target.additional_total} valid participants."
+                )
+        for target in observed_analysis.planned_targets:
+            if target.achieved:
+                suggestions.append("The observed valid sample reached the sample size from the loaded or entered plan.")
+            else:
+                suggestions.append(
+                    "The observed valid sample is below the loaded or entered plan by about "
+                    f"{target.additional_total} valid participants."
+                )
+        if config.had_planned_sample and config.planned_effect_size:
+            if observed_analysis.observed_effect_size < config.planned_effect_size:
+                suggestions.append(
+                    "The observed effect is smaller than the planned effect. Even a study with the planned sample can miss conventional thresholds when the real effect is smaller than expected."
+                )
+            else:
+                suggestions.append(
+                    "The observed effect is at least as large as the planned effect. If thresholds were not reached, sample size, allocation, or attrition are likely limiting factors."
+                )
     return suggestions
 
 
@@ -730,6 +1038,26 @@ def _group_text(config: StudyConfig, groups: GroupSizes) -> str:
     )
 
 
+def _target_text_en(config: StudyConfig, target: EvaluationTarget) -> str:
+    status = "reached" if target.achieved else f"needs {target.additional_total} more valid participants"
+    if config.study_design == "one_group_pre_post":
+        return f"- {target.label}: requires {target.required_total} valid participants; {status}."
+    return (
+        f"- {target.label}: requires {target.required_control} {config.control_label} and "
+        f"{target.required_intervention} {config.intervention_label}; {status}."
+    )
+
+
+def _target_text_pt(config: StudyConfig, target: EvaluationTarget) -> str:
+    status = "alcancado" if target.achieved else f"faltam {target.additional_total} participantes validos"
+    if config.study_design == "one_group_pre_post":
+        return f"- {target.label}: exige {target.required_total} participantes validos; {status}."
+    return (
+        f"- {target.label}: exige {target.required_control} {config.control_label} e "
+        f"{target.required_intervention} {config.intervention_label}; {status}."
+    )
+
+
 def _render_en(plan: SamplePlan) -> str:
     c = plan.config
     lines = [
@@ -764,6 +1092,25 @@ def _render_en(plan: SamplePlan) -> str:
                 f"- Approximate achieved power for the observed effect: {obs.achieved_power:.1%}.",
             ]
         )
+        if obs.observed_control_rate is not None and obs.observed_intervention_rate is not None:
+            lines.extend(
+                [
+                    f"- Observed control rate: {obs.observed_control_rate:.1%}.",
+                    f"- Observed intervention rate: {obs.observed_intervention_rate:.1%}.",
+                ]
+            )
+        if obs.planned_targets:
+            lines.extend(["", "Comparison with previous plan"])
+            lines.extend(_target_text_en(c, target) for target in obs.planned_targets)
+            if c.planned_effect_size:
+                lines.append(f"- Planned effect: {c.planned_effect_size:.4f}.")
+            if c.planned_alpha:
+                lines.append(f"- Planned alpha: {c.planned_alpha:.4f}.")
+            if c.planned_power:
+                lines.append(f"- Planned power: {c.planned_power:.1%}.")
+        if obs.benchmark_targets:
+            lines.extend(["", "Conventional benchmark gaps"])
+            lines.extend(_target_text_en(c, target) for target in obs.benchmark_targets)
     if plan.suggestions:
         lines.extend(["", "Suggestions"])
         lines.extend(f"- {item}" for item in plan.suggestions)
@@ -819,6 +1166,25 @@ def _render_pt(plan: SamplePlan) -> str:
                 f"- Poder aproximado alcançado para o efeito observado: {obs.achieved_power:.1%}.",
             ]
         )
+        if obs.observed_control_rate is not None and obs.observed_intervention_rate is not None:
+            lines.extend(
+                [
+                    f"- Taxa observada no controle: {obs.observed_control_rate:.1%}.",
+                    f"- Taxa observada na intervencao: {obs.observed_intervention_rate:.1%}.",
+                ]
+            )
+        if obs.planned_targets:
+            lines.extend(["", "Comparacao com o plano anterior"])
+            lines.extend(_target_text_pt(c, target) for target in obs.planned_targets)
+            if c.planned_effect_size:
+                lines.append(f"- Efeito planejado: {c.planned_effect_size:.4f}.")
+            if c.planned_alpha:
+                lines.append(f"- Alfa planejado: {c.planned_alpha:.4f}.")
+            if c.planned_power:
+                lines.append(f"- Poder planejado: {c.planned_power:.1%}.")
+        if obs.benchmark_targets:
+            lines.extend(["", "Lacunas para benchmarks convencionais"])
+            lines.extend(_target_text_pt(c, target) for target in obs.benchmark_targets)
     if plan.suggestions:
         lines.extend(["", "Sugestões"])
         lines.extend(f"- {item}" for item in plan.suggestions)

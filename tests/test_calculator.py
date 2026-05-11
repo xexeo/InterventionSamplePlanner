@@ -16,6 +16,7 @@ from intervention_sample_planner import (
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SOURCE_EXAMPLES = REPO_ROOT / "examples" / "from_sources"
+ROOT_EXAMPLES = REPO_ROOT / "examples"
 SCHEMA_PATH = REPO_ROOT / "schemas" / "study_config.schema.json"
 
 
@@ -85,7 +86,7 @@ class CalculatorTests(unittest.TestCase):
         plan = calculate_plan(
             StudyConfig(
                 study_design="parallel_two_group",
-                analysis_mode="evaluate",
+                workflow_path="evaluate_done",
                 outcome_type="continuous",
                 observed_control_n=40,
                 observed_intervention_n=42,
@@ -97,6 +98,50 @@ class CalculatorTests(unittest.TestCase):
         self.assertGreater(plan.observed_analysis.z_statistic, 0)
         self.assertGreaterEqual(plan.observed_analysis.achieved_power, 0)
         self.assertLessEqual(plan.observed_analysis.p_value, 1)
+
+    def test_evaluate_binary_event_counts_return_rates_and_benchmark_gaps(self):
+        plan = calculate_plan(
+            StudyConfig(
+                workflow_path="evaluate_done",
+                outcome_type="binary",
+                observed_control_n=80,
+                observed_intervention_n=80,
+                observed_control_events=36,
+                observed_intervention_events=48,
+            )
+        )
+        self.assertIsNotNone(plan.observed_analysis)
+        assert plan.observed_analysis is not None
+        self.assertAlmostEqual(plan.observed_analysis.observed_control_rate, 0.45)
+        self.assertAlmostEqual(plan.observed_analysis.observed_intervention_rate, 0.60)
+        self.assertAlmostEqual(plan.observed_analysis.observed_effect_size, 0.15)
+        self.assertGreater(plan.observed_analysis.p_value, 0)
+        self.assertEqual(len(plan.observed_analysis.benchmark_targets), 4)
+        self.assertTrue(any(target.additional_total > 0 for target in plan.observed_analysis.benchmark_targets))
+
+    def test_evaluate_against_previous_plan_reports_sample_gap(self):
+        plan = calculate_plan(
+            StudyConfig(
+                workflow_path="evaluate_against_plan",
+                observed_control_n=40,
+                observed_intervention_n=42,
+                observed_effect_size=0.45,
+                planned_control_n=63,
+                planned_intervention_n=63,
+                planned_effect_size=0.50,
+                planned_alpha=0.05,
+                planned_power=0.80,
+            )
+        )
+        self.assertEqual(plan.config.analysis_mode, "evaluate")
+        self.assertTrue(plan.config.had_planned_sample)
+        self.assertIsNotNone(plan.observed_analysis)
+        assert plan.observed_analysis is not None
+        self.assertEqual(len(plan.observed_analysis.planned_targets), 1)
+        target = plan.observed_analysis.planned_targets[0]
+        self.assertFalse(target.achieved)
+        self.assertEqual(target.additional_control, 23)
+        self.assertEqual(target.additional_intervention, 21)
 
     def test_config_roundtrip_ignores_unknown_fields(self):
         data = config_to_dict(StudyConfig(study_name="Roundtrip"))
@@ -130,6 +175,19 @@ class CalculatorTests(unittest.TestCase):
                         self.assertAlmostEqual(plan.design_effect, expected_value)
                     else:
                         self.assertEqual(checks[key], expected_value)
+
+    def test_public_examples_run(self):
+        cases = sorted(ROOT_EXAMPLES.glob("*.json"))
+        self.assertGreaterEqual(len(cases), 4)
+        for case_path in cases:
+            with self.subTest(case=case_path.name):
+                data = json.loads(case_path.read_text(encoding="utf-8"))
+                plan = calculate_plan(config_from_dict(data))
+                self.assertGreaterEqual(plan.alpha_adjusted, 0)
+                if plan.config.analysis_mode == "evaluate":
+                    self.assertIsNotNone(plan.observed_analysis)
+                else:
+                    self.assertGreater(plan.initial_valid.total, 0)
 
     def test_json_schema_covers_study_config_fields(self):
         schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))

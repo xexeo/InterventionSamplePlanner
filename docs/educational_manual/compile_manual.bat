@@ -95,5 +95,5 @@ for /f "tokens=2,*" %%A in ('reg query "%~1" /v UserInstall 2^>nul ^| find "User
 exit /b 0
 
 :delete_generated
-powershell -NoProfile -Command "Get-ChildItem -LiteralPath '.' -File | Where-Object { $_.BaseName -eq 'manual' -and $_.Extension -in @('.aux','.bbl','.bcf','.blg','.fdb_latexmk','.fls','.idx','.ilg','.ind','.log','.out','.run.xml','.synctex.gz','.toc','.lof','.lot','.nav','.snm','.vrb','.xdv') } | Remove-Item -Force -ErrorAction SilentlyContinue"
+powershell -NoProfile -Command "$files = @('manual.aux','manual.bbl','manual.bcf','manual.blg','manual.fdb_latexmk','manual.fls','manual.idx','manual.ilg','manual.ind','manual.log','manual.out','manual.run.xml','manual.synctex.gz','manual.toc','manual.lof','manual.lot','manual.nav','manual.snm','manual.vrb','manual.xdv'); Get-ChildItem -LiteralPath '.' -File | Where-Object { $_.Name -in $files } | Remove-Item -Force -ErrorAction SilentlyContinue"
 exit /b 0

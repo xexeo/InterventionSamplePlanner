@@ -33,6 +33,9 @@
       }
     },
     "fields": {
+      "workflow_path": {
+        "help": "Choose the practical task before choosing statistical details. Use 'Plan a study' before data collection. Use 'Analyze a completed study' when no formal sample plan existed. Use 'Compare completed study with plan' when you want to load or enter the original planned sample and see what the achieved result reached."
+      },
       "study_design": {
         "help": "Choose the structure that best matches how data will be collected. Parallel two-group means different people in intervention and control. Pre-test/post-test with control means the same people are measured before and after in both groups. One-group pre-test/post-test means there is no control group and the same participants are measured twice."
       },
@@ -166,7 +169,85 @@
         }
       },
       "observed_effect_size": {
-        "help": "In achieved-result mode, enter the effect actually observed. For continuous designs this is a standardized effect. For binary parallel designs this is the observed difference in proportions."
+        "help": "In achieved-result mode, enter the effect actually observed. For continuous designs this is a standardized effect. For binary parallel designs this is the observed difference in proportions if you do not enter event counts.",
+        "recommended": {
+          "min": 0.01,
+          "max": 1.50,
+          "typical": ["0.20", "0.50", "0.80"],
+          "justification": "Observed effects can be smaller or larger than planned effects. Values far outside this range should be checked for scale, coding, or denominator mistakes."
+        }
+      },
+      "observed_control_events": {
+        "help": "For binary achieved-result analysis, enter how many control participants had the event, success, or desired outcome. Example: if 36 of 80 control students passed the post-test criterion, enter 36.",
+        "recommended": {
+          "min": 0,
+          "max": 1000000,
+          "typical": ["count between 0 and observed control n"],
+          "justification": "The value must be a count, not a percent. The calculator divides it by observed control n to obtain the observed control rate."
+        }
+      },
+      "observed_intervention_events": {
+        "help": "For binary achieved-result analysis, enter how many intervention participants had the event, success, or desired outcome. Example: if 48 of 80 students in the game condition passed the post-test criterion, enter 48.",
+        "recommended": {
+          "min": 0,
+          "max": 1000000,
+          "typical": ["count between 0 and observed intervention n"],
+          "justification": "The value must be a count, not a percent. The calculator divides it by observed intervention n to obtain the observed intervention rate."
+        }
+      },
+      "planned_control_n": {
+        "help": "When comparing with a previous plan, enter the planned number of valid control participants. Use the number expected to provide analyzable data, not merely the number invited.",
+        "recommended": {
+          "min": 2,
+          "max": 1000000,
+          "typical": ["same value as the saved plan"],
+          "justification": "The plan comparison checks whether the achieved valid sample reached the original valid-sample target."
+        }
+      },
+      "planned_intervention_n": {
+        "help": "When comparing with a previous plan, enter the planned number of valid intervention participants. Use the number expected to provide analyzable data after losses.",
+        "recommended": {
+          "min": 2,
+          "max": 1000000,
+          "typical": ["same value as the saved plan"],
+          "justification": "The plan comparison checks whether the achieved intervention sample reached the original valid-sample target."
+        }
+      },
+      "planned_total_n": {
+        "help": "When comparing a one-group study with a previous plan, enter the planned number of valid participants who should complete all required measurements.",
+        "recommended": {
+          "min": 2,
+          "max": 1000000,
+          "typical": ["same value as the saved plan"],
+          "justification": "For one-group pre/post studies, the relevant planned sample is the number of participants with usable paired data."
+        }
+      },
+      "planned_effect_size": {
+        "help": "The effect size assumed in the original plan. The result comparison uses this to explain whether the observed effect was smaller or larger than expected.",
+        "recommended": {
+          "min": 0.10,
+          "max": 1.20,
+          "typical": ["0.20", "0.50", "0.80"],
+          "justification": "This should usually match the effect size used when the study was planned."
+        }
+      },
+      "planned_alpha": {
+        "help": "The alpha used in the original plan. If you load a saved plan, this is filled automatically.",
+        "recommended": {
+          "min": 0.01,
+          "max": 0.10,
+          "typical": ["0.05", "0.01"],
+          "justification": "This preserves the evidential standard that the original plan intended to use."
+        }
+      },
+      "planned_power": {
+        "help": "The target power used in the original plan. If you load a saved plan, this is filled automatically.",
+        "recommended": {
+          "min": 0.80,
+          "max": 0.95,
+          "typical": ["0.80", "0.90"],
+          "justification": "This preserves the planned probability of detecting the target effect."
+        }
       }
     }
   },
@@ -336,6 +417,33 @@
       },
       "observed_effect_size": {
         "help": "No modo de resultado alcançado, informe o efeito realmente observado. Para desenhos contínuos, é um efeito padronizado. Para desenho paralelo binário, é a diferença observada entre proporções."
+      },
+      "workflow_path": {
+        "help": "Escolha a tarefa pratica antes dos detalhes estatisticos. Use planejar antes da coleta. Use analisar estudo realizado quando nao houve plano amostral formal. Use comparar com o plano quando quiser carregar ou digitar a amostra planejada original."
+      },
+      "observed_control_events": {
+        "help": "Na analise de resultado binario, informe quantos participantes do controle tiveram o evento, sucesso ou resultado desejado. Exemplo: se 36 de 80 estudantes do controle atingiram o criterio no pos-teste, digite 36."
+      },
+      "observed_intervention_events": {
+        "help": "Na analise de resultado binario, informe quantos participantes da intervencao tiveram o evento, sucesso ou resultado desejado. Exemplo: se 48 de 80 estudantes com o jogo atingiram o criterio no pos-teste, digite 48."
+      },
+      "planned_control_n": {
+        "help": "Ao comparar com um plano anterior, informe o numero planejado de participantes validos no controle."
+      },
+      "planned_intervention_n": {
+        "help": "Ao comparar com um plano anterior, informe o numero planejado de participantes validos na intervencao."
+      },
+      "planned_total_n": {
+        "help": "Ao comparar estudo de um grupo com um plano anterior, informe o numero planejado de participantes validos com dados pareados."
+      },
+      "planned_effect_size": {
+        "help": "Tamanho de efeito usado no plano original. A comparacao usa esse valor para explicar se o efeito observado foi menor ou maior que o esperado."
+      },
+      "planned_alpha": {
+        "help": "Alfa usado no plano original. Ao carregar um plano salvo, este campo e preenchido automaticamente."
+      },
+      "planned_power": {
+        "help": "Poder desejado no plano original. Ao carregar um plano salvo, este campo e preenchido automaticamente."
       }
     }
   }

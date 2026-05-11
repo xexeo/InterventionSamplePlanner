@@ -27,6 +27,11 @@
       "enum": ["en", "pt"],
       "default": "en"
     },
+    "workflow_path": {
+      "type": "string",
+      "enum": ["plan_study", "evaluate_done", "evaluate_against_plan"],
+      "default": "plan_study"
+    },
     "study_design": {
       "type": "string",
       "enum": ["parallel_two_group", "pretest_posttest_control", "one_group_pre_post"],
@@ -172,8 +177,54 @@
       "minimum": 1,
       "default": null
     },
+    "observed_control_events": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "default": null
+    },
+    "observed_intervention_events": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "default": null
+    },
     "observed_effect_size": {
       "type": ["number", "null"],
+      "default": null
+    },
+    "had_planned_sample": {
+      "type": "boolean",
+      "default": false
+    },
+    "planned_control_n": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "default": null
+    },
+    "planned_intervention_n": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "default": null
+    },
+    "planned_total_n": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "default": null
+    },
+    "planned_effect_size": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0,
+      "default": null
+    },
+    "planned_alpha": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1,
+      "default": null
+    },
+    "planned_power": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1,
       "default": null
     },
     "intervention_label": {
@@ -201,6 +252,7 @@
   "required": [
     "study_name",
     "language",
+    "workflow_path",
     "study_design",
     "analysis_mode",
     "analysis_unit",

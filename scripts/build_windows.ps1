@@ -1,4 +1,4 @@
-# File version: 1.0; date: 2026-05-11
+# File version: 2.0; date: 2026-05-11
 
 param(
     [switch]$OneFile
@@ -13,7 +13,9 @@ $argsList = @(
     "--clean",
     "--windowed",
     "--name",
-    "InterventionSamplePlanner"
+    "InterventionSamplePlanner",
+    "--add-data",
+    "$root\intervention_sample_planner\explanations.json;intervention_sample_planner"
 )
 
 if ($OneFile) {

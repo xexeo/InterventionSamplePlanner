@@ -42,6 +42,10 @@ Use quando os mesmos participantes são medidos antes e depois e não existe gru
 
 ## Modo inverso
 
+A versao atual separa tres caminhos logo no inicio do wizard: `Planejar um estudo`, `Analisar um estudo realizado` e `Comparar estudo realizado com o plano`. No ultimo caso, voce pode digitar os dados do plano anterior ou clicar em `Carregar plano anterior` para preencher os campos a partir de um JSON salvo pelo proprio programa.
+
+Nos fluxos de estudo realizado, o relatorio mostra valor-p aproximado, poder alcancado, taxas binarias observadas quando sao informadas contagens de eventos, e quanto faltaria para benchmarks como `p < 0.05`, `p < 0.10`, `power >= 80%` e `power >= 90%`.
+
 `Avaliar resultado alcançado` é o fluxo inverso. Em vez de perguntar quantos participantes são necessários, ele pergunta o que a amostra alcançada e o efeito observado implicam. Ele informa quantidades aproximadas como:
 
 - efeito observado informado
@@ -87,5 +91,7 @@ Veja:
 
 ## Documentação principal
 
-- `resumoteoria.md`
+- `theoryintroduction_pt.md`
 - `docs/educational_manual/manual.tex`
+- `useofAI_pt.md`
+- `disclaimer_pt.md`

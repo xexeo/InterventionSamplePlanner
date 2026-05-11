@@ -4,6 +4,10 @@
 
 ## 2.0
 
+- adiciona tres escolhas explicitas de fluxo: planejar um estudo, analisar um estudo realizado e comparar um estudo realizado com um plano anterior
+- adiciona carregamento de planos salvos em JSON para a comparacao com o plano
+- adiciona contagens binarias de eventos, taxas observadas, lacunas de benchmark e estimativas de amostra faltante para limiares comuns de valor-p e poder
+
 - adiciona a escolha do caminho de pesquisa no início do wizard
 - adiciona `Pré-teste/pós-teste com grupo de controle`
 - adiciona `Pré-teste/pós-teste com um grupo`

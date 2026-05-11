@@ -30,6 +30,26 @@ As faixas recomendadas ficam em `explanations.json`. A GUI as verifica e bloquei
 
 ## Modo inverso
 
+Os fluxos novos sao:
+
+- `workflow_path = "evaluate_done"` para estudo realizado sem plano anterior
+- `workflow_path = "evaluate_against_plan"` para estudo realizado comparado com plano anterior
+- `workflow_path = "plan_study"` para planejamento antes da coleta
+
+Campos adicionais usados na comparacao com plano:
+
+- `had_planned_sample`
+- `planned_control_n`
+- `planned_intervention_n`
+- `planned_total_n`
+- `planned_effect_size`
+- `planned_alpha`
+- `planned_power`
+- `observed_control_events`
+- `observed_intervention_events`
+
+A interface pode carregar um JSON de planejamento salvo por `load_previous_plan()`. O objeto `observed_analysis` agora inclui tambem taxas binarias observadas, metas de benchmark e metas do plano anterior.
+
 O fluxo inverso é representado por:
 
 - `analysis_mode = "evaluate"`

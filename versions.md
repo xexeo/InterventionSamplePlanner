@@ -8,6 +8,9 @@
 - added `Pre-test/post-test with control group`
 - added `One-group pre-test/post-test`
 - added `Evaluate achieved result` inverse workflow
+- added three explicit workflow choices: plan a study, analyze a completed study, and compare a completed study with a previous plan
+- added loading of saved JSON plans into the plan-comparison workflow
+- added binary achieved-result event counts, observed rates, benchmark gaps, and missing-sample estimates for common p-value and power thresholds
 - added recommended ranges with explicit override
 - moved long-form variable explanations to `intervention_sample_planner/explanations.json`
 - added the `Suggestions` tab

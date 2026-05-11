@@ -42,9 +42,15 @@ Use this when there is no control group and the same participants are measured b
 Educational-games example:
 A researcher wants a first estimate of whether playing Uno between two measurements improves understanding of greater-than and less-than. The same children complete a pre-test, play Uno in a guided session, and then complete a post-test. This can be a useful pilot design, but it is weaker for causal inference because change over time may come from factors other than the game.
 
-## 3. Then choose the run type
+## 3. Then choose the workflow
 
-### Plan required sample
+The first wizard question now uses three practical choices:
+
+- `Plan a study`: estimate the required sample before data collection.
+- `Analyze a completed study`: calculate approximate p-value, achieved power, and benchmark gaps after a study or pilot, when no previous sample plan exists.
+- `Compare completed study with plan`: do the achieved-result analysis and compare the observed valid sample with a previous plan. The previous plan can be typed manually or loaded from a saved JSON configuration.
+
+### Plan a study
 
 Use this when the study has not been run yet and you want to estimate:
 
@@ -52,7 +58,7 @@ Use this when the study has not been run yet and you want to estimate:
 - participants who must start
 - participants who must be invited
 
-### Evaluate achieved result
+### Analyze a completed study
 
 Use this when the study or pilot already exists and you want to estimate what the observed sample and observed effect imply.
 
@@ -61,6 +67,20 @@ This inverse workflow helps answer:
 - Was the study underpowered?
 - What approximate p-value corresponds to the observed effect?
 - If the desired effect was not found, what effect was actually observed?
+- How many valid participants would be needed to reach common thresholds such as `p < 0.05`, `p < 0.10`, `power >= 0.80`, or `power >= 0.90`?
+
+### Compare completed study with plan
+
+Use this when a sample-size plan existed before collection. Enter or load:
+
+- planned control and intervention sample sizes, or planned total for one-group studies
+- planned effect size
+- planned alpha
+- planned power
+- observed sample sizes
+- observed effect or, for binary two-group outcomes, observed event counts
+
+The report says whether the observed sample reached the planned sample and how many valid participants were missing.
 
 ## 4. Recommended ranges and why they exist
 

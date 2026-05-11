@@ -31,7 +31,7 @@
   "notes": "Students are nested in classes, so a design-effect correction is required.",
   "source_case": {
     "source_name": "Methodology chapter, clusters/classes",
-    "source_file": "resumoteoria.md",
+    "source_file": "theoryintroduction.md",
     "real_life_problem": "An educational game intervention is delivered by classroom, and students in the same class are more similar than independent students.",
     "calculator_expected": {
       "design_adjusted_valid_control": 139,

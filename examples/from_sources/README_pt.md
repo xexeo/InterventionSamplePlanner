@@ -5,9 +5,9 @@
 Política de documentação: `README.md` é o original canônico em inglês. Este arquivo é sua tradução em português.
 
 Estes arquivos JSON foram feitos para serem carregados pelo app e pela suíte de testes.
-Cada arquivo contém uma configuração normal do app e um bloco `source_case` com a fonte externa ou a fonte local `resumoteoria.md`, o problema de vida real e os resultados esperados para esta calculadora.
+Cada arquivo contém uma configuração normal do app e um bloco `source_case` com a fonte externa ou a fonte local `theoryintroduction_pt.md`, o problema de vida real e os resultados esperados para esta calculadora.
 
-A calculadora usa as fórmulas de aproximação normal descritas no resumo metodológico em `resumoteoria.md`. Algumas ferramentas exatas, como G*Power ou R `pwr`, podem retornar um participante a mais por grupo porque usam distribuição t ou procedimentos exatos iterativos. Os exemplos documentam essa diferença quando ela importa.
+A calculadora usa as fórmulas de aproximação normal descritas no resumo metodológico em `theoryintroduction_pt.md`. Algumas ferramentas exatas, como G*Power ou R `pwr`, podem retornar um participante a mais por grupo porque usam distribuição t ou procedimentos exatos iterativos. Os exemplos documentam essa diferença quando ela importa.
 
 Os exemplos atuais baseados em fontes incluem:
 

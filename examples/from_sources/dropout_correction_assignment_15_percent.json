@@ -31,7 +31,7 @@
   "notes": "A study needs 63 valid participants per group but expects 15% loss after assignment.",
   "source_case": {
     "source_name": "Methodology chapter, correction for loss",
-    "source_file": "resumoteoria.md",
+    "source_file": "theoryintroduction.md",
     "real_life_problem": "An experiment expects some participants to abandon after allocation and therefore must start more people than the valid-data target.",
     "calculator_expected": {
       "initial_valid_control": 63,

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# File version: 1.0; date: 2026-05-11
+# File version: 2.0; date: 2026-05-11
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -11,6 +11,8 @@ ARGS=(
   --windowed
   --name
   InterventionSamplePlanner
+  --add-data
+  "$ROOT/intervention_sample_planner/explanations.json:intervention_sample_planner"
 )
 
 if [[ "${1:-}" == "--onefile" ]]; then

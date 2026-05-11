@@ -31,7 +31,7 @@
   "notes": "Detect an increase from 45% to 60% in completion rate.",
   "source_case": {
     "source_name": "Methodology chapter, comparison between two proportions",
-    "source_file": "resumoteoria.md",
+    "source_file": "theoryintroduction.md",
     "real_life_problem": "A game study compares whether an adaptive version increases level completion compared with the standard version.",
     "calculator_expected": {
       "initial_valid_control": 173,

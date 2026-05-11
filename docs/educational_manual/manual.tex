@@ -19,7 +19,7 @@
 \usepackage{array}
 \usepackage{enumitem}
 \usepackage{amsmath,amssymb}
-\usepackage{tcolorbox}
+\usepackage[most]{tcolorbox}
 \usepackage[strings]{underscore}
 \usepackage{xurl}
 \usepackage{hyperref}
@@ -37,7 +37,9 @@
 \definecolor{ispgreen}{HTML}{2D6A4F}
 \definecolor{ispamber}{HTML}{9A6700}
 \definecolor{ispgray}{HTML}{F4F6F8}
-\definecolor{ispink}{HTML}{7F1D1D}
+\definecolor{ispred}{HTML}{7F1D1D}
+\definecolor{ispsoftblue}{HTML}{EAF3FA}
+\definecolor{ispsoftgreen}{HTML}{EEF7F1}
 
 \hypersetup{
   colorlinks=true,
@@ -45,7 +47,7 @@
   citecolor=ispgreen,
   urlcolor=ispblue,
   pdftitle={Educational Manual for ISP v2.0},
-  pdfauthor={Intervention Sample Planner contributors}
+  pdfauthor={Xexeo}
 }
 \urlstyle{same}
 
@@ -65,6 +67,8 @@
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
 \newtcolorbox{conceptbox}[1]{
+  enhanced,
+  breakable,
   colback=ispgray,
   colframe=ispblue,
   title=\textbf{#1},
@@ -73,7 +77,20 @@
   boxrule=0.8pt
 }
 
+\newtcolorbox{examplebox}[1]{
+  enhanced,
+  breakable,
+  colback=ispsoftgreen,
+  colframe=ispgreen,
+  title=\textbf{Example: #1},
+  fonttitle=\bfseries,
+  arc=2mm,
+  boxrule=0.8pt
+}
+
 \newtcolorbox{statbox}[1]{
+  enhanced,
+  breakable,
   colback=white,
   colframe=ispamber,
   title=\textbf{For readers who want more statistics: #1},
@@ -83,9 +100,22 @@
 }
 
 \newtcolorbox{warningbox}[1]{
+  enhanced,
+  breakable,
   colback=white,
-  colframe=ispink,
+  colframe=ispred,
   title=\textbf{Important limit: #1},
+  fonttitle=\bfseries,
+  arc=2mm,
+  boxrule=0.8pt
+}
+
+\newtcolorbox{decisionbox}[1]{
+  enhanced,
+  breakable,
+  colback=ispsoftblue,
+  colframe=ispblue,
+  title=\textbf{Decision point: #1},
   fonttitle=\bfseries,
   arc=2mm,
   boxrule=0.8pt
@@ -95,6 +125,7 @@
 \newcommand{\app}{\textsf{ISP v2.0}\index{ISP v2.0}}
 \newcommand{\field}[1]{\code{#1}\index{configuration variables!#1@\code{#1}}}
 \newcommand{\term}[1]{\textbf{#1}\index{#1}}
+\newcommand{\wizard}[1]{\textbf{#1}\index{wizard!#1}}
 
 \begin{document}
 \hypersetup{pageanchor=false}
@@ -109,10 +140,10 @@
   {\large Manual version 2.0 \quad Date: 2026-05-11\par}
   \vfill
   \begin{conceptbox}{Default problem family}
-  This manual assumes interventions in human processes such as learning, training, usability, workflow, or decision support. It is not a clinical-trial manual for medication, surgery, or safety endpoints. It is strongest when the researcher needs practical guidance for sample-size planning or achieved-result interpretation in non-clinical intervention studies.
+  This manual assumes studies of interventions in human processes: learning, training, usability, work procedures, decision support, classroom activities, and similar situations. The examples use an educational game, but the same logic applies to many non-clinical interventions. This is not a clinical-trial manual for medication, surgery, safety endpoints, or regulatory decisions.
   \end{conceptbox}
   \vfill
-  {\large Intervention Sample Planner contributors\par}
+  {\large Author: Xexeo\par}
 \end{titlepage}
 
 \clearpage
@@ -122,248 +153,1148 @@
 \clearpage
 \pagenumbering{arabic}
 
-\chapter{What the Software Now Covers}
+\chapter{What the App Is For}
 
-\app{} was originally a two-group calculator. Version 2.0 extends the software in three directions:
+\app{} helps a researcher decide how many people are needed for a study that evaluates an \term{intervention}. It also helps interpret an achieved sample after data collection. The central use case is simple to state:
 
-\begin{itemize}
-  \item different \term{research paths};
-  \item recommended-value checking with explicit override;
-  \item an \term{inverse workflow} for evaluating achieved results.
-\end{itemize}
+\begin{quote}
+  A researcher wants to know whether doing something differently changes an outcome measured in people.
+\end{quote}
 
-\begin{longtable}{L{0.26\textwidth}L{0.28\textwidth}L{0.34\textwidth}}
+The software is designed for interventions in human processes. A class receives a new learning activity; a team receives a new workflow; users receive a new interface; students play an educational game; a workshop changes how people solve a task. The app converts these decisions into a consistent set of sample-size assumptions.
+
+\section{The main outputs}
+
+When the app is used in \term{planning mode}, it separates four quantities that are often confused:
+
+\begin{longtable}{L{0.24\textwidth}L{0.34\textwidth}L{0.32\textwidth}}
 \toprule
-\textbf{Path or mode} & \textbf{When it applies} & \textbf{What the software does}\\
+\textbf{Output} & \textbf{Meaning} & \textbf{Why it matters}\\
 \midrule
 \endfirsthead
 \toprule
-\textbf{Path or mode} & \textbf{When it applies} & \textbf{What the software does}\\
+\textbf{Output} & \textbf{Meaning} & \textbf{Why it matters}\\
 \midrule
 \endhead
-Two independent groups & Intervention and control are different people. & Plans or evaluates a between-group comparison.\\
-Pre-test/post-test with control group & The same participants are measured before and after in both groups. & Uses an approximate gain-sensitive design with a pre/post correlation input.\\
-One-group pre-test/post-test & There is no control group and the same participants are measured twice. & Plans or evaluates a paired change design, with explicit warnings about causal limits.\\
-Plan required sample & Data have not yet been collected. & Estimates valid, assigned, and invited sample sizes.\\
-Evaluate achieved result & Data or pilot results already exist. & Estimates approximate achieved power and p-value for the observed result.\\
+Initial valid target & The analyzable participants needed by the statistical comparison before operational losses. & This is the statistical core of the calculation.\\
+Design-adjusted valid target & The valid target after finite-population and cluster corrections. & Natural groups such as classrooms can reduce independent information.\\
+Assigned or started participants & The number who need to begin the study after expected completion and data-quality losses. & A participant who starts but does not finish all required measurements may not be analyzable.\\
+Invited or contacted people & The number who must be approached before expected non-response. & Recruitment planning starts before anyone accepts.\\
 \bottomrule
 \end{longtable}
 
-\begin{conceptbox}{Why the first wizard question changed}
-In version 2.0, the first question is no longer the outcome type. It is the research path. This matches the real logic of research planning: the same variable, such as effect size, means different things in different designs.
-\end{conceptbox}
+When the app is used in \term{evaluation mode}, it asks for the achieved sample and observed effect. It then estimates approximate achieved power and approximate p-value. This does not replace a final statistical analysis, but it helps the researcher understand what the achieved study was able to show.
+
+\section{The three research paths}
+
+The first wizard question asks for the research path. That decision controls which assumptions are meaningful.
+
+\begin{longtable}{L{0.25\textwidth}L{0.32\textwidth}L{0.33\textwidth}}
+\toprule
+\textbf{Research path} & \textbf{Basic structure} & \textbf{Best use}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Research path} & \textbf{Basic structure} & \textbf{Best use}\\
+\midrule
+\endhead
+\field{parallel_two_group} & Different people are in the intervention and control groups. & Comparing an intervention condition with a non-intervention or usual-practice condition.\\
+\field{pretest_posttest_control} & Both groups are measured before and after. & Comparing change while using the pre-test to improve precision and understand baseline status.\\
+\field{one_group_pre_post} & The same people are measured before and after, with no control group. & Pilot studies, feasibility studies, and early signal checks where causal claims must stay cautious.\\
+\bottomrule
+\end{longtable}
+
+\begin{warningbox}{What the app does not do}
+\app{} uses transparent normal-approximation formulas. It is not a complete replacement for specialized power software, simulation, mixed-model planning, clinical-trial design, or a statistician's review for high-stakes studies. It is meant to support clear planning for common intervention studies and to make assumptions visible.
+\end{warningbox}
+
+\chapter{Core Concepts Before Using the Wizard}
+
+This chapter gives the minimal conceptual foundation needed to use the wizard well. It is written for researchers who are not statisticians.
+
+\section{Intervention and control}
+
+An \term{intervention} is the activity, method, interface, training, game, or procedure whose effect is being studied. A \term{control group} is a comparison condition. It might receive ordinary instruction, a standard workflow, an existing interface, or no special activity.
+
+The control group is not a bureaucratic detail. It is what helps distinguish the intervention effect from other reasons people may change: practice, time, ordinary instruction, motivation, test familiarity, or external events \parencite{shadish2002experimental}.
+
+\section{Outcome}
+
+The \term{outcome} is the variable used to judge whether the intervention mattered. In \app{}, the main outcome is either:
+
+\begin{itemize}
+  \item \term{continuous}, such as a test score, time to complete a task, usability scale, or number of correct answers;
+  \item \term{binary}, such as success/failure, passed/not passed, completed/not completed.
+\end{itemize}
+
+Binary outcomes are supported for the two independent group path. For pre-test/post-test paths, the app currently supports continuous outcomes.
+
+\section{Unit of analysis and unit of observation}
+
+The \term{unit of analysis} is what the final comparison treats as one independent case. The \term{unit of observation} is where data are recorded. Often both are people, but not always.
+
+\begin{examplebox}{Classroom learning game}
+If 60 children each have one post-test score, the child is the observation unit and usually also the analysis unit. If whole classrooms are assigned to a condition and children inside a classroom are similar, the classroom structure creates clustering. The app can apply a simple cluster design-effect correction through \field{cluster_average_size} and \field{intraclass_correlation}.
+\end{examplebox}
+
+\section{Alpha}
+
+\term{Alpha} is the planned false-positive risk. In the app it is stored as \field{alpha}. A common value is 0.05. This means the study is planned so that, if there is truly no effect and the assumptions hold, the probability of a false-positive result is about 5\%.
+
+Alpha is not the probability that the hypothesis is true or false. It is a planning convention for controlling one type of statistical error \parencite{neyman1933efficient}.
+
+\section{Power}
+
+\term{Power} is the probability of detecting the planned effect if that effect really exists. In the app it is stored as \field{power}. Traditional planning values are 0.80 and 0.90 \parencite{cohen1988power,lakens2022sample}.
+
+Low power means a study can miss an effect that would matter. High power usually requires a larger sample. The practical question is not only "what power is ideal?" but also "what sample can the project actually recruit, measure, and keep complete?"
+
+\section{Effect size}
+
+\term{Effect size} connects the real-world change to a statistical scale. In the app, the main continuous effect input is \field{effect_size_d}. For a two-group continuous outcome:
+
+\[
+d = \frac{\text{mean in intervention} - \text{mean in control}}{\text{pooled standard deviation}}.
+\]
+
+For one-group pre-test/post-test:
+
+\[
+d_{\text{change}} = \frac{\text{mean change}}{\text{standard deviation of change}}.
+\]
+
+Cohen's traditional anchors of 0.20, 0.50, and 0.80 are useful as vocabulary, but they are not a substitute for judgment \parencite{cohen1988power,cumming2012understanding}. A small effect may matter if the intervention is cheap and scalable. A medium effect may not matter if the intervention is expensive, disruptive, or ethically questionable.
+
+\section{Losses and adherence}
+
+The app distinguishes three operational rates:
+
+\begin{itemize}
+  \item \field{response_rate}: invited people who agree or start;
+  \item \field{completion_rate}: starters who finish the required measurements;
+  \item \field{usable_data_rate}: completed cases that remain analyzable after quality checks.
+\end{itemize}
+
+For pre-test/post-test studies, \term{final adherence} should mean completing both tests. A child who completes only the pre-test, only the post-test, or only the game session does not provide the full pair needed for the intended analysis.
 
 \chapter{Choosing the Research Path}
 
+\section{Path 1: Two independent groups}
+
+Choose \field{parallel_two_group} when different people are in the intervention and control groups. The intervention group receives the new activity; the control group receives the comparison activity.
+
+\begin{examplebox}{Uno game with post-test comparison}
+A researcher in educational games wants to verify whether using Uno helps children understand the concepts of greater-than and less-than. The intervention group plays Uno with guided prompts and then receives a short lesson. The control group receives only the short lesson. Both groups complete a final test. The primary claim is whether the intervention group has a better post-test score than the control group.
+\end{examplebox}
+
+\subsection*{When it applies}
+
+This path applies when participants are distinct across groups and the main comparison is between groups. It fits post-test-only studies, survey-after-intervention studies, and binary success-rate comparisons.
+
+\subsection*{What it cannot cover well}
+
+It does not use baseline data. If groups differ before the intervention, the post-test comparison can be less convincing. If baseline measurement is available and meaningful, consider \field{pretest_posttest_control}.
+
+\section{Path 2: Pre-test/post-test with control group}
+
+Choose \field{pretest_posttest_control} when both groups are measured before and after.
+
+\begin{examplebox}{Uno game with pre-test, post-test, and control}
+A researcher wants a stronger learning design. Children in both groups complete a pre-test on greater-than and less-than. The intervention group then plays Uno with guided prompts and receives a short lesson. The control group receives only the lesson. Both groups complete the same post-test. Final adherence is defined as completing both the pre-test and the post-test.
+\end{examplebox}
+
+\subsection*{When it applies}
+
+This path applies when baseline differences matter, when the same outcome can be measured before and after, and when the researcher still has a control group. It is often preferable to a post-test-only design because the pre-test helps describe starting status and can improve precision.
+
+\subsection*{What it cannot cover well}
+
+The app uses an approximate ANCOVA-style precision adjustment based on the pre/post correlation. It does not fit a full mixed model, multiple repeated waves, nonlinear growth, or complex missing-data models. For those cases, use longitudinal or mixed-model power analysis.
+
+\begin{statbox}{Why correlation matters}
+If pre-test and post-test are correlated, the pre-test explains part of the post-test variability. The app uses a precision factor based on \((1-r^2)\), where \(r\) is \field{pre_post_correlation}. Higher \(r\) usually reduces the needed sample, but unrealistic correlation values can make a plan too optimistic.
+\end{statbox}
+
+\section{Path 3: One-group pre-test/post-test}
+
+Choose \field{one_group_pre_post} when the same people are measured before and after and there is no control group.
+
+\begin{examplebox}{Uno pilot without a control group}
+A researcher cannot yet recruit a control group. The same children complete a pre-test, participate in a guided Uno session, and complete a post-test. The researcher uses the result as a pilot to decide whether the intervention is promising enough for a controlled study.
+\end{examplebox}
+
+\subsection*{When it applies}
+
+This path applies to pilots, feasibility work, early classroom innovation studies, and situations where the first question is whether measurable change occurs at all.
+
+\subsection*{What it cannot cover well}
+
+Without a control group, the study cannot strongly separate the intervention from practice effects, maturation, ordinary instruction, history, or repeated exposure to the test. If the goal is a strong causal claim, add a control group or use a stronger quasi-experimental design \parencite{shadish2002experimental}.
+
+\chapter{Wizard Step-by-Step: Starting Decision}
+
+The first wizard question is no longer a statistical detail. It asks what practical job the user wants the software to do. This prevents a common mistake: mixing a prospective sample-size plan with a retrospective check of a study that already happened.
+
+\begin{decisionbox}{Question}
+What do you want the program to do first?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{workflow_path}.
+
+\textbf{Why the wizard asks:} the same study information can be used in three different ways. A new plan uses desired effect size and desired power to estimate how many people are needed. A completed-study analysis starts from the sample and effect that were actually observed. A plan comparison does the completed-study analysis and also checks whether the study reached the previous plan.
+
+\begin{longtable}{L{0.28\textwidth}L{0.30\textwidth}L{0.32\textwidth}}
+\toprule
+\textbf{Wizard choice} & \textbf{Internal value} & \textbf{Use when}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Wizard choice} & \textbf{Internal value} & \textbf{Use when}\\
+\midrule
+\endhead
+\wizard{Plan a study} & \field{plan_study} & Data collection has not happened and the researcher wants a required sample size.\\
+\wizard{Analyze a completed study} & \field{evaluate_done} & The study or pilot already happened and there was no formal sample-size plan to compare against.\\
+\wizard{Compare completed study with plan} & \field{evaluate_against_plan} & The study already happened and the researcher has a prior plan, either typed manually or loaded from a saved JSON plan.\\
+\bottomrule
+\end{longtable}
+
+The older internal variable \field{analysis_mode} is still stored for compatibility. The workflow choice sets it automatically: \field{plan_study} becomes \field{analysis_mode=plan}; the two completed-study choices become \field{analysis_mode=evaluate}. The plan-comparison choice also sets \field{had_planned_sample=true}.
+
+\begin{examplebox}{Three ways to use the same Uno study idea}
+Before recruitment, the researcher chooses \wizard{Plan a study} to estimate how many children must complete the post-test. After a small informal pilot with no plan, the researcher chooses \wizard{Analyze a completed study}. After a formally planned study, the researcher chooses \wizard{Compare completed study with plan} and loads the saved JSON from the original planning run.
+\end{examplebox}
+
+\chapter{Wizard Step-by-Step: Planning Mode}
+
+Use \wizard{Plan required sample} when data collection has not happened yet. The wizard asks only the fields needed for the selected path. Every field that appears in the wizard also appears in the Data / Configuration tab with a \code{?} help button.
+
+\section{Step 1: Research path}
+
+\begin{decisionbox}{Question}
+Which research path should the study follow?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{study_design}.
+
+\textbf{Why the wizard asks:} the calculation changes depending on whether the comparison is between different people, between two groups over time, or within the same people over time.
+
+\begin{longtable}{L{0.27\textwidth}L{0.31\textwidth}L{0.32\textwidth}}
+\toprule
+\textbf{Choose} & \textbf{Use when} & \textbf{Avoid when}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Choose} & \textbf{Use when} & \textbf{Avoid when}\\
+\midrule
+\endhead
+\field{parallel_two_group} & Intervention and control are different participants. & Baseline scores are central to the claim.\\
+\field{pretest_posttest_control} & Both groups complete pre-test and post-test. & There is no control group or there are many repeated waves.\\
+\field{one_group_pre_post} & The same participants are measured twice and no control group exists. & The study must make a strong causal claim.\\
+\bottomrule
+\end{longtable}
+
+\section{Step 2: Study name}
+
+\begin{decisionbox}{Question}
+What is the study called?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{study_name}.
+
+\textbf{Why the wizard asks:} reports, saved JSON files, and exported summaries should be traceable. Use a name that identifies the intervention, population, and outcome when possible.
+
+\begin{examplebox}{Good study name}
+\code{Uno greater-than lesson, grade 3, post-test score}
+\end{examplebox}
+
+\section{Step 3: Outcome type}
+
+\begin{decisionbox}{Question}
+What kind of primary outcome will be analyzed?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{outcome_type}.
+
+\textbf{Why the wizard asks:} continuous outcomes and binary outcomes use different formulas.
+
+\begin{longtable}{L{0.20\textwidth}L{0.36\textwidth}L{0.34\textwidth}}
+\toprule
+\textbf{Outcome} & \textbf{Examples} & \textbf{App support}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Outcome} & \textbf{Examples} & \textbf{App support}\\
+\midrule
+\endhead
+\field{continuous} & Test score, time, scale score, number correct, confidence rating. & Supported for all three research paths.\\
+\field{binary} & Passed/not passed, completed/not completed, success/failure. & Supported for two independent groups.\\
+\bottomrule
+\end{longtable}
+
+\section{Step 4: Alpha}
+
+\begin{decisionbox}{Question}
+What false-positive risk should the study plan use?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{alpha}.
+
+\textbf{Recommended range:} 0.01 to 0.10. Typical values: 0.05 and 0.01.
+
+\textbf{Why the wizard asks:} smaller alpha makes the evidence threshold stricter and increases the required sample. If there are multiple primary comparisons, the app divides alpha by \field{primary_comparisons}.
+
+\begin{examplebox}{Traditional choice}
+For the Uno learning study, \field{alpha}=0.05 is a conventional starting point. If the study is a formal confirmatory evaluation for a school district decision, \field{alpha}=0.01 might be justified, but it will require more participants.
+\end{examplebox}
+
+\section{Step 5: Power}
+
+\begin{decisionbox}{Question}
+What probability of detecting the planned effect should the study target?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{power}.
+
+\textbf{Recommended range:} 0.80 to 0.95. Typical values: 0.80 and 0.90.
+
+\textbf{Why the wizard asks:} higher power reduces the risk of missing a meaningful effect, but increases the sample.
+
+\begin{statbox}{Power and the planned effect}
+Power is always power for a specified effect. A study can have 80\% power for \(d=0.50\) and much lower power for \(d=0.20\). This is why effect size must be chosen carefully.
+\end{statbox}
+
+\section{Step 7A: Allocation ratio}
+
+This step appears for \field{parallel_two_group} and \field{pretest_posttest_control}.
+
+\begin{decisionbox}{Question}
+How should participants be divided between intervention and control?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{allocation_ratio}.
+
+\textbf{Recommended range:} 0.5 to 2.0. Typical value: 1.0.
+
+\textbf{Why the wizard asks:} equal groups are usually efficient. The value is intervention divided by control. A value of 1 means equal groups; 2 means twice as many intervention participants as control; 0.5 means half as many intervention participants as control.
+
+\begin{examplebox}{Uno with two classes}
+If the school can provide one intervention class and one control class with similar sizes, use \field{allocation_ratio}=1. If there are two intervention classes and one control class, \field{allocation_ratio}=2 may better match reality, but it may require a larger total sample than a balanced design.
+\end{examplebox}
+
+\section{Step 7B: Proportions for a binary two-group outcome}
+
+This step appears when \field{study_design} is \field{parallel_two_group} and \field{outcome_type} is \field{binary}.
+
+\begin{decisionbox}{Question}
+What rates are expected in the control and intervention groups?
+\end{decisionbox}
+
+\textbf{Configuration variables:} \field{proportion_control} and \field{proportion_intervention}.
+
+\textbf{Recommended range:} 0.05 to 0.95 for each rate.
+
+\textbf{Why the wizard asks:} the planned effect for binary outcomes is the difference between these two proportions.
+
+\begin{examplebox}{Task success}
+Suppose 45\% of children in the lesson-only group are expected to answer a comparison task correctly, and 60\% in the Uno group are expected to answer correctly. Use \field{proportion_control}=0.45 and \field{proportion_intervention}=0.60. The planned difference is 0.15, or 15 percentage points.
+\end{examplebox}
+
+\section{Step 7C: Continuous effect size}
+
+This step appears for continuous planning paths.
+
+\begin{decisionbox}{Question}
+What is the smallest meaningful standardized effect?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{effect_size_d}.
+
+\textbf{Recommended range:} 0.10 to 1.20. Typical values: 0.20, 0.50, and 0.80.
+
+\textbf{Why the wizard asks:} the desired effect is the core driver of the sample size. Smaller effects require larger samples.
+
+\begin{examplebox}{Uno post-test score}
+If a 5-point improvement on the post-test would matter, and the pooled standard deviation is expected to be 10 points, use \(d=5/10=0.50\). This is not chosen because 0.50 is a famous number; it is chosen because 5 points is the smallest improvement the researcher considers worth adopting.
+\end{examplebox}
+
+\section{Step 8: Pre/post correlation}
+
+This step appears for \field{pretest_posttest_control}.
+
+\begin{decisionbox}{Question}
+How strongly do pre-test and post-test scores correlate?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{pre_post_correlation}.
+
+\textbf{Recommended range:} 0.30 to 0.80. Typical values: 0.50 and 0.60.
+
+\textbf{Why the wizard asks:} the pre-test can make the comparison more precise. The software uses the correlation to estimate that precision gain. Pilot data are better than generic values.
+
+\begin{examplebox}{Learning test stability}
+If children who score high before the activity also tend to score high after it, the pre/post correlation may be around 0.60. If the test is noisy or the content changes strongly, the correlation may be lower. A lower value produces a more conservative sample.
+\end{examplebox}
+
+\section{Step 9: Primary comparisons}
+
+\begin{decisionbox}{Question}
+How many primary comparisons will be tested?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{primary_comparisons}.
+
+\textbf{Recommended range:} 1 to 10. Typical values: 1, 2, or 3.
+
+\textbf{Why the wizard asks:} if there are several primary tests, the app adjusts alpha using a simple Bonferroni-style division \parencite{bonferroni1936teoria}. This is conservative and clear.
+
+\begin{examplebox}{One primary outcome}
+If the Uno study has one primary endpoint, the post-test score, use \field{primary_comparisons}=1. If the study declares both math score and confidence scale as primary outcomes, use 2 or define a single primary outcome before collecting data.
+\end{examplebox}
+
+\section{Step 10: Response rate}
+
+\begin{decisionbox}{Question}
+What share of invited people is expected to start or accept?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{response_rate}.
+
+\textbf{Recommended range:} 0.40 to 1.00. Typical values: 0.60, 0.80, and 0.90.
+
+\textbf{Why the wizard asks:} not every invited person starts. The app inflates the number of invitations so that the needed number can begin the study.
+
+\begin{examplebox}{Recruitment}
+If 100 families are invited and about 80 usually give consent, use \field{response_rate}=0.80. If only 40 usually respond, the app will warn that recruitment is fragile and will require many more invitations.
+\end{examplebox}
+
+\section{Step 11: Completion rate}
+
+\begin{decisionbox}{Question}
+What share of starters is expected to complete all required measurements?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{completion_rate}.
+
+\textbf{Recommended range:} 0.70 to 1.00. Typical values: 0.85, 0.90, and 0.95.
+
+\textbf{Why the wizard asks:} a person who starts may not provide all data required by the planned analysis.
+
+\begin{examplebox}{Pre-test and post-test adherence}
+In the pre-test/post-test Uno study, completion means finishing both tests. A child who completes the pre-test, plays Uno, but misses the post-test should not be counted as a complete analyzable pre/post case. If 85\% are expected to complete both tests, use \field{completion_rate}=0.85.
+\end{examplebox}
+
+\section{Step 12: Usable data rate}
+
+\begin{decisionbox}{Question}
+What share of completed cases will remain analyzable?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{usable_data_rate}.
+
+\textbf{Recommended range:} 0.80 to 1.00. Typical values: 0.90, 0.95, and 0.98.
+
+\textbf{Why the wizard asks:} completed records can still be unusable because of missing files, invalid IDs, technical failures, duplicate entries, or predefined exclusion rules.
+
+\begin{examplebox}{Data-quality loss}
+If a digital test sometimes fails to save answers, or children sometimes use the wrong login, a completed session may not produce usable data. If past studies kept 95\% of completed cases, use \field{usable_data_rate}=0.95.
+\end{examplebox}
+
+\section{Step 13: Extra buffer}
+
+\begin{decisionbox}{Question}
+Is an additional conservative margin needed?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{extra_buffer_rate}.
+
+\textbf{Recommended range:} 0.00 to 0.20. Typical values: 0.00, 0.05, and 0.10.
+
+\textbf{Why the wizard asks:} some uncertainty is not captured by response, completion, or usable-data rates. A small extra buffer can protect against minor operational surprises.
+
+\begin{warningbox}{Do not use buffer to hide uncertainty}
+If the study needs a 40\% buffer, the real problem may be that the protocol, recruitment process, or measurement pipeline is too uncertain. Improve the procedure or run a pilot instead of only adding people.
+\end{warningbox}
+
+\section{Step 14: Cluster average size}
+
+\begin{decisionbox}{Question}
+How many participants are in each natural cluster on average?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{cluster_average_size}.
+
+\textbf{Recommended range:} 1 to 50. Typical values: 1, 20, and 30.
+
+\textbf{Why the wizard asks:} people inside the same class, team, workshop, or school may be more similar than people from different clusters. Similarity inside clusters reduces the amount of independent information.
+
+Use 1 when participants can be treated as independent individuals.
+
+\section{Step 15: Intraclass correlation}
+
+\begin{decisionbox}{Question}
+How similar are people inside the same cluster?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{intraclass_correlation}.
+
+\textbf{Recommended range:} 0.00 to 0.20. Typical values: 0.01, 0.05, and 0.10.
+
+\textbf{Why the wizard asks:} the \term{intraclass correlation}, or \term{ICC}, measures how much people in the same cluster resemble each other. Even a small ICC can strongly inflate sample needs when clusters are large \parencite{donner2000cluster}.
+
+\begin{statbox}{Design effect}
+The app uses the common design-effect approximation
+\[
+DE = 1 + (m - 1)\rho,
+\]
+where \(m\) is \field{cluster_average_size} and \(\rho\) is \field{intraclass_correlation}. If there is no clustering, use \(m=1\) and \(\rho=0\), so \(DE=1\).
+\end{statbox}
+
+\chapter{Wizard Step-by-Step: Completed-Study Analysis}
+
+Use \wizard{Analyze a completed study} when the study, a pilot, or a partial collection already exists and there was no formal sample-size plan. Use \wizard{Compare completed study with plan} when a previous plan exists. Both are inverse problems: instead of asking how many participants are needed, the researcher asks what the achieved sample and observed effect imply.
+
+The plan-comparison path can be filled in two ways. The user may type the planned sample by hand, or click \wizard{Load previous plan} and choose a saved JSON configuration from an earlier planning run. Loading a plan fills \field{planned_control_n}, \field{planned_intervention_n}, \field{planned_total_n}, \field{planned_effect_size}, \field{planned_alpha}, and \field{planned_power} when those values are available.
+
+\section{Steps shared with planning mode}
+
+Evaluation mode still asks for:
+
+\begin{itemize}
+  \item \field{study_design}, because the observed effect depends on the design;
+  \item \field{study_name}, because the report should remain traceable;
+  \item \field{outcome_type}, because binary and continuous effects differ;
+  \item \field{alpha}, because p-value and achieved-power interpretation depend on the evidence threshold;
+  \item \field{power}, because the app can compare achieved power with the target.
+\end{itemize}
+
+\section{Previous-plan inputs}
+
+This section appears only when the first wizard choice is \wizard{Compare completed study with plan}.
+
+\begin{longtable}{L{0.26\textwidth}L{0.35\textwidth}L{0.29\textwidth}}
+\toprule
+\textbf{Variable} & \textbf{Meaning} & \textbf{How to obtain it}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Variable} & \textbf{Meaning} & \textbf{How to obtain it}\\
+\midrule
+\endhead
+\field{planned_control_n} & Planned valid control cases. & Type the original plan value or load a saved plan.\\
+\field{planned_intervention_n} & Planned valid intervention cases. & Type the original plan value or load a saved plan.\\
+\field{planned_total_n} & Planned valid cases for one-group studies. & Use complete paired cases planned for pre/post analysis.\\
+\field{planned_effect_size} & Effect size assumed in the original plan. & Use the planned \(d\), planned change, or planned proportion difference.\\
+\field{planned_alpha} & Evidence threshold used in the original plan. & Often 0.05.\\
+\field{planned_power} & Target detection probability from the original plan. & Often 0.80 or 0.90.\\
+\bottomrule
+\end{longtable}
+
+\textbf{Why the wizard asks:} without these plan values, the app can calculate the achieved p-value and achieved power, but it cannot say whether the study reached the plan that justified the original recruitment target.
+
+\begin{examplebox}{Loading the Uno plan}
+Before data collection, the researcher planned for 63 valid children in the lesson-only control group and 63 valid children in the Uno-plus-lesson group, assuming \(d=0.50\), \(\alpha=0.05\), and 80\% power. If the researcher saved the planning JSON, clicking \wizard{Load previous plan} fills these fields automatically. If the plan exists only in notes or a protocol, the values can be typed manually.
+\end{examplebox}
+
+\section{Observed group sizes}
+
+For two-group designs, the wizard asks for:
+
+\begin{itemize}
+  \item \field{observed_control_n};
+  \item \field{observed_intervention_n}.
+\end{itemize}
+
+For the one-group pre-test/post-test design, it asks for:
+
+\begin{itemize}
+  \item \field{observed_total_n}.
+\end{itemize}
+
+\textbf{Why the wizard asks:} achieved power and approximate p-value depend on the information actually collected. In repeated-measure designs, the observed total should count only people with the required complete data.
+
+\begin{examplebox}{One-group Uno pilot}
+If 35 children start, 30 complete the pre-test, and 28 complete both pre-test and post-test, the observed total for one-group evaluation is 28.
+\end{examplebox}
+
+\section{Observed binary events}
+
+For a binary two-group outcome, the wizard can ask for:
+
+\begin{itemize}
+  \item \field{observed_control_events};
+  \item \field{observed_intervention_events}.
+\end{itemize}
+
+\textbf{Why the wizard asks:} event counts are clearer and safer than asking the user to compute a proportion difference by hand. The app divides events by observed group size, calculates the observed control and intervention rates, and uses their difference as the observed effect.
+
+\begin{examplebox}{Binary Uno result}
+Suppose 80 children completed the control condition and 36 reached the post-test criterion. In the Uno condition, 80 completed and 48 reached the criterion. Enter \field{observed_control_n}=80, \field{observed_control_events}=36, \field{observed_intervention_n}=80, and \field{observed_intervention_events}=48. The app calculates rates of 45\% and 60\%, so the observed difference is 15 percentage points.
+\end{examplebox}
+
+\section{Observed effect size}
+
+\begin{decisionbox}{Question}
+What effect was actually observed?
+\end{decisionbox}
+
+\textbf{Configuration variable:} \field{observed_effect_size}.
+
+For continuous designs, enter the standardized observed effect. For a binary two-group design, prefer entering event counts. If event counts are unavailable, enter the observed difference in proportions as \field{observed_effect_size}.
+
+\begin{examplebox}{Observed effect after a pilot}
+In a one-group Uno pilot, the average score increases by 3.5 points and the standard deviation of change is 10 points. The observed standardized change is \(3.5/10 = 0.35\). Enter \field{observed_effect_size}=0.35.
+\end{examplebox}
+
+\section{What evaluation mode can and cannot conclude}
+
+Evaluation mode can help answer:
+
+\begin{itemize}
+  \item Was the achieved sample obviously too small for the observed effect?
+  \item Is the observed result approximately compatible with statistical significance at the chosen alpha?
+  \item Should a replication plan use a smaller, similar, or larger target effect?
+  \item If a plan existed, how many additional valid participants would have been needed to reach the planned sample?
+  \item How many additional valid participants would be needed, under the same observed effect and allocation, to reach conventional benchmarks such as \(p<0.05\), \(p<0.10\), 80\% power, or 90\% power?
+\end{itemize}
+
+It cannot replace the final model fitted to the real data. The final analysis should use the actual outcome scale, missing-data decisions, covariates, distribution, and design.
+
+\chapter{Configuration Tab Reference}
+
+The Data / Configuration tab exposes all stored inputs. This tab is useful when the researcher wants to edit the model directly, save a JSON configuration, or inspect variables not shown in the current wizard path. The \code{?} button beside each field explains the field using the external JSON explanation file.
+
+{\small
+\begin{longtable}{L{0.21\textwidth}L{0.20\textwidth}L{0.26\textwidth}L{0.23\textwidth}}
+\toprule
+\textbf{Variable} & \textbf{Where used} & \textbf{Meaning} & \textbf{Typical or recommended values}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Variable} & \textbf{Where used} & \textbf{Meaning} & \textbf{Typical or recommended values}\\
+\midrule
+\endhead
+\field{study_name} & All modes & Human-readable study name. & Descriptive text.\\
+\field{language} & Interface and reports & App language. & \code{en} or \code{pt}.\\
+\field{workflow_path} & First wizard choice & Practical workflow to run. & \code{plan_study}, \code{evaluate_done}, \code{evaluate_against_plan}.\\
+\field{study_design} & All modes & Research path. & \code{parallel_two_group}, \code{pretest_posttest_control}, \code{one_group_pre_post}.\\
+\field{analysis_mode} & Compatibility and API & Internal plan/evaluate mode set by \field{workflow_path}. & \code{plan} or \code{evaluate}.\\
+\field{analysis_unit} & Documentation and JSON & Unit treated as one analysis case. & Usually \code{person}.\\
+\field{observation_unit} & Documentation and JSON & Unit where data are recorded. & Usually \code{person}.\\
+\field{outcome_type} & Formula selection & Continuous or binary endpoint. & \code{continuous}; \code{binary} for two-group path.\\
+\field{alternative} & Alpha threshold & Direction of hypothesis test. & \code{two_sided} is the safest default.\\
+\field{alpha} & Planning and evaluation & Planned false-positive risk. & 0.01 to 0.10; often 0.05.\\
+\field{power} & Planning target & Probability of detecting the planned effect. & 0.80 to 0.95; often 0.80 or 0.90.\\
+\field{primary_comparisons} & Alpha adjustment & Number of primary planned tests. & 1 to 10; preferably few.\\
+\field{allocation_ratio} & Two-group paths & Intervention \(n\) divided by control \(n\). & 0.5 to 2.0; often 1.0.\\
+\field{effect_size_d} & Continuous planning & Smallest meaningful standardized effect. & 0.10 to 1.20; anchors 0.20, 0.50, 0.80.\\
+\field{mean_control} & Optional effect derivation & Expected control mean. & Use with \field{mean_intervention} and \field{sd_pooled}.\\
+\field{mean_intervention} & Optional effect derivation & Expected intervention mean. & Use when raw-scale expectations are clearer than \(d\).\\
+\field{sd_pooled} & Optional effect derivation & Expected pooled standard deviation. & Must be positive if used.\\
+\field{pre_post_correlation} & Pre/post with control & Correlation between pre-test and post-test. & 0.30 to 0.80; often 0.50 or 0.60.\\
+\field{proportion_control} & Binary two-group planning & Expected control rate. & 0.05 to 0.95.\\
+\field{proportion_intervention} & Binary two-group planning & Expected intervention rate. & 0.05 to 0.95.\\
+\field{apply_fpc} & Optional correction & Whether to apply finite-population correction. & Usually false unless inference is limited to a closed population.\\
+\field{finite_population} & FPC & Size of the closed population. & Positive integer when \field{apply_fpc} is true.\\
+\field{cluster_average_size} & Cluster correction & Average people per natural group. & 1 to 50; use 1 if independent.\\
+\field{intraclass_correlation} & Cluster correction & Similarity inside clusters. & 0.00 to 0.20; often 0.01 to 0.05.\\
+\field{response_rate} & Invitation correction & Invited people expected to start. & 0.40 to 1.00.\\
+\field{completion_rate} & Start correction & Starters expected to complete required measures. & 0.70 to 1.00.\\
+\field{usable_data_rate} & Data-quality correction & Completed cases expected to remain analyzable. & 0.80 to 1.00.\\
+\field{extra_buffer_rate} & Operational margin & Additional conservative loss margin. & 0.00 to 0.20.\\
+\field{observed_control_n} & Evaluation mode & Achieved control sample. & Integer at least 2 for two-group evaluation.\\
+\field{observed_intervention_n} & Evaluation mode & Achieved intervention sample. & Integer at least 2 for two-group evaluation.\\
+\field{observed_total_n} & One-group evaluation & Achieved complete pre/post pairs. & Integer at least 2.\\
+\field{observed_control_events} & Binary evaluation & Control participants with the event or success. & Count from 0 to \field{observed_control_n}.\\
+\field{observed_intervention_events} & Binary evaluation & Intervention participants with the event or success. & Count from 0 to \field{observed_intervention_n}.\\
+\field{observed_effect_size} & Evaluation mode & Effect actually observed. & Standardized effect or binary proportion difference.\\
+\field{planned_control_n} & Plan comparison & Planned valid control sample. & Integer at least 2.\\
+\field{planned_intervention_n} & Plan comparison & Planned valid intervention sample. & Integer at least 2.\\
+\field{planned_total_n} & One-group plan comparison & Planned valid paired sample. & Integer at least 2.\\
+\field{planned_effect_size} & Plan comparison & Effect assumed in the original plan. & Usually 0.20, 0.50, or 0.80 for standardized effects.\\
+\field{planned_alpha} & Plan comparison & Alpha used in the original plan. & Often 0.05.\\
+\field{planned_power} & Plan comparison & Power targeted in the original plan. & Often 0.80 or 0.90.\\
+\field{had_planned_sample} & Compatibility and API & Whether plan-comparison fields are active. & Set automatically by \field{workflow_path}.\\
+\field{intervention_label} & Reports & Name of intervention group. & Example: \code{Uno + lesson}.\\
+\field{control_label} & Reports & Name of control group. & Example: \code{Lesson only}.\\
+\field{notes} & Reports and JSON & Free notes. & Protocol assumptions, citations, constraints.\\
+\field{range_override_fields} & Range checking & Fields explicitly allowed outside recommended range. & Empty unless the user accepts out-of-range values.\\
+\bottomrule
+\end{longtable}
+}
+
+\chapter{Recommended Ranges and Overrides}
+
+\app{} shows a recommended or typical range for important fields. If a value falls outside the range, the user must explicitly allow it. The app then keeps that decision visible in the Suggestions tab.
+
+\begin{conceptbox}{Why the app allows overrides}
+Recommended ranges are not laws. A researcher may have a legitimate reason to use unusual values. The point is to make unusual assumptions deliberate, documented, and visible.
+\end{conceptbox}
+
+{\small
+\begin{longtable}{L{0.20\textwidth}L{0.17\textwidth}L{0.18\textwidth}L{0.35\textwidth}}
+\toprule
+\textbf{Variable} & \textbf{Range} & \textbf{Typical values} & \textbf{Reason for the range}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Variable} & \textbf{Range} & \textbf{Typical values} & \textbf{Reason for the range}\\
+\midrule
+\endhead
+\field{alpha} & 0.01--0.10 & 0.05, 0.01 & Common evidential standards for social, educational, and usability studies.\\
+\field{power} & 0.80--0.95 & 0.80, 0.90 & Lower values are weak for confirmatory claims; higher values may be infeasible.\\
+\field{primary_comparisons} & 1--10 & 1, 2, 3 & Many primary comparisons usually signal that the research question should be narrowed.\\
+\field{allocation_ratio} & 0.5--2.0 & 1.0 & Balanced groups are usually efficient.\\
+\field{effect_size_d} & 0.10--1.20 & 0.20, 0.50, 0.80 & Very small effects require large samples; very large effects need strong prior support.\\
+\field{pre_post_correlation} & 0.30--0.80 & 0.50, 0.60 & Common range for many learning, attitude, and usability measures.\\
+\field{proportion_control} & 0.05--0.95 & 0.30, 0.50, 0.70 & Extreme rates may require specialized planning.\\
+\field{proportion_intervention} & 0.05--0.95 & 0.40, 0.60, 0.80 & Extreme rates should come from prior evidence.\\
+\field{response_rate} & 0.40--1.00 & 0.60, 0.80, 0.90 & Low response makes recruitment fragile.\\
+\field{completion_rate} & 0.70--1.00 & 0.85, 0.90, 0.95 & Low completion indicates attrition risk and may bias results.\\
+\field{usable_data_rate} & 0.80--1.00 & 0.90, 0.95, 0.98 & Low usable-data rates often indicate measurement or data-pipeline problems.\\
+\field{extra_buffer_rate} & 0.00--0.20 & 0.00, 0.05, 0.10 & Small buffers are practical; large buffers suggest uncertain planning.\\
+\field{cluster_average_size} & 1--50 & 1, 20, 30 & Larger clusters can sharply increase design effects.\\
+\field{intraclass_correlation} & 0.00--0.20 & 0.01, 0.05, 0.10 & Small ICC values are common but can matter strongly with clusters.\\
+\field{planned_alpha} & 0.01--0.10 & 0.05, 0.01 & Preserves the evidence threshold used by the original plan.\\
+\field{planned_power} & 0.80--0.95 & 0.80, 0.90 & Preserves the detection target used by the original plan.\\
+\field{planned_effect_size} & 0.10--1.20 & 0.20, 0.50, 0.80 & Should match the effect size assumed in the original plan.\\
+\field{observed_effect_size} & 0.01--1.50 & 0.20, 0.50, 0.80 & Values far outside this range deserve scale, coding, or denominator checks.\\
+\bottomrule
+\end{longtable}
+}
+
+\chapter{Understanding Effect Size}
+
+\section{The practical definition}
+
+The best effect size is not the largest effect the researcher hopes to find. It is the \term{smallest meaningful effect}: the smallest effect that would justify saying the intervention is useful, worth adopting, or worth studying further \parencite{lakens2022sample}.
+
 \section{Two independent groups}
 
-Use this path when one group receives the intervention and another group does not. The central claim is about a difference between groups.
+For continuous outcomes in two independent groups, \field{effect_size_d} is the standardized difference between the intervention and control means.
 
-\subsection*{Worked scenario}
-A researcher in educational games wants to verify whether using the game Uno helps children learn the concepts of greater-than and less-than. The intervention group plays Uno with guided prompts and then receives a short lesson. The control group receives only the short lesson. Both groups complete a final test.
+\begin{examplebox}{Post-test score}
+The Uno post-test has a standard deviation of about 10 points. The research team decides that a 5-point advantage is educationally meaningful. The effect size is:
+\[
+d = 5/10 = 0.50.
+\]
+The value \(d=0.50\) is not used because it is automatically "medium"; it is used because 5 points is the smallest useful difference in this context.
+\end{examplebox}
 
-\subsection*{Why this path fits}
-The intervention is not defined as change inside the same participant over time. The main claim is whether the intervention group differs from the control group at the end of the activity sequence.
+\section{Pre-test/post-test with control}
 
-\section{Pre-test/post-test with control group}
+For a pre-test/post-test design with control, the effect should represent the meaningful difference after accounting for baseline. In practical language, it is often the standardized difference in improvement between groups.
 
-Use this path when both groups are measured before and after. This is useful when baseline differences matter and when the researcher wants the pre-test to improve precision.
+\begin{examplebox}{Difference in learning gain}
+The control group is expected to improve by 4 points after the lesson. The Uno group is expected to improve by 8 points after game plus lesson. The meaningful extra gain is 4 points. If the relevant standard deviation is 10 points, a practical planning value is \(d=4/10=0.40\).
+\end{examplebox}
 
-\subsection*{Worked scenario}
-A researcher in educational games wants a stronger design than post-test only. All children complete a pre-test on greater-than and less-than. The intervention group then plays Uno and receives a short lesson. The control group receives only the lesson. Both groups complete the same post-test.
-
-\subsection*{Why this path fits}
-The software treats the pre-test as a precision-improving measurement and asks for the expected correlation between pre-test and post-test. Higher correlation usually means a more efficient design.
-
-\begin{statbox}{What the pre/post correlation does}
-When pre-test and post-test are moderately or strongly correlated, baseline information helps reduce unexplained variability. The version 2.0 implementation uses an approximate ANCOVA-style precision gain based on the factor \((1-r^2)\), where \(r\) is the pre/post correlation.
-\end{statbox}
+The \field{pre_post_correlation} then tells the app how informative the pre-test is. Stronger pre/post correlation means baseline information helps more.
 
 \section{One-group pre-test/post-test}
 
-Use this path when the same participants are measured before and after and there is no control group.
-
-\subsection*{Worked scenario}
-A researcher wants an early pilot before attempting a controlled trial. The same children complete a pre-test, participate in a guided Uno session, and then complete a post-test. Final adherence is defined as completing both tests.
-
-\subsection*{Why this path fits}
-The design is centered on change within the same participants rather than comparison against a separate group.
-
-\begin{warningbox}{What this path cannot establish strongly}
-Without a control group, observed improvement may reflect practice effects, history, maturation, or ordinary instruction rather than the intervention itself. This path is useful for pilots, feasibility work, and early signal detection, but not as strong causal evidence.
-\end{warningbox}
-
-\chapter{Recommended Ranges}
-
-Version 2.0 introduces recommended or typical ranges. The software checks these ranges and allows the user to continue only when a specific override box is selected for a field that falls outside the recommended range.
-
-\begin{longtable}{L{0.20\textwidth}L{0.23\textwidth}L{0.20\textwidth}L{0.28\textwidth}}
-\toprule
-\textbf{Variable} & \textbf{Recommended range} & \textbf{Typical values} & \textbf{Justification}\\
-\midrule
-\endfirsthead
-\toprule
-\textbf{Variable} & \textbf{Recommended range} & \textbf{Typical values} & \textbf{Justification}\\
-\midrule
-\endhead
-\field{alpha} & 0.01 to 0.10 & 0.05, 0.01 & Outside this range, the evidential standard becomes uncommon and should be justified.\\
-\field{power} & 0.80 to 0.95 & 0.80, 0.90 & Lower power weakens detection; higher power may become infeasible.\\
-\field{allocation_ratio} & 0.5 to 2.0 & 1.0 & Balanced groups are usually efficient.\\
-\field{effect_size_d} & 0.10 to 1.20 & 0.20, 0.50, 0.80 & Tiny effects can demand very large samples; huge effects should not be assumed casually.\\
-\field{pre_post_correlation} & 0.30 to 0.80 & 0.50, 0.60 & Common range for many educational and usability measures.\\
-\field{response_rate} & 0.40 to 1.00 & 0.60, 0.80, 0.90 & Low values make recruitment fragile.\\
-\field{completion_rate} & 0.70 to 1.00 & 0.85, 0.90, 0.95 & In repeated-measure designs, completion means finishing all required waves.\\
-\field{usable_data_rate} & 0.80 to 1.00 & 0.90, 0.95, 0.98 & Lower values often indicate a data-quality issue, not just a sample-size issue.\\
-\field{extra_buffer_rate} & 0.00 to 0.20 & 0.00, 0.05, 0.10 & Small buffers are common; large buffers may indicate weak operational certainty.\\
-\field{intraclass_correlation} & 0.00 to 0.20 & 0.01, 0.05, 0.10 & Even small ICC values can matter when clusters are large.\\
-\bottomrule
-\end{longtable}
-
-\chapter{Understanding Effect Size Better}
-
-\section{Why effect size is difficult}
-
-Effect size is difficult because it must connect statistics to a real decision. The researcher should not ask only, ``What can I afford to detect?'' The better question is, ``What is the smallest effect that would matter enough to justify adopting the intervention?''
-
-\section{Effect size in a post-test-only two-group study}
-
-Suppose a post-test has a pooled standard deviation of 10 points. If a 5-point improvement would justify using the game-based intervention, then:
+For one-group pre-test/post-test, \field{effect_size_d} is the standardized mean change in the same people.
 
 \[
-d = \frac{5}{10} = 0.5.
+d_{\text{change}} = \frac{\text{mean post-test} - \text{mean pre-test}}{\text{standard deviation of the change scores}}.
 \]
 
-This is a traditional medium effect in Cohen's language \parencite{cohen1988power}, but what matters most is the practical meaning of the 5-point gain.
-
-\section{Effect size in pre-test/post-test with control}
-
-In this design, the important effect is often the difference in gain. Imagine that both groups start at similar pre-test scores. If the intervention group improves enough after Uno and the control group improves less after lesson only, the researcher wants the study to detect that meaningful difference in change.
-
-The entered \field{effect_size_d} should therefore reflect the smallest meaningful standardized difference in gain.
-
-\section{Effect size in one-group pre-test/post-test}
-
-In a one-group pre/post design, the effect is the standardized change in the same participants. This can be useful for early pilots and feasibility checks.
-
-\begin{warningbox}{Interpretation warning}
-A one-group pre/post effect size can describe how much change was observed, but not by itself why that change happened.
+\begin{warningbox}{Causal interpretation}
+A one-group pre/post effect can describe change, but it cannot prove that the intervention caused the change. The app's Suggestions tab will remind the user of this limitation.
 \end{warningbox}
 
-\section{Effect size in opinion or usability studies}
+\section{Post-only opinion and usability studies}
 
-Sometimes the researcher has only a post-use questionnaire. In that case, the same logic still applies. If a 0.4-point difference on a 1-to-5 satisfaction scale would justify changing a game tutorial, and the expected pooled standard deviation is 0.8, then:
+Some studies collect only a post-use opinion or usability scale. If there is a control group, use the two independent group path. If there is no control group, sample-size planning requires a different target, such as estimating a mean with a margin of error, testing against a known benchmark, or using a one-sample method. \app{} is centered on intervention comparisons and simple pre/post change, so the researcher should be clear about what "effect" means.
+
+\begin{examplebox}{Usability rating}
+Suppose a game tutorial is rated from 1 to 5. A difference of 0.4 points would justify adopting the new tutorial, and the expected standard deviation is 0.8. The standardized difference is \(0.4/0.8=0.50\). If the comparison is between old tutorial and new tutorial, the two independent group path is appropriate.
+\end{examplebox}
+
+\section{When the desired effect is not found}
+
+A non-significant result does not automatically mean there is no effect. It may mean the observed effect was smaller than planned, the sample was too small, the outcome was noisy, or the design was weak.
+
+At the end of the study, report:
+
+\begin{itemize}
+  \item the effect size that was planned;
+  \item the effect size that was observed;
+  \item the achieved sample in each relevant group;
+  \item the approximate uncertainty or confidence interval from the final analysis;
+  \item whether the study was precise enough to address the planned decision.
+\end{itemize}
+
+The evaluation mode helps with this last reflection. It should be interpreted alongside the real statistical analysis.
+
+\chapter{How the App Calculates the Result}
+
+\section{Continuous two-group planning}
+
+For a continuous two-group comparison, the app uses a normal approximation:
 
 \[
-d = \frac{0.4}{0.8} = 0.5.
+n_{\text{control}} = \left(1 + \frac{1}{k}\right)\frac{(z_{\alpha}+z_{\text{power}})^2}{d^2},
 \]
 
-\chapter{Run Type: Planning or Evaluating}
+where \(k\) is \field{allocation_ratio}. The intervention size is \(k n_{\text{control}}\).
 
-\section{Planning the sample}
+\section{Binary two-group planning}
 
-The planning workflow estimates:
+For a binary two-group comparison, the app uses a normal approximation for two proportions, based on expected control and intervention rates. This is conceptually similar to standard rate and proportion methods \parencite{fleiss2003rates}.
 
-\begin{itemize}
-  \item initial valid analyzable cases;
-  \item valid cases after design correction;
-  \item participants who must start;
-  \item participants who must be invited.
-\end{itemize}
+\section{Pre-test/post-test with control}
 
-This separation is especially important in pre-test/post-test studies because a participant should not count as complete unless the required measurement points are complete.
+The app starts from the continuous two-group approximation and applies the factor:
 
-\section{Evaluating the achieved result}
+\[
+1-r^2,
+\]
 
-The inverse workflow asks the user for the achieved sample and the observed effect. It then estimates an approximate:
+where \(r\) is \field{pre_post_correlation}. This is a transparent approximation for the precision gained by using baseline information.
 
-\begin{itemize}
-  \item z statistic;
-  \item p-value;
-  \item achieved power for the observed effect.
-\end{itemize}
+\section{One-group pre-test/post-test}
 
-\subsection*{Worked inverse scenario}
-A one-group Uno pilot collected 28 children who completed both tests. The observed standardized change was 0.35. The researcher wants to know what that implies.
+The app uses:
 
-\subsection*{Why this matters}
-If the desired effect was not found, the researcher should still report the effect actually observed and what the achieved sample was able to show about it.
+\[
+n = \frac{(z_{\alpha}+z_{\text{power}})^2}{d_{\text{change}}^2}.
+\]
 
-\chapter{Worked Examples}
+The result is a total number of complete pre/post pairs.
 
-\section{Uno with control, post-test comparison}
+\section{Operational corrections}
 
-A researcher in educational games wants to verify whether the use of Uno helps children understand greater-than and less-than. The intervention group plays Uno with guided prompts and then receives a short lesson. The control group receives only the lesson. The main comparison is the final test.
+After the statistical target is calculated, the app applies design and missing-data corrections:
 
-Recommended wizard path:
+\[
+\text{design effect} = 1 + (m-1)\rho,
+\]
 
-\begin{itemize}
-  \item research path: two independent groups;
-  \item run type: plan required sample;
-  \item outcome: continuous;
-  \item effect size: for example, \(d=0.5\) if a 5-point gain on a 10-point spread would justify adopting the intervention.
-\end{itemize}
+\[
+\text{effective data rate} =
+\text{response rate} \times \text{completion rate} \times \text{usable data rate} \times (1-\text{extra buffer}).
+\]
 
-\section{Uno with pre-test/post-test and control}
+This is why the app can report invited participants separately from valid analyzable participants.
 
-A researcher wants a stronger design. Both groups complete a pre-test. The intervention group plays Uno and receives a short lesson. The control group receives the lesson only. Both groups complete the same post-test. The researcher expects a moderate pre/post correlation, such as 0.60, and wants to detect a meaningful difference in gain.
+\chapter{Reading the Results}
 
-Recommended wizard path:
+\section{Summary tab}
 
-\begin{itemize}
-  \item research path: pre-test/post-test with control group;
-  \item run type: plan required sample;
-  \item outcome: continuous;
-  \item effect size: meaningful standardized difference in gain;
-  \item pre/post correlation: use pilot data when possible, otherwise a reasoned value such as 0.50 or 0.60.
-\end{itemize}
+The Summary result gives the shortest interpretation of the calculation. In planning mode, read the result in this order:
 
-\section{Uno with one group only}
+\begin{enumerate}
+  \item \term{Initial valid target}: the statistical minimum before correction.
+  \item \term{Design-adjusted valid target}: the valid target after cluster or finite-population corrections.
+  \item \term{Assigned or started}: how many must enter the protocol.
+  \item \term{Invited or contacted}: how many must be approached.
+\end{enumerate}
 
-A researcher cannot yet recruit a comparison group and wants a pilot. The same children complete a pre-test, play Uno in a guided session, and complete a post-test.
+\begin{examplebox}{Interpreting a planning result}
+If the app reports 64 valid participants per group, 72 starters per group, and 90 invitations per group, the practical conclusion is not "the sample is 64." The practical conclusion is "we need about 180 invitations to end with about 128 valid analyzable participants."
+\end{examplebox}
 
-Recommended wizard path:
+\section{Warnings}
 
-\begin{itemize}
-  \item research path: one-group pre-test/post-test;
-  \item run type: plan required sample;
-  \item outcome: continuous;
-  \item completion rate: define completion as finishing both tests.
-\end{itemize}
+Warnings describe methodological limits or technical assumptions. They are not necessarily errors. For example, a warning may say that one-group pre/post studies are vulnerable to history and practice effects.
 
-\chapter{Suggestions Tab}
+\section{Sensitivity tab}
 
-The new suggestions tab is a practical judgment layer. It is designed to translate methodological concerns into direct software feedback.
+The Sensitivity tab shows how results change under nearby assumptions. This is important because sample-size planning is rarely exact. If a small change in \field{effect_size_d} or \field{power} doubles the sample, the study is sensitive and should be planned carefully.
 
-It can warn about:
+\section{JSON tab}
+
+The JSON tab shows the saved machine-readable configuration. This is useful for reproducibility, later editing, and developer work. A JSON Schema is provided in the project so saved configurations can be validated.
+
+\section{Suggestions tab}
+
+The Suggestions tab turns methodological concerns into practical advice. It can comment on:
 
 \begin{itemize}
-  \item a no-control-group design;
-  \item low response, completion, or usable-data expectations;
-  \item cluster inflation;
-  \item out-of-range values that the user deliberately overrode;
+  \item no-control-group designs;
+  \item low response, completion, or usable-data rates;
+  \item clustering;
+  \item out-of-range values accepted with overrides;
   \item achieved results that remain underpowered.
 \end{itemize}
 
-\chapter{When Another Methodology Is Better}
+\chapter{Worked Examples}
 
-\begin{longtable}{L{0.24\textwidth}L{0.33\textwidth}L{0.33\textwidth}}
+\section{Example 1: Uno with control group and post-test comparison}
+
+\subsection*{Scenario}
+
+A researcher in educational games wants to test whether the game Uno helps children understand greater-than and less-than. Two comparable classes are available. One class plays Uno with guided questions about comparing card values and then receives a short lesson. The other class receives only the lesson. Both classes complete a post-test with the same scoring rubric.
+
+The researcher decides that a 5-point improvement on a test with an expected pooled standard deviation of 10 points would be educationally meaningful. Therefore, the planned effect is \(d=0.50\).
+
+\subsection*{Wizard choices}
+
+\begin{longtable}{L{0.28\textwidth}L{0.25\textwidth}L{0.37\textwidth}}
 \toprule
-\textbf{Situation} & \textbf{Why \app{} is not enough} & \textbf{Consider instead}\\
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
 \midrule
 \endfirsthead
 \toprule
-\textbf{Situation} & \textbf{Why \app{} is not enough} & \textbf{Consider instead}\\
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
 \midrule
 \endhead
-Binary pre/post without a simple parallel comparison & The current implementation does not model paired binary change directly. & McNemar-based or specialized paired binary methods.\\
-Many repeated waves over time & The design is longitudinal, not single pre/post. & Mixed models or longitudinal power analysis.\\
-Interview-centered evidence & Mean/proportion power formulas do not define qualitative adequacy. & Information power or saturation logic \parencite{malterud2016information}.\\
-Clinical safety or medication & Ethical and regulatory constraints are much stronger. & Clinical-trial planning \parencite{julious2010sample}.\\
-Strong causal claims without control & Time and practice effects remain serious threats. & Add a control group or use a stronger quasi-experimental design \parencite{shadish2002experimental}.\\
+\field{study_design} & \field{parallel_two_group} & Different children are in intervention and control.\\
+\field{workflow_path} & \field{plan_study} & Data have not been collected.\\
+\field{outcome_type} & \field{continuous} & The primary outcome is a score.\\
+\field{alpha} & 0.05 & Conventional evidential threshold.\\
+\field{power} & 0.80 & Traditional minimum planning power.\\
+\field{allocation_ratio} & 1.0 & Equal class sizes are expected.\\
+\field{effect_size_d} & 0.50 & A 5-point meaningful difference over a 10-point SD.\\
+\field{completion_rate} & 0.90 & Most children are expected to finish the post-test.\\
+\field{usable_data_rate} & 0.95 & A few records may be unusable.\\
 \bottomrule
 \end{longtable}
 
+\subsection*{Interpretation}
+
+The result estimates how many children must produce valid post-test data in each group and how many must be invited or started after operational losses. If the class structure is strong, the researcher should also consider \field{cluster_average_size} and \field{intraclass_correlation}.
+
+\section{Example 2: Uno with pre-test/post-test and control}
+
+\subsection*{Scenario}
+
+A researcher wants a stronger design because children may start with different math knowledge. Both groups complete a pre-test on comparing quantities. The intervention group plays Uno with guided prompts, then receives a lesson. The control group receives only the lesson. Both groups complete a post-test. Final adherence means completing both tests.
+
+The researcher expects the intervention group to improve about 4 points more than the control group, and the relevant standard deviation is about 10 points. The planned effect is \(d=0.40\). Prior classroom assessments suggest a pre/post correlation around 0.60.
+
+\subsection*{Wizard choices}
+
+\begin{longtable}{L{0.28\textwidth}L{0.25\textwidth}L{0.37\textwidth}}
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endhead
+\field{study_design} & \field{pretest_posttest_control} & Both groups are measured before and after.\\
+\field{workflow_path} & \field{plan_study} & The study is being designed.\\
+\field{outcome_type} & \field{continuous} & The outcome is a score.\\
+\field{effect_size_d} & 0.40 & Smallest meaningful extra gain.\\
+\field{pre_post_correlation} & 0.60 & Reasonable expectation from prior classroom measures.\\
+\field{completion_rate} & 0.85 & Completion means both pre-test and post-test.\\
+\field{usable_data_rate} & 0.95 & Most complete records should be usable.\\
+\bottomrule
+\end{longtable}
+
+\subsection*{Interpretation}
+
+The app estimates complete pre/post cases needed in each group. The number of invited people may be substantially larger than the valid target because both pre-test and post-test are required.
+
+\section{Example 3: Uno one-group pre-test/post-test}
+
+\subsection*{Scenario}
+
+A researcher cannot recruit a control group yet but wants to know whether a guided Uno activity is promising. The same children complete a pre-test, play Uno, and complete a post-test. The researcher wants a pilot that can detect a standardized mean change of \(d=0.50\). The result will be used to decide whether a controlled study is worth organizing.
+
+\subsection*{Wizard choices}
+
+\begin{longtable}{L{0.28\textwidth}L{0.25\textwidth}L{0.37\textwidth}}
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endhead
+\field{study_design} & \field{one_group_pre_post} & The same children are measured twice.\\
+\field{workflow_path} & \field{plan_study} & The pilot has not started.\\
+\field{outcome_type} & \field{continuous} & The outcome is a score.\\
+\field{effect_size_d} & 0.50 & Planned standardized change.\\
+\field{completion_rate} & 0.85 & Completion means both tests.\\
+\field{cluster_average_size} & 1 & Treat children as independent unless natural grouping is analyzed.\\
+\bottomrule
+\end{longtable}
+
+\subsection*{Interpretation}
+
+This result estimates how many complete pairs are needed. The manual conclusion should be cautious: improvement is evidence of change, not proof that Uno caused the change.
+
+\section{Example 4: Binary two-group outcome}
+
+\subsection*{Scenario}
+
+Instead of analyzing a test score, the researcher defines success as correctly solving a final comparison task. Earlier classroom lessons suggest about 45\% success in the control group. The researcher would consider a 60\% success rate in the Uno group meaningful.
+
+\subsection*{Wizard choices}
+
+\begin{longtable}{L{0.28\textwidth}L{0.25\textwidth}L{0.37\textwidth}}
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endhead
+\field{study_design} & \field{parallel_two_group} & Different children are in intervention and control.\\
+\field{workflow_path} & \field{plan_study} & The binary study is being planned.\\
+\field{outcome_type} & \field{binary} & Outcome is success/failure.\\
+\field{proportion_control} & 0.45 & Expected control success rate.\\
+\field{proportion_intervention} & 0.60 & Meaningful intervention success rate.\\
+\field{allocation_ratio} & 1.0 & Equal groups.\\
+\bottomrule
+\end{longtable}
+
+\subsection*{Interpretation}
+
+The effect is a 15-percentage-point improvement. The app calculates the sample needed for that difference, then inflates for operational losses.
+
+\section{Example 5: Inverse problem after a pilot}
+
+\subsection*{Scenario}
+
+The researcher runs a one-group Uno pilot. Thirty-five children start. Twenty-eight complete both the pre-test and post-test. The observed mean improvement is 3.5 points, and the standard deviation of change scores is 10 points. The observed standardized change is \(d=0.35\).
+
+\subsection*{Wizard choices}
+
+\begin{longtable}{L{0.28\textwidth}L{0.25\textwidth}L{0.37\textwidth}}
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endhead
+\field{study_design} & \field{one_group_pre_post} & Same children before and after.\\
+\field{workflow_path} & \field{evaluate_done} & The pilot already happened and no previous sample plan is being compared.\\
+\field{observed_total_n} & 28 & Only complete pairs count.\\
+\field{observed_effect_size} & 0.35 & Observed standardized change.\\
+\field{alpha} & 0.05 & Approximate p-value threshold.\\
+\bottomrule
+\end{longtable}
+
+\subsection*{Interpretation}
+
+The app estimates an approximate z statistic, p-value, and achieved power for the observed effect. If the p-value is not below alpha and achieved power is low, the best interpretation is not "the game failed." A better interpretation is: the pilot observed a modest effect with limited precision; a larger controlled study may be needed if the effect is still educationally meaningful.
+
+\section{Example 6: Completed study compared with a previous plan}
+
+\subsection*{Scenario}
+
+The researcher originally planned a controlled Uno study with 63 valid children in the lesson-only control group and 63 valid children in the Uno-plus-lesson group. The plan assumed \(d=0.50\), \(\alpha=0.05\), and 80\% power. After collection, only 40 valid control cases and 42 valid intervention cases remain. The observed standardized effect is \(d=0.45\).
+
+\subsection*{Wizard choices}
+
+\begin{longtable}{L{0.28\textwidth}L{0.25\textwidth}L{0.37\textwidth}}
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endhead
+\field{workflow_path} & \field{evaluate_against_plan} & The study happened and a prior plan exists.\\
+\field{study_design} & \field{parallel_two_group} & Different children were in intervention and control.\\
+\field{planned_control_n} & 63 & Valid control cases from the original plan.\\
+\field{planned_intervention_n} & 63 & Valid intervention cases from the original plan.\\
+\field{planned_effect_size} & 0.50 & Effect assumed by the plan.\\
+\field{planned_alpha} & 0.05 & Original evidence threshold.\\
+\field{planned_power} & 0.80 & Original planned power.\\
+\field{observed_control_n} & 40 & Valid control cases actually obtained.\\
+\field{observed_intervention_n} & 42 & Valid intervention cases actually obtained.\\
+\field{observed_effect_size} & 0.45 & Observed standardized effect.\\
+\bottomrule
+\end{longtable}
+
+\subsection*{Interpretation}
+
+The app reports the approximate p-value and achieved power for the observed result. It also reports the gap relative to the previous plan: in this example, 23 additional valid control cases and 21 additional valid intervention cases would have been needed just to reach the planned sample. The benchmark section then estimates how many valid participants would be needed, under the same observed effect and allocation, to reach common thresholds such as \(p<0.05\), \(p<0.10\), 80\% power, and 90\% power.
+
+\chapter{When to Use Another Methodology}
+
+\app{} is intentionally focused. Some studies need another method.
+
+{\small
+\begin{longtable}{L{0.24\textwidth}L{0.34\textwidth}L{0.32\textwidth}}
+\toprule
+\textbf{Situation} & \textbf{Why this app is not enough} & \textbf{Consider instead}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Situation} & \textbf{Why this app is not enough} & \textbf{Consider instead}\\
+\midrule
+\endhead
+Many repeated waves over time & A single pre/post model does not represent growth curves or time trends. & Longitudinal mixed-model power analysis.\\
+Students nested in many classrooms or schools with cluster assignment & A simple design-effect correction may be too rough. & Cluster-randomized trial planning \parencite{donner2000cluster}.\\
+Binary paired pre/post change & The current app does not model paired binary change directly. & McNemar-based or paired binary methods.\\
+Ordinal outcomes with strong floor or ceiling effects & Treating the score as continuous may be misleading. & Ordinal models or simulation.\\
+Very small samples & Normal approximations may be inaccurate. & Exact methods, simulation, or Bayesian planning.\\
+Clinical medication, surgery, or safety endpoint & Ethical, regulatory, and adverse-event issues dominate planning. & Clinical-trial design \parencite{julious2010sample}.\\
+Interview-centered qualitative research & Power formulas do not define qualitative adequacy. & Information power or saturation logic \parencite{malterud2016information}.\\
+Strong causal claim without control group & Threats such as maturation and practice remain unresolved. & Add a control group or use a stronger quasi-experimental design \parencite{shadish2002experimental}.\\
+Multiple outcomes selected after seeing data & The statistical error rate is not controlled by a planned comparison count. & Pre-register primary outcomes or use exploratory analysis language.\\
+\bottomrule
+\end{longtable}
+}
+
+\chapter{Checklist for a Complete Planning Report}
+
+A good report from \app{} should include:
+
+\begin{itemize}
+  \item the research path;
+  \item the primary outcome;
+  \item the planned alpha and power;
+  \item the smallest meaningful effect and how it was justified;
+  \item expected response, completion, and usable-data rates;
+  \item whether completion means both pre-test and post-test;
+  \item cluster assumptions if participants are grouped;
+  \item the valid target, started target, and invited target;
+  \item any values accepted outside recommended ranges;
+  \item the methodological limitations of the selected design.
+\end{itemize}
+
+\begin{conceptbox}{Plain-language conclusion template}
+This study is planned to detect [effect] on [outcome] using [research path], with alpha [alpha] and power [power]. The analysis needs about [valid target] valid cases. Because we expect [response/completion/usable data assumptions], we should invite about [invited target] people. The main limitation is [design limitation].
+\end{conceptbox}
+
+\chapter{Glossary}
+
+\begin{description}
+  \item[Achieved power] Approximate power implied by the observed sample and observed effect.
+  \item[Alpha] Planned false-positive risk, stored as \field{alpha}.
+  \item[Allocation ratio] Intervention group size divided by control group size, stored as \field{allocation_ratio}.
+  \item[Binary outcome] Outcome with two categories, such as success/failure.
+  \item[Cluster] Natural group such as a classroom, team, school, or workshop.
+  \item[Completion rate] Share of starters who finish all required measurements, stored as \field{completion_rate}.
+  \item[Continuous outcome] Numeric outcome such as a score, time, or scale.
+  \item[Control group] Comparison condition that does not receive the intervention of interest.
+  \item[Effect size] Standardized or proportion-scale expression of the effect the study targets.
+  \item[Evaluation mode] App mode that estimates what an achieved sample and observed effect imply.
+  \item[Final adherence] Completion of all measurements required by the intended analysis.
+  \item[Intraclass correlation] Similarity inside clusters, stored as \field{intraclass_correlation}.
+  \item[Load previous plan] Interface action that reads a saved planning JSON and fills the plan-comparison fields.
+  \item[Plan comparison] Completed-study workflow that compares observed sample and observed effect with the original plan.
+  \item[Planning mode] App mode that estimates the required sample before collection.
+  \item[Power] Probability of detecting the planned effect if it exists, stored as \field{power}.
+  \item[Pre-test/post-test] Design in which the same people are measured before and after.
+  \item[Response rate] Share of invited people expected to start, stored as \field{response_rate}.
+  \item[Usable data rate] Share of completed cases expected to remain analyzable, stored as \field{usable_data_rate}.
+  \item[Workflow path] First wizard choice, stored as \field{workflow_path}; it selects planning, completed-study analysis, or comparison with a previous plan.
+\end{description}
+
 \printbibliography
 \printindex
+
+\cleardoublepage
+\chapter*{Use of AI}
+\addcontentsline{toc}{chapter}{Use of AI}
+\input{../../useofAI.md}
+
+\cleardoublepage
+\chapter*{Disclaimer}
+\addcontentsline{toc}{chapter}{Disclaimer}
+\input{../../disclaimer.md}
 
 \end{document}

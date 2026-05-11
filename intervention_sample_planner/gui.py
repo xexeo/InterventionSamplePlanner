@@ -15,6 +15,7 @@ from .calculator import (
     PlanningError,
     StudyConfig,
     calculate_plan,
+    config_from_dict,
     config_to_dict,
     load_config,
     render_report,
@@ -26,7 +27,7 @@ from .version import APP_WINDOW_TITLE
 
 
 FIELD_GROUPS = [
-    ("design", ["study_name", "study_design", "analysis_mode", "language"]),
+    ("design", ["workflow_path", "study_name", "study_design", "language"]),
     (
         "study_core",
         [
@@ -67,13 +68,27 @@ FIELD_GROUPS = [
     ),
     (
         "inverse_inputs",
-        ["observed_control_n", "observed_intervention_n", "observed_total_n", "observed_effect_size"],
+        [
+            "planned_control_n",
+            "planned_intervention_n",
+            "planned_total_n",
+            "planned_effect_size",
+            "planned_alpha",
+            "planned_power",
+            "observed_control_n",
+            "observed_intervention_n",
+            "observed_total_n",
+            "observed_control_events",
+            "observed_intervention_events",
+            "observed_effect_size",
+        ],
     ),
     ("labels_notes", ["intervention_label", "control_label", "notes"]),
 ]
 
 FIELD_TYPES = {
     "study_name": "text",
+    "workflow_path": "workflow",
     "study_design": "design",
     "analysis_mode": "mode",
     "language": "language",
@@ -103,7 +118,15 @@ FIELD_TYPES = {
     "observed_control_n": "optional_int",
     "observed_intervention_n": "optional_int",
     "observed_total_n": "optional_int",
+    "observed_control_events": "optional_int",
+    "observed_intervention_events": "optional_int",
     "observed_effect_size": "optional_float",
+    "planned_control_n": "optional_int",
+    "planned_intervention_n": "optional_int",
+    "planned_total_n": "optional_int",
+    "planned_effect_size": "optional_float",
+    "planned_alpha": "optional_rate",
+    "planned_power": "optional_rate",
     "intervention_label": "text",
     "control_label": "text",
     "notes": "multiline",
@@ -204,6 +227,9 @@ class PlannerApp(tk.Tk):
         buttons = ttk.Frame(self.wizard_card)
         buttons.pack(fill=tk.X)
         ttk.Button(buttons, text=t(self.language, "reset"), command=self._reset_wizard).pack(side=tk.LEFT)
+        ttk.Button(buttons, text=t(self.language, "load_previous_plan"), command=self.load_previous_plan).pack(
+            side=tk.LEFT, padx=(8, 0)
+        )
         self.prev_button = ttk.Button(buttons, text=t(self.language, "previous"), command=self._wizard_previous)
         self.prev_button.pack(side=tk.RIGHT, padx=(8, 0))
         self.next_button = ttk.Button(buttons, text=t(self.language, "next"), command=self._wizard_next)
@@ -217,6 +243,9 @@ class PlannerApp(tk.Tk):
         ttk.Label(top, text=t(self.language, "direct_mode_hint")).pack(side=tk.LEFT)
         ttk.Button(top, text=t(self.language, "calculate"), command=self.calculate).pack(side=tk.RIGHT, padx=(8, 0))
         ttk.Button(top, text=t(self.language, "load_config"), command=self.load_configuration).pack(
+            side=tk.RIGHT, padx=(8, 0)
+        )
+        ttk.Button(top, text=t(self.language, "load_previous_plan"), command=self.load_previous_plan).pack(
             side=tk.RIGHT, padx=(8, 0)
         )
         ttk.Button(top, text=t(self.language, "save_config"), command=self.save_configuration).pack(side=tk.RIGHT)
@@ -344,6 +373,8 @@ class PlannerApp(tk.Tk):
         self.vars[field] = var
         if kind == "language":
             return ttk.Combobox(parent, textvariable=var, values=["en", "pt"], state="readonly")
+        if kind == "workflow":
+            return ttk.Combobox(parent, textvariable=var, values=self._workflow_values(), state="readonly")
         if kind == "design":
             return ttk.Combobox(
                 parent,
@@ -373,6 +404,13 @@ class PlannerApp(tk.Tk):
             t(self.language, "design_one_group_pre_post"),
         ]
 
+    def _workflow_values(self) -> list[str]:
+        return [
+            t(self.language, "workflow_plan_study"),
+            t(self.language, "workflow_evaluate_done"),
+            t(self.language, "workflow_evaluate_against_plan"),
+        ]
+
     def _mode_values(self) -> list[str]:
         return [t(self.language, "mode_plan"), t(self.language, "mode_evaluate")]
 
@@ -390,8 +428,10 @@ class PlannerApp(tk.Tk):
 
     def _show_field(self, field: str) -> bool:
         design = self._current_study_design()
+        workflow = self._current_workflow_path()
         mode = self._current_analysis_mode()
         outcome = self._current_outcome_type()
+        has_plan = workflow == "evaluate_against_plan"
         if field == "allocation_ratio":
             return design != "one_group_pre_post"
         if field == "pre_post_correlation":
@@ -406,17 +446,25 @@ class PlannerApp(tk.Tk):
             return mode == "evaluate" and design != "one_group_pre_post"
         if field == "observed_total_n":
             return mode == "evaluate" and design == "one_group_pre_post"
+        if field in {"observed_control_events", "observed_intervention_events"}:
+            return mode == "evaluate" and design == "parallel_two_group" and outcome == "binary"
         if field == "observed_effect_size":
-            return mode == "evaluate"
+            return mode == "evaluate" and not (design == "parallel_two_group" and outcome == "binary")
+        if field in {"planned_control_n", "planned_intervention_n"}:
+            return has_plan and design != "one_group_pre_post"
+        if field == "planned_total_n":
+            return has_plan and design == "one_group_pre_post"
+        if field in {"planned_effect_size", "planned_alpha", "planned_power"}:
+            return has_plan
         if field == "control_label":
             return design != "one_group_pre_post"
         return True
 
     def _visible_wizard_fields(self) -> list[str]:
         fields = [
-            "study_design",
-            "analysis_mode",
+            "workflow_path",
             "study_name",
+            "study_design",
             "outcome_type",
             "alpha",
             "power",
@@ -424,6 +472,7 @@ class PlannerApp(tk.Tk):
         design = self._current_study_design()
         mode = self._current_analysis_mode()
         outcome = self._current_outcome_type()
+        has_plan = self._current_workflow_path() == "evaluate_against_plan"
         if mode == "plan":
             if design == "parallel_two_group":
                 fields.append("allocation_ratio")
@@ -446,6 +495,12 @@ class PlannerApp(tk.Tk):
                 ]
             )
         else:
+            if has_plan:
+                if design == "one_group_pre_post":
+                    fields.append("planned_total_n")
+                else:
+                    fields.extend(["planned_control_n", "planned_intervention_n"])
+                fields.extend(["planned_effect_size", "planned_alpha", "planned_power"])
             if design == "one_group_pre_post":
                 fields.extend(["observed_total_n", "observed_effect_size"])
             else:
@@ -453,7 +508,11 @@ class PlannerApp(tk.Tk):
                     fields.append("allocation_ratio")
                 if design == "pretest_posttest_control":
                     fields.append("pre_post_correlation")
-                fields.extend(["observed_control_n", "observed_intervention_n", "observed_effect_size"])
+                fields.extend(["observed_control_n", "observed_intervention_n"])
+                if design == "parallel_two_group" and outcome == "binary":
+                    fields.extend(["observed_control_events", "observed_intervention_events"])
+                else:
+                    fields.append("observed_effect_size")
         return fields
 
     def _current_study_design(self) -> str:
@@ -471,7 +530,27 @@ class PlannerApp(tk.Tk):
         }
         return mapping.get(text, self.config_model.study_design)
 
+    def _current_workflow_path(self) -> str:
+        var = self.vars.get("workflow_path")
+        if not var:
+            return self.config_model.workflow_path
+        text = str(var.get())
+        mapping = {
+            t(self.language, "workflow_plan_study"): "plan_study",
+            t(self.language, "workflow_evaluate_done"): "evaluate_done",
+            t(self.language, "workflow_evaluate_against_plan"): "evaluate_against_plan",
+            "plan_study": "plan_study",
+            "evaluate_done": "evaluate_done",
+            "evaluate_against_plan": "evaluate_against_plan",
+        }
+        return mapping.get(text, self.config_model.workflow_path)
+
     def _current_analysis_mode(self) -> str:
+        workflow = self._current_workflow_path()
+        if workflow == "plan_study":
+            return "plan"
+        if workflow in {"evaluate_done", "evaluate_against_plan"}:
+            return "evaluate"
         var = self.vars.get("analysis_mode")
         if not var:
             return self.config_model.analysis_mode
@@ -542,6 +621,8 @@ class PlannerApp(tk.Tk):
             self.vars[field] = tk.StringVar()
         if kind == "design":
             return ttk.Combobox(parent, textvariable=self.vars[field], values=self._design_values(), state="readonly")
+        if kind == "workflow":
+            return ttk.Combobox(parent, textvariable=self.vars[field], values=self._workflow_values(), state="readonly")
         if kind == "mode":
             return ttk.Combobox(parent, textvariable=self.vars[field], values=self._mode_values(), state="readonly")
         if kind == "outcome":
@@ -610,6 +691,12 @@ class PlannerApp(tk.Tk):
             }[str(value)]
         if field == "analysis_mode":
             return {"plan": t(self.language, "mode_plan"), "evaluate": t(self.language, "mode_evaluate")}[str(value)]
+        if field == "workflow_path":
+            return {
+                "plan_study": t(self.language, "workflow_plan_study"),
+                "evaluate_done": t(self.language, "workflow_evaluate_done"),
+                "evaluate_against_plan": t(self.language, "workflow_evaluate_against_plan"),
+            }[str(value)]
         if field == "outcome_type":
             return t(self.language, "outcome_binary") if value == "binary" else t(self.language, "outcome_continuous")
         if field == "alternative":
@@ -636,9 +723,16 @@ class PlannerApp(tk.Tk):
                 data[field] = self._parse_int(raw, field)
             elif kind == "optional_int":
                 data[field] = self._parse_optional_int(raw, field)
-            elif kind in {"float", "optional_float", "rate"}:
+            elif kind in {"float", "optional_float", "rate", "optional_rate"}:
                 optional = kind == "optional_float"
-                data[field] = self._parse_number(raw, field, optional=optional, rate=kind == "rate")
+                data[field] = self._parse_number(
+                    raw,
+                    field,
+                    optional=optional or kind == "optional_rate",
+                    rate=kind in {"rate", "optional_rate"},
+                )
+            elif kind == "workflow":
+                data[field] = self._current_workflow_path()
             elif kind == "design":
                 data[field] = self._current_study_design()
             elif kind == "mode":
@@ -649,6 +743,9 @@ class PlannerApp(tk.Tk):
                 data[field] = self._internal_alternative(str(raw))
             else:
                 data[field] = str(raw)
+        workflow = data.get("workflow_path", "plan_study")
+        data["analysis_mode"] = "plan" if workflow == "plan_study" else "evaluate"
+        data["had_planned_sample"] = workflow == "evaluate_against_plan"
         data["range_override_fields"] = [field for field, var in self.range_override_vars.items() if bool(var.get())]
         candidate = StudyConfig(**data)
         self.range_issues = self._validate_recommended_ranges(candidate)
@@ -786,6 +883,65 @@ class PlannerApp(tk.Tk):
             return
         save_config(self.config_model, filename)
         messagebox.showinfo(t(self.language, "ready"), t(self.language, "config_saved"), parent=self)
+
+    def load_previous_plan(self) -> None:
+        filename = filedialog.askopenfilename(
+            parent=self,
+            title=t(self.language, "choose_plan_json"),
+            filetypes=[("JSON", "*.json"), ("All files", "*.*")],
+        )
+        if not filename:
+            return
+        try:
+            raw = json.loads(Path(filename).read_text(encoding="utf-8"))
+            source_data = raw.get("config", raw)
+            source_config = config_from_dict(source_data)
+            source_config.workflow_path = "plan_study"
+            source_config.analysis_mode = "plan"
+            source_config.had_planned_sample = False
+            source_plan = calculate_plan(source_config)
+            planned_sizes = raw.get("design_adjusted_valid") or {
+                "control": source_plan.design_adjusted_valid.control,
+                "intervention": source_plan.design_adjusted_valid.intervention,
+            }
+        except (OSError, json.JSONDecodeError, TypeError, ValueError, PlanningError) as exc:
+            messagebox.showerror(t(self.language, "error"), str(exc), parent=self)
+            return
+
+        current = config_to_dict(self.config_model)
+        current.update(
+            {
+                "workflow_path": "evaluate_against_plan",
+                "analysis_mode": "evaluate",
+                "had_planned_sample": True,
+                "study_design": source_config.study_design,
+                "outcome_type": source_config.outcome_type,
+                "alternative": source_config.alternative,
+                "alpha": source_config.alpha,
+                "power": source_config.power,
+                "primary_comparisons": source_config.primary_comparisons,
+                "allocation_ratio": source_config.allocation_ratio,
+                "pre_post_correlation": source_config.pre_post_correlation,
+                "planned_effect_size": source_plan.effect_size_used,
+                "planned_alpha": source_config.alpha,
+                "planned_power": source_config.power,
+                "intervention_label": source_config.intervention_label,
+                "control_label": source_config.control_label,
+            }
+        )
+        if source_config.study_design == "one_group_pre_post":
+            current["planned_total_n"] = int(planned_sizes.get("intervention", source_plan.design_adjusted_valid.total))
+            current["planned_control_n"] = None
+            current["planned_intervention_n"] = None
+        else:
+            current["planned_control_n"] = int(planned_sizes.get("control", source_plan.design_adjusted_valid.control))
+            current["planned_intervention_n"] = int(
+                planned_sizes.get("intervention", source_plan.design_adjusted_valid.intervention)
+            )
+            current["planned_total_n"] = None
+        self.config_model = config_from_dict(current)
+        self._build_ui()
+        messagebox.showinfo(t(self.language, "ready"), t(self.language, "previous_plan_loaded"), parent=self)
 
     def load_configuration(self) -> None:
         filename = filedialog.askopenfilename(

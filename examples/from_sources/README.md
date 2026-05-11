@@ -6,11 +6,11 @@ Documentation policy: this English file is the canonical original. `README_pt.md
 
 These JSON files are meant to be loaded by the app and by the test suite.
 Each file contains a normal app configuration plus a `source_case` block with
-the external source or local `resumoteoria.md` source, the real-world problem,
+the external source or local `theoryintroduction.md` source, the real-world problem,
 and expected outputs for this calculator.
 
 The calculator uses the normal-approximation formulas from the methodology
-summary in `resumoteoria.md`. Some exact tools, such as G*Power or R `pwr`,
+summary in `theoryintroduction.md`. Some exact tools, such as G*Power or R `pwr`,
 may return one more participant per group because they use t-distribution or
 iterative exact procedures. The examples document that distinction when it matters.
 

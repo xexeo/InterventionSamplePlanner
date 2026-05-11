@@ -2,6 +2,16 @@
 
 # Resumo Operacional da Teoria para o ISP v2.0
 
+## Fluxos atuais do wizard
+
+O primeiro passo do wizard agora pergunta a tarefa pratica:
+
+- `Planejar um estudo`: estima a amostra necessaria antes da coleta.
+- `Analisar um estudo realizado`: calcula valor-p aproximado, poder alcancado e lacunas de benchmark depois de um estudo ou piloto sem plano anterior.
+- `Comparar estudo realizado com o plano`: faz a analise do resultado observado e compara a amostra valida alcancada com um plano anterior. O plano pode ser digitado manualmente ou carregado de um JSON salvo.
+
+Na comparacao com plano, o app usa os campos `planned_control_n`, `planned_intervention_n`, `planned_total_n`, `planned_effect_size`, `planned_alpha` e `planned_power`. Para desfechos binarios, pode usar `observed_control_events` e `observed_intervention_events` para calcular as taxas observadas.
+
 Este manual operacional explica como usar o `ISP v2.0` de forma prática. Ele é mais curto que o manual educacional em LaTeX, mas foi escrito para apoiar decisões reais dentro do aplicativo.
 
 ## 1. O que mudou na versão 2.0
