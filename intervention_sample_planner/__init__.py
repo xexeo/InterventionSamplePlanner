@@ -1,5 +1,7 @@
 """Intervention Sample Planner public API."""
 
+# File version: 1.0; date: 2026-05-11
+
 from .calculator import (
     GroupSizes,
     SamplePlan,
@@ -11,6 +13,7 @@ from .calculator import (
     render_report,
     save_config,
 )
+from .version import APP_VERSION, APP_VERSION_DATE, APP_WINDOW_TITLE
 
 __all__ = [
     "GroupSizes",
@@ -22,4 +25,7 @@ __all__ = [
     "load_config",
     "render_report",
     "save_config",
+    "APP_VERSION",
+    "APP_VERSION_DATE",
+    "APP_WINDOW_TITLE",
 ]

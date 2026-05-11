@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/intervention-sample-planner/schemas/study_config.schema.json",
+  "title": "Intervention Sample Planner Study Configuration",
+  "description": "JSON Schema for local Intervention Sample Planner configuration files. File version 1.0; date 2026-05-11.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional schema URI or relative path used by editors and validators."
+    },
+    "_file_version": {
+      "type": "string",
+      "description": "Metadata for the version of this JSON file format.",
+      "default": "1.0"
+    },
+    "_file_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Metadata date for this JSON file format.",
+      "default": "2026-05-11"
+    },
+    "study_name": {
+      "type": "string",
+      "minLength": 1,
+      "default": "Untitled intervention study",
+      "description": "Short study name used in saved files and reports."
+    },
+    "language": {
+      "type": "string",
+      "enum": ["en", "pt"],
+      "default": "en",
+      "description": "Language used by the interface/report when this configuration is loaded."
+    },
+    "analysis_unit": {
+      "type": "string",
+      "minLength": 1,
+      "default": "person",
+      "description": "Unit about which the conclusion is made."
+    },
+    "observation_unit": {
+      "type": "string",
+      "minLength": 1,
+      "default": "person",
+      "description": "Unit from which data are collected."
+    },
+    "outcome_type": {
+      "type": "string",
+      "enum": ["continuous", "binary"],
+      "default": "continuous",
+      "description": "Primary outcome type. Continuous uses two independent means; binary uses two independent proportions."
+    },
+    "alternative": {
+      "type": "string",
+      "enum": ["two_sided", "greater", "less"],
+      "default": "two_sided",
+      "description": "Hypothesis direction used to choose the alpha quantile."
+    },
+    "alpha": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1,
+      "default": 0.05,
+      "description": "Type I error risk before Bonferroni adjustment."
+    },
+    "power": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1,
+      "default": 0.8,
+      "description": "Target statistical power."
+    },
+    "primary_comparisons": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1,
+      "description": "Number of planned primary comparisons for Bonferroni alpha adjustment."
+    },
+    "allocation_ratio": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "default": 1.0,
+      "description": "Intervention/control group size ratio."
+    },
+    "effect_size_d": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0,
+      "default": 0.5,
+      "description": "Cohen's d for continuous outcomes. May be null if raw means plus pooled SD are provided."
+    },
+    "mean_control": {
+      "type": ["number", "null"],
+      "default": null,
+      "description": "Optional expected control mean for documentation or effect-size calculation."
+    },
+    "mean_intervention": {
+      "type": ["number", "null"],
+      "default": null,
+      "description": "Optional expected intervention mean for documentation or effect-size calculation."
+    },
+    "sd_pooled": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0,
+      "default": null,
+      "description": "Optional pooled standard deviation. Required if effect_size_d is null and raw means are used."
+    },
+    "proportion_control": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1,
+      "default": 0.45,
+      "description": "Expected control-group proportion for binary outcomes."
+    },
+    "proportion_intervention": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1,
+      "default": 0.6,
+      "description": "Expected intervention-group proportion for binary outcomes."
+    },
+    "apply_fpc": {
+      "type": "boolean",
+      "default": false,
+      "description": "Whether to apply finite-population correction."
+    },
+    "finite_population": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "default": null,
+      "description": "Known closed population size when finite-population correction is used."
+    },
+    "cluster_average_size": {
+      "type": "number",
+      "minimum": 1,
+      "default": 1.0,
+      "description": "Average number of people per cluster/class/group."
+    },
+    "intraclass_correlation": {
+      "type": "number",
+      "minimum": 0,
+      "default": 0.0,
+      "description": "Intraclass correlation used for design-effect correction."
+    },
+    "response_rate": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "default": 1.0,
+      "description": "Share of invited people expected to start or accept."
+    },
+    "completion_rate": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "default": 1.0,
+      "description": "Share of assigned/starters expected to complete the study."
+    },
+    "usable_data_rate": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "maximum": 1,
+      "default": 1.0,
+      "description": "Share of completed cases expected to provide valid analyzable data."
+    },
+    "extra_buffer_rate": {
+      "type": "number",
+      "minimum": 0,
+      "exclusiveMaximum": 1,
+      "default": 0.0,
+      "description": "Additional conservative buffer/loss rate."
+    },
+    "intervention_label": {
+      "type": "string",
+      "minLength": 1,
+      "default": "Intervention",
+      "description": "Label used for the intervention group in reports."
+    },
+    "control_label": {
+      "type": "string",
+      "minLength": 1,
+      "default": "Control",
+      "description": "Label used for the control group in reports."
+    },
+    "notes": {
+      "type": "string",
+      "default": "",
+      "description": "Free notes about assumptions, literature sources, pilot data, or limitations."
+    },
+    "source_case": {
+      "type": "object",
+      "description": "Optional metadata block used by source-based examples and tests.",
+      "additionalProperties": true
+    }
+  },
+  "required": [
+    "study_name",
+    "language",
+    "analysis_unit",
+    "observation_unit",
+    "outcome_type",
+    "alternative",
+    "alpha",
+    "power",
+    "primary_comparisons",
+    "allocation_ratio",
+    "proportion_control",
+    "proportion_intervention",
+    "apply_fpc",
+    "cluster_average_size",
+    "intraclass_correlation",
+    "response_rate",
+    "completion_rate",
+    "usable_data_rate",
+    "extra_buffer_rate",
+    "intervention_label",
+    "control_label",
+    "notes"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome_type": { "const": "continuous" }
+        },
+        "required": ["outcome_type"]
+      },
+      "then": {
+        "anyOf": [
+          {
+            "required": ["effect_size_d"],
+            "properties": {
+              "effect_size_d": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          },
+          {
+            "required": ["mean_control", "mean_intervention", "sd_pooled"],
+            "properties": {
+              "mean_control": { "type": "number" },
+              "mean_intervention": { "type": "number" },
+              "sd_pooled": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "apply_fpc": { "const": true }
+        },
+        "required": ["apply_fpc"]
+      },
+      "then": {
+        "required": ["finite_population"],
+        "properties": {
+          "finite_population": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  ]
+}

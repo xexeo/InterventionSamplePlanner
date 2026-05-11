@@ -1,4 +1,7 @@
 {
+  "$schema": "../schemas/study_config.schema.json",
+  "_file_version": "1.0",
+  "_file_date": "2026-05-11",
   "study_name": "Educational game engagement validation",
   "language": "en",
   "analysis_unit": "student",

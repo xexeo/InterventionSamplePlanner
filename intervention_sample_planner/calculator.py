@@ -7,6 +7,8 @@ correction, attrition/nonresponse correction, cluster design effect, and
 Bonferroni adjustment for planned primary comparisons.
 """
 
+# File version: 1.0; date: 2026-05-11
+
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field

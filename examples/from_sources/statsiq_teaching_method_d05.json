@@ -1,0 +1,43 @@
+{
+  "$schema": "../../schemas/study_config.schema.json",
+  "_file_version": "1.0",
+  "_file_date": "2026-05-11",
+  "study_name": "Teaching method intervention: medium mean effect",
+  "language": "en",
+  "analysis_unit": "student",
+  "observation_unit": "student",
+  "outcome_type": "continuous",
+  "alternative": "two_sided",
+  "alpha": 0.05,
+  "power": 0.8,
+  "primary_comparisons": 1,
+  "allocation_ratio": 1.0,
+  "effect_size_d": 0.5,
+  "mean_control": null,
+  "mean_intervention": null,
+  "sd_pooled": null,
+  "proportion_control": 0.45,
+  "proportion_intervention": 0.6,
+  "apply_fpc": false,
+  "finite_population": null,
+  "cluster_average_size": 1.0,
+  "intraclass_correlation": 0.0,
+  "response_rate": 1.0,
+  "completion_rate": 1.0,
+  "usable_data_rate": 1.0,
+  "extra_buffer_rate": 0.0,
+  "intervention_label": "New teaching method",
+  "control_label": "Standard lecture",
+  "notes": "A teaching-method intervention wants 80% power to detect d=0.5 at alpha=0.05.",
+  "source_case": {
+    "source_name": "StatsIQ worked example",
+    "source_url": "https://www.statisticstutor.app/study-guides/statistical-power-sample-size-calculation-type-ii-error",
+    "real_life_problem": "A researcher tests whether a new teaching method improves exam scores compared with standard lecture.",
+    "calculator_expected": {
+      "initial_valid_control": 63,
+      "initial_valid_intervention": 63,
+      "initial_valid_total": 126
+    },
+    "note": "The source's normal-approximation worked example rounds to 63 per group; it also notes exact software may return 64 per group."
+  }
+}

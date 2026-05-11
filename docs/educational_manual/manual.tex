@@ -1,0 +1,796 @@
+% File version: 1.0; date: 2026-05-11
+\documentclass[11pt,a4paper,oneside]{report}
+
+\usepackage{iftex}
+\ifLuaTeX
+  \usepackage{fontspec}
+  \setmainfont{Latin Modern Roman}
+\else
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \usepackage{lmodern}
+\fi
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{amsmath,amssymb}
+\usepackage{tcolorbox}
+\usepackage[strings]{underscore}
+\usepackage{hyperref}
+\usepackage{imakeidx}
+\usepackage{titlesec}
+\usepackage{csquotes}
+\usepackage[backend=biber,style=authoryear,maxcitenames=2]{biblatex}
+
+\geometry{margin=2.3cm}
+\addbibresource{references.bib}
+\makeindex[intoc]
+
+\definecolor{ispblue}{HTML}{174A7C}
+\definecolor{ispgreen}{HTML}{2D6A4F}
+\definecolor{ispamber}{HTML}{9A6700}
+\definecolor{ispgray}{HTML}{F4F6F8}
+\definecolor{ispink}{HTML}{7F1D1D}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=ispblue,
+  citecolor=ispgreen,
+  urlcolor=ispblue,
+  pdftitle={Educational Manual for ISP v1.0},
+  pdfauthor={Intervention Sample Planner contributors}
+}
+
+\titleformat{\chapter}
+  {\normalfont\huge\bfseries\color{ispblue}}
+  {\thechapter}{1em}{}
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{ispblue}}
+  {\thesection}{0.7em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{ispgreen}}
+  {\thesubsection}{0.6em}{}
+
+\setlist[itemize]{leftmargin=1.2cm}
+\setlist[enumerate]{leftmargin=1.2cm}
+\renewcommand{\arraystretch}{1.25}
+
+\newtcolorbox{conceptbox}[1]{
+  colback=ispgray,
+  colframe=ispblue,
+  title=\textbf{#1},
+  fonttitle=\bfseries,
+  arc=2mm,
+  boxrule=0.8pt
+}
+
+\newtcolorbox{statbox}[1]{
+  colback=white,
+  colframe=ispamber,
+  title=\textbf{For readers who want more statistics: #1},
+  fonttitle=\bfseries,
+  arc=2mm,
+  boxrule=0.8pt
+}
+
+\newtcolorbox{warningbox}[1]{
+  colback=white,
+  colframe=ispink,
+  title=\textbf{Important limit: #1},
+  fonttitle=\bfseries,
+  arc=2mm,
+  boxrule=0.8pt
+}
+
+\newcommand{\app}{\textsc{ISP v1.0}\index{ISP v1.0}}
+\newcommand{\field}[1]{\texttt{\detokenize{#1}}\index{configuration variables!#1@\texttt{\detokenize{#1}}}}
+\newcommand{\term}[1]{\textbf{#1}\index{#1}}
+\newcommand{\wizard}{\term{wizard}}
+\newcommand{\config}{\term{configuration tab}}
+\newcommand{\results}{\term{results tab}}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries\color{ispblue} Educational Manual for \app\par}
+  \vspace{0.5cm}
+  {\Large Planning sample size for a two-group human intervention study\par}
+  \vspace{1cm}
+  {\large Version 1.0 \quad Date: 2026-05-11\par}
+  \vfill
+  \begin{conceptbox}{Standard problem assumed by this manual}
+  The default problem is a study of an intervention in a human process, such as learning, training, usability, work performance, or comprehension. The manual assumes no medication, surgery, invasive treatment, or high-risk clinical procedure. If the study has clinical, safety, legal, or regulatory consequences, this app can support early planning, but the final design should be reviewed by a qualified statistician and the relevant ethics or regulatory body.
+  \end{conceptbox}
+  \vfill
+  {\large Intervention Sample Planner contributors\par}
+\end{titlepage}
+
+\pagenumbering{roman}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\chapter{What This Manual Is For}
+
+This manual explains how to use the \wizard{} of \app{} and how each question changes a parameter in the \config{}. It is written for readers who are not statisticians but need to plan a responsible validation study.
+
+The app helps with one common design:
+
+\begin{center}
+\Large intervention group vs control group
+\end{center}
+
+In this design, one group receives the new intervention and the other does not. The goal is to decide how many valid participants are needed, how to divide them between groups, and how many people to invite or start after losses are considered.
+
+\begin{conceptbox}{The main idea}
+Sample size is not only a formula. It is a decision about the strength of evidence needed to support a conclusion. A study should collect enough evidence to answer the question it asks, and it should ask a question that can be answered by the evidence it can realistically collect. This framing follows the sample-size justification perspective described by \textcite{lakens2022sample}.
+\end{conceptbox}
+
+\section{What the app can do}
+
+\app{} currently supports:
+
+\begin{itemize}
+  \item two independent groups: \term{intervention group} and \term{control group};
+  \item a \term{continuous outcome}, analyzed as a comparison between two means;
+  \item a \term{binary outcome}, analyzed as a comparison between two proportions;
+  \item equal or unequal group allocation;
+  \item two-sided or one-sided hypotheses;
+  \item \term{alpha}, \term{power}, and \term{effect size} planning;
+  \item Bonferroni adjustment for multiple primary comparisons;
+  \item finite-population correction;
+  \item cluster design-effect correction;
+  \item response, completion, usable-data, and buffer corrections;
+  \item a sensitivity table and a narrative justification paragraph.
+\end{itemize}
+
+\section{What the app cannot cover}
+
+The app is intentionally narrower than full statistical software such as G*Power \parencite{faul2007gpower,gpowermanual}. It does not currently handle:
+
+\begin{itemize}
+  \item repeated-measures or paired pre--post designs;
+  \item non-inferiority or equivalence designs;
+  \item regression, mixed models, mediation, or covariate-adjusted power;
+  \item longitudinal outcomes;
+  \item adaptive designs;
+  \item randomization by cluster with full field-experiment modeling;
+  \item clinical trial design with medication, surgery, safety endpoints, or regulatory requirements;
+  \item qualitative saturation or information power calculations.
+\end{itemize}
+
+If the study is mainly qualitative, use qualitative sample adequacy logic such as information power \parencite{malterud2016information}. If the design is quasi-experimental, interrupted time series, matched comparison, or natural experiment, consult causal design guidance such as \textcite{shadish2002experimental}. If the intervention is clinical, use dedicated clinical-trial planning references and expert review \parencite{julious2010sample}.
+
+\chapter{Concepts You Need Before Using the Wizard}
+
+\section{Unit of analysis and unit of observation}
+
+The \term{unit of analysis} is what the conclusion is about. In a learning intervention, it is usually the learner. In a usability intervention, it is usually the user. In a team training intervention, it might be the team.
+
+The \term{unit of observation} is where the data come from. A learner can produce several observations: a pre-test score, a post-test score, a log file, a questionnaire, and an interview. Many observations from the same person do not automatically become many independent people.
+
+\begin{warningbox}{Do not count logs as independent people}
+If 40 people each generate 1,000 log events, the study does not have 40,000 independent participants. The participant-level sample is still 40 unless the analysis explicitly models the dependence between events.
+\end{warningbox}
+
+\section{Outcome type}
+
+The \term{outcome} is the main result used to validate the intervention. \app{} asks whether it is:
+
+\begin{itemize}
+  \item \term{continuous}: a score, time, scale, grade, or numeric measurement;
+  \item \term{binary}: yes/no, success/failure, completed/not completed, returned/did not return, error/no error.
+\end{itemize}
+
+This choice matters because comparing means and comparing proportions use different formulas.
+
+\section{Alpha, beta, and power}
+
+The app uses the classical testing language associated with the Neyman--Pearson framework \parencite{neyman1933efficient}.
+
+\term{Alpha} is the planned risk of a \term{Type I error}: concluding that the intervention made a difference when there is no real difference.
+
+\term{Beta} is the planned risk of a \term{Type II error}: missing a real effect that the study was supposed to detect.
+
+\term{Power} is:
+
+\[
+\text{power}=1-\beta.
+\]
+
+In practical language, power is the probability that the study will detect the planned effect if that effect is real.
+
+\begin{statbox}{Why 0.05 alpha and 0.80 power are common}
+Values such as \(\alpha=0.05\) and power \(=0.80\) are conventions, not laws. They are common in behavioral and educational research, but a study can justify more conservative or more permissive values. A higher power target, such as 0.90, usually requires more participants. A smaller alpha, such as 0.01, usually also requires more participants.
+\end{statbox}
+
+\section{Effect size}
+
+The \term{effect size} is the smallest difference that would matter enough to justify the study.
+
+For a continuous outcome, the app uses \term{Cohen's d} \parencite{cohen1988power}:
+
+\[
+d = \frac{\mu_{\text{intervention}}-\mu_{\text{control}}}{s}.
+\]
+
+For a binary outcome, the effect is the difference between two proportions:
+
+\[
+p_{\text{intervention}} - p_{\text{control}}.
+\]
+
+\begin{conceptbox}{Effect size is not a decoration}
+Do not choose an effect only because it is conventional. Ask what change would matter in the real process. For example, if the intervention is a learning activity, what difference in post-test score would justify adopting it? If the intervention is a tutorial, what increase in completion rate would justify changing the product?
+\end{conceptbox}
+
+\chapter{How the Wizard Maps to Configuration Variables}
+
+The \wizard{} asks fewer questions than the \config{} shows. This is intentional. The wizard focuses on the core planning path. The configuration tab contains every editable field, including labels, notes, optional raw means, finite-population correction, and extra buffer.
+
+\begin{longtable}{p{0.22\textwidth}p{0.23\textwidth}p{0.19\textwidth}p{0.27\textwidth}}
+\toprule
+\textbf{Wizard question} & \textbf{Configuration variable} & \textbf{Result affected} & \textbf{Why it matters}\\
+\midrule
+\endhead
+Study name & \field{study_name} & report text & Keeps the calculation traceable.\\
+Outcome type & \field{outcome_type} & formula choice & Selects means or proportions.\\
+Cohen's d & \field{effect_size_d} & valid sample & Defines the continuous effect to detect.\\
+Control proportion & \field{proportion_control} & valid sample & Defines the baseline binary rate.\\
+Intervention proportion & \field{proportion_intervention} & valid sample & Defines the expected intervention rate.\\
+Alpha & \field{alpha} & \field{alpha_adjusted}, \field{z_alpha} & Controls false-positive risk.\\
+Power & \field{power}, \field{z_power} & valid sample & Controls false-negative protection.\\
+Allocation ratio & \field{allocation_ratio} & group division & Divides participants between groups.\\
+Response/start rate & \field{response_rate} & invited target & Converts assigned target into invitations.\\
+Completion rate & \field{completion_rate} & assigned target & Accounts for dropout after start.\\
+Usable data rate & \field{usable_data_rate} & assigned target & Accounts for invalid or unusable data.\\
+Primary comparisons & \field{primary_comparisons} & \field{alpha_adjusted} & Adjusts alpha for multiple planned tests.\\
+Average cluster size & \field{cluster_average_size} & \field{design_effect} & Accounts for grouped participants.\\
+Intraclass correlation & \field{intraclass_correlation} & \field{design_effect} & Measures similarity within clusters.\\
+\bottomrule
+\end{longtable}
+
+\chapter{Step-by-Step Wizard Guide}
+
+\section{Step 1: Study name}
+
+\subsection*{Question in the wizard}
+What is the study called?
+
+\subsection*{Configuration variable changed}
+\field{study_name}
+
+\subsection*{Why this is necessary}
+The study name appears in the report and saved configuration. It lets you connect the calculation to a protocol, ethics submission, dissertation chapter, or project file.
+
+\subsection*{Applies when}
+Always.
+
+\subsection*{Does not cover}
+The name does not define the scientific question. You still need a clear intervention, a control condition, and a primary outcome.
+
+\section{Step 2: Outcome type}
+
+\subsection*{Question in the wizard}
+What kind of main outcome validates the intervention?
+
+\subsection*{Configuration variable changed}
+\field{outcome_type}
+
+\subsection*{Why this is necessary}
+This is the most important branching question in the wizard. If the outcome is a mean score, the app uses the two-means formula. If the outcome is a rate, the app uses the two-proportions formula.
+
+\subsection*{Real-life examples}
+
+\begin{itemize}
+  \item Continuous: post-test score, usability score, engagement scale, time to complete a task.
+  \item Binary: completed the activity, passed the level, returned voluntarily, made an error.
+\end{itemize}
+
+\subsection*{Applies when}
+Use \field{continuous} when each participant contributes a numeric score. Use \field{binary} when each participant contributes a yes/no or success/failure result.
+
+\subsection*{Does not cover}
+If each participant is measured before and after, a paired or pre--post method may be more efficient. If the outcome is a count, ordinal scale, survival time, or repeated log sequence, use a specialized model.
+
+\begin{statbox}{Continuous does not mean perfect normality}
+The two-means approximation is often used for scores and scales, especially when sample sizes are not tiny. However, highly skewed times, bounded scales with floor/ceiling effects, or ordinal data may need different analysis or simulation.
+\end{statbox}
+
+\section{Step 3A: Cohen's d for continuous outcomes}
+
+\subsection*{Question in the wizard}
+What standardized mean difference would be large enough to matter?
+
+\subsection*{Configuration variable changed}
+\field{effect_size_d}
+
+\subsection*{Why this is necessary}
+For continuous outcomes, the app needs to know the difference it should be able to detect. Cohen's \(d\) expresses that difference in standard-deviation units.
+
+\[
+d = \frac{\text{meaningful mean difference}}{\text{pooled standard deviation}}.
+\]
+
+\subsection*{Real-life example}
+Suppose a learning test has a pooled standard deviation of 10 points. If a 5-point improvement is the smallest difference worth adopting the intervention, then:
+
+\[
+d = 5 / 10 = 0.5.
+\]
+
+\subsection*{Configuration alternatives}
+The wizard asks directly for \field{effect_size_d}. In the \config{}, you can instead document:
+
+\begin{itemize}
+  \item \field{mean_control};
+  \item \field{mean_intervention};
+  \item \field{sd_pooled}.
+\end{itemize}
+
+If \field{effect_size_d} is blank, the API can compute it from those raw values.
+
+\subsection*{Does not cover}
+This step does not decide whether the measure is valid. A poorly designed test can produce a precise sample size for the wrong outcome.
+
+\section{Step 3B: Control and intervention proportions for binary outcomes}
+
+\subsection*{Questions in the wizard}
+What proportion do you expect in the group without intervention? What proportion do you expect in the intervention group?
+
+\subsection*{Configuration variables changed}
+\field{proportion_control} and \field{proportion_intervention}
+
+\subsection*{Why this is necessary}
+For binary outcomes, the effect is the difference between two rates. Planning to detect a change from 45\% to 60\% is different from planning to detect a change from 80\% to 85\%.
+
+\subsection*{Real-life example}
+In the standard process, 45\% of learners complete an activity. With the intervention, the team expects 60\% to complete it. The inputs are:
+
+\[
+p_{\text{control}}=0.45,\qquad p_{\text{intervention}}=0.60.
+\]
+
+\subsection*{Does not cover}
+If the event is rare, if the outcome has several categories, or if participants can experience the event many times, use a method for rare events, multinomial outcomes, or repeated counts.
+
+\begin{statbox}{Where the two-proportions formula comes from}
+The app uses a normal approximation to compare two independent proportions. Methods for rates and proportions are a large topic; \textcite{fleiss2003rates} is a standard reference.
+\end{statbox}
+
+\section{Step 4: Alpha}
+
+\subsection*{Question in the wizard}
+What alpha should control false positives?
+
+\subsection*{Configuration variable changed}
+\field{alpha}
+
+\subsection*{Result variables affected}
+\field{alpha_adjusted} and \field{z_alpha}
+
+\subsection*{Why this is necessary}
+Alpha controls the planned probability of a false positive under the testing procedure. A common choice is 0.05.
+
+\subsection*{Applies when}
+Use this when the study will make a statistical comparison between intervention and control.
+
+\subsection*{Does not cover}
+Alpha does not protect against every form of bias. Non-random assignment, invalid measures, selective reporting, and missing data can still make a result misleading.
+
+\section{Step 5: Power}
+
+\subsection*{Question in the wizard}
+What power should the study target?
+
+\subsection*{Configuration variable changed}
+\field{power}
+
+\subsection*{Result variable affected}
+\field{z_power}
+
+\subsection*{Why this is necessary}
+Power controls how likely the study is to detect the planned effect if it really exists. A common value is 0.80; more confirmatory studies often use 0.90 or 0.95.
+
+\subsection*{Does not cover}
+Power is conditional on the planned effect and assumptions. If the true effect is smaller, the actual chance of detection is lower.
+
+\section{Step 6: Allocation ratio}
+
+\subsection*{Question in the wizard}
+How will participants be divided between intervention and control?
+
+\subsection*{Configuration variable changed}
+\field{allocation_ratio}
+
+\subsection*{Why this is necessary}
+The allocation ratio is:
+
+\[
+k = n_{\text{intervention}} / n_{\text{control}}.
+\]
+
+Equal groups (\(k=1\)) are usually efficient. Unequal groups can be necessary when one group is harder to recruit or when the intervention is available to more people.
+
+\subsection*{Does not cover}
+This does not solve confounding. If participants choose their own group, differences between groups may reflect pre-existing differences rather than the intervention. Use random assignment when possible, or a quasi-experimental method when randomization is not possible \parencite{shadish2002experimental}.
+
+\section{Step 7: Response/start rate}
+
+\subsection*{Question in the wizard}
+Of the people invited, what share will start or accept?
+
+\subsection*{Configuration variable changed}
+\field{response_rate}
+
+\subsection*{Result variable affected}
+\field{invited_needed}
+
+\subsection*{Why this is necessary}
+The calculated sample is valid data, not invitations. If only 40\% of invited people start, the number of invitations must be much larger than the number of valid cases.
+
+\subsection*{Example}
+If 126 valid cases are needed and only 70\% of invited people are expected to start, invitations must be inflated:
+
+\[
+126 / 0.70 = 180.
+\]
+
+\section{Step 8: Completion rate}
+
+\subsection*{Question in the wizard}
+Of the people who start, what share will complete the study?
+
+\subsection*{Configuration variable changed}
+\field{completion_rate}
+
+\subsection*{Result variable affected}
+\field{assigned_needed}
+
+\subsection*{Why this is necessary}
+Participants may leave after assignment. If the valid target is 63 per group and the expected completion rate is 0.85, the study should start:
+
+\[
+63 / 0.85 = 74.12,
+\]
+
+which rounds to 75 per group.
+
+\subsection*{Does not cover}
+This correction assumes missingness is a recruitment/planning problem. If dropout is related to the intervention or outcome, the analysis also needs a missing-data plan.
+
+\section{Step 9: Usable data rate}
+
+\subsection*{Question in the wizard}
+Of the completed cases, what share will provide usable data?
+
+\subsection*{Configuration variable changed}
+\field{usable_data_rate}
+
+\subsection*{Why this is necessary}
+Some completed cases may still be unusable because of failed eligibility criteria, corrupted files, incomplete forms, attention-check failure, or technical errors.
+
+\subsection*{Does not cover}
+This correction does not justify careless data collection. It is better to improve instruments, instructions, and logging quality than to compensate with a larger sample.
+
+\section{Step 10: Primary comparisons}
+
+\subsection*{Question in the wizard}
+How many primary comparisons are planned?
+
+\subsection*{Configuration variable changed}
+\field{primary_comparisons}
+
+\subsection*{Result variable affected}
+\field{alpha_adjusted}
+
+\subsection*{Why this is necessary}
+Testing many primary outcomes increases the chance of a false positive. The app applies a Bonferroni adjustment:
+
+\[
+\alpha_{\text{adjusted}} = \alpha / m.
+\]
+
+The idea is associated with the classical Bonferroni inequality \parencite{bonferroni1936teoria}.
+
+\subsection*{Does not cover}
+Bonferroni is simple and conservative. Other methods may be better for many correlated outcomes, exploratory analysis, or false discovery rate control.
+
+\section{Step 11: Cluster average size}
+
+\subsection*{Question in the wizard}
+Are participants clustered in classes, groups, schools, or workshops?
+
+\subsection*{Configuration variable changed}
+\field{cluster_average_size}
+
+\subsection*{Why this is necessary}
+People in the same class or workshop tend to be more similar than independent people. The app uses a design-effect correction:
+
+\[
+DEFF = 1 + (m-1)\rho.
+\]
+
+\subsection*{Applies when}
+Use this when participants are naturally grouped, such as students in classes, employees in teams, or users in workshop cohorts.
+
+\subsection*{Does not cover}
+This is a simplified correction. If whole clusters are randomized, if there are few clusters, or if cluster sizes vary strongly, use dedicated cluster-randomized design methods \parencite{donner2000cluster}.
+
+\section{Step 12: Intraclass correlation}
+
+\subsection*{Question in the wizard}
+How similar are participants inside the same cluster?
+
+\subsection*{Configuration variable changed}
+\field{intraclass_correlation}
+
+\subsection*{Why this is necessary}
+The intraclass correlation, or \term{ICC}, measures how much participants inside the same cluster resemble each other. Even a small ICC can substantially increase sample size when clusters are large.
+
+\subsection*{Example}
+If \(m=25\) and \(\rho=0.05\):
+
+\[
+DEFF = 1 + (25-1)0.05 = 2.2.
+\]
+
+The independent sample is multiplied by 2.2.
+
+\chapter{The Configuration Tab}
+
+The \config{} contains every variable used by the API. Some are asked in the wizard; others are optional or advanced.
+
+\begin{longtable}{p{0.24\textwidth}p{0.24\textwidth}p{0.43\textwidth}}
+\toprule
+\textbf{Variable} & \textbf{Where used} & \textbf{Meaning}\\
+\midrule
+\endhead
+\field{language} & interface/report & English or Portuguese display language.\\
+\field{analysis_unit} & documentation & Unit about which the conclusion is made.\\
+\field{observation_unit} & documentation & Unit from which data are collected.\\
+\field{alternative} & formula & Two-sided, intervention greater, or intervention smaller.\\
+\field{mean_control} & continuous documentation & Expected raw mean for control.\\
+\field{mean_intervention} & continuous documentation & Expected raw mean for intervention.\\
+\field{sd_pooled} & continuous effect calculation & Pooled standard deviation.\\
+\field{apply_fpc} & finite-population correction & Turns finite-population correction on/off.\\
+\field{finite_population} & finite-population correction & Size of the closed eligible population.\\
+\field{extra_buffer_rate} & missing-data correction & Extra conservative loss buffer.\\
+\field{intervention_label} & report & Name for the intervention group.\\
+\field{control_label} & report & Name for the control group.\\
+\field{notes} & project memory & Assumptions, citations, pilot evidence, limitations.\\
+\bottomrule
+\end{longtable}
+
+\begin{warningbox}{Finite-population correction}
+Use \field{apply_fpc} only when the conclusion is restricted to a known closed population, such as all students in one course. Do not use it for broad populations such as all learners, all players, or all workers.
+\end{warningbox}
+
+\chapter{Understanding the Results}
+
+The \results{} deliberately separates several sample numbers. This prevents a common planning error: confusing valid data with invitations.
+
+\section{Initial valid target}
+
+\field{initial_valid} is the theoretical number of valid analyzable cases required if everyone provides usable data.
+
+For a continuous study with \(d=0.5\), \(\alpha=0.05\), power \(=0.80\), and equal allocation, the app reports:
+
+\[
+63 + 63 = 126.
+\]
+
+This is not the number of people to invite. It is the number of valid cases needed for analysis.
+
+\section{Finite-population adjusted target}
+
+\field{fpc_adjusted_valid} applies only if \field{apply_fpc} is true. It can reduce the required valid sample when the target population is small and closed.
+
+\section{Design-adjusted valid target}
+
+\field{design_adjusted_valid} applies the cluster design effect. If clusters are present, this can be much larger than the independent-participant sample.
+
+\section{Assigned or started target}
+
+\field{assigned_needed} inflates the corrected valid target for completion, usable-data loss, and extra buffer.
+
+\section{Invited target}
+
+\field{invited_needed} inflates the assigned target for the response/start rate.
+
+\section{Effective data rate}
+
+\field{effective_data_rate} is the combined rate from invitation to valid data:
+
+\[
+\text{effective data rate}
+=
+\text{response rate}\times
+\text{completion rate}\times
+\text{usable data rate}\times
+(1-\text{extra buffer}).
+\]
+
+If this number is low, recruitment risk is high.
+
+\section{Sensitivity table}
+
+The \term{sensitivity table} asks: what happens if the effect is smaller, the effect is larger, or the desired power changes? This is important because sample-size planning is only as good as its assumptions.
+
+\begin{conceptbox}{How to read sensitivity}
+If a small change in effect size creates a very large change in sample size, the design is fragile. A researcher should then consider pilot data, a more precise outcome, a narrower population, or a more modest conclusion.
+\end{conceptbox}
+
+\chapter{Worked Examples}
+
+\section{Example 1: Teaching intervention with a continuous outcome}
+
+\subsection*{Problem}
+A researcher tests whether a new learning activity improves a post-test score compared with a standard activity.
+
+\subsection*{Inputs}
+\begin{itemize}
+  \item \field{outcome_type}: continuous;
+  \item \field{effect_size_d}: 0.5;
+  \item \field{alpha}: 0.05;
+  \item \field{power}: 0.80;
+  \item \field{allocation_ratio}: 1;
+  \item no losses.
+\end{itemize}
+
+\subsection*{Result}
+\[
+63 \text{ control} + 63 \text{ intervention} = 126 \text{ valid participants}.
+\]
+
+\subsection*{Meaning}
+If the true effect is about \(d=0.5\), the planned study has about 80\% power to detect it using the normal approximation. Exact tools may return 64 per group because they use a t-based method \parencite{faul2007gpower}.
+
+\section{Example 2: Same intervention with 15\% dropout}
+
+\subsection*{Inputs changed}
+\field{completion_rate} becomes 0.85.
+
+\subsection*{Result}
+\[
+63 / 0.85 = 74.12,
+\]
+
+so the app rounds up to:
+
+\[
+75 \text{ control} + 75 \text{ intervention} = 150 \text{ participants to start}.
+\]
+
+\subsection*{Meaning}
+The study still needs 126 valid participants, but it should start 150 people to protect that valid target from expected dropout.
+
+\section{Example 3: Completion rate as a binary outcome}
+
+\subsection*{Problem}
+The intervention is expected to increase completion from 45\% to 60\%.
+
+\subsection*{Inputs}
+\begin{itemize}
+  \item \field{outcome_type}: binary;
+  \item \field{proportion_control}: 0.45;
+  \item \field{proportion_intervention}: 0.60;
+  \item \field{alpha}: 0.05;
+  \item \field{power}: 0.80;
+  \item \field{allocation_ratio}: 1.
+\end{itemize}
+
+\subsection*{Result}
+\[
+173 \text{ control} + 173 \text{ intervention} = 346 \text{ valid participants}.
+\]
+
+\subsection*{Meaning}
+Rates often need larger samples than scores. A difference of 15 percentage points can be important in practice, but it still requires many observations to estimate reliably.
+
+\section{Example 4: Classroom clusters}
+
+\subsection*{Problem}
+The same continuous intervention is delivered in classes of about 25 learners. Learners inside the same class are more similar than independent learners.
+
+\subsection*{Inputs changed}
+\begin{itemize}
+  \item \field{cluster_average_size}: 25;
+  \item \field{intraclass_correlation}: 0.05.
+\end{itemize}
+
+\subsection*{Design effect}
+\[
+DEFF = 1 + (25-1)0.05 = 2.2.
+\]
+
+\subsection*{Result}
+\[
+126 \times 2.2 = 277.2,
+\]
+
+rounded to 278 valid participants:
+
+\[
+139 \text{ control} + 139 \text{ intervention}.
+\]
+
+\subsection*{Meaning}
+Clustered data can greatly increase the required sample. Adding more classes may help more than adding more students inside the same class.
+
+\chapter{When to Use Another Methodology}
+
+Use another method when the research question is not a two-group independent comparison.
+
+\begin{longtable}{p{0.29\textwidth}p{0.32\textwidth}p{0.30\textwidth}}
+\toprule
+\textbf{Situation} & \textbf{Why this app is not enough} & \textbf{Consider instead}\\
+\midrule
+\endhead
+Same person measured before and after & Measurements are paired, not independent. & Paired t-test or repeated-measures planning.\\
+Whole classes randomized & Number of clusters matters strongly. & Cluster-randomized trial methods.\\
+No control group & Causal claim is weak. & Pilot, pre--post, interrupted time series, or quasi-experimental design.\\
+Main evidence is interview data & Power formulas do not apply. & Qualitative information power or saturation logic.\\
+Outcome is time-to-event & Censoring and timing matter. & Survival analysis design.\\
+Outcome is count data & Variance structure differs. & Poisson or negative-binomial planning.\\
+Clinical safety or medication & Regulatory and ethical stakes are higher. & Clinical-trial statistical planning.\\
+\bottomrule
+\end{longtable}
+
+\chapter{Glossary of Important Terms}
+
+\begin{description}
+  \item[Alpha] Planned Type I error rate.
+  \item[Allocation ratio] Planned size of intervention group divided by control group.
+  \item[Binary outcome] A yes/no or success/failure outcome.
+  \item[Cluster] A natural group such as class, team, school, or workshop.
+  \item[Cohen's d] Standardized mean difference.
+  \item[Completion rate] Share of starters expected to finish.
+  \item[Control group] Group without the intervention.
+  \item[Design effect] Multiplier that adjusts for clustered data.
+  \item[Effect size] Smallest difference that matters for the study.
+  \item[Finite population] Closed known population to which the conclusion is restricted.
+  \item[ICC] Intraclass correlation.
+  \item[Intervention group] Group receiving the intervention.
+  \item[Power] Probability of detecting the planned effect if it exists.
+  \item[Response rate] Share of invited people expected to start or accept.
+  \item[Usable data rate] Share of completed cases expected to be analyzable.
+  \item[Valid sample] Participants with usable analyzable data.
+  \item[Wizard] Guided interface mode that asks core planning questions.
+\end{description}
+
+\chapter{Final Practical Checklist}
+
+Before collecting data, write down:
+
+\begin{enumerate}
+  \item the intervention;
+  \item the control condition;
+  \item the target population or context;
+  \item the analysis unit and observation unit;
+  \item the primary outcome;
+  \item whether the primary outcome is continuous or binary;
+  \item the smallest effect that matters;
+  \item alpha, power, and hypothesis direction;
+  \item allocation ratio;
+  \item expected response, completion, and usable-data rates;
+  \item whether finite-population or cluster correction applies;
+  \item the final valid target, assigned target, and invited target;
+  \item the limits of the conclusion.
+\end{enumerate}
+
+\begin{conceptbox}{A good conclusion is proportional}
+The safest final sentence is often not "the intervention works." It is: "Under these conditions, with this outcome, this comparison, and this amount of valid data, the study was planned to detect an effect of this size with this level of uncertainty."
+\end{conceptbox}
+
+\printbibliography
+\printindex
+
+\end{document}

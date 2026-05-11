@@ -1,5 +1,7 @@
 """Tkinter interface for Intervention Sample Planner."""
 
+# File version: 1.0; date: 2026-05-11
+
 from __future__ import annotations
 
 from dataclasses import asdict
@@ -7,7 +9,7 @@ import json
 from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from typing import Any, Callable
+from typing import Any
 
 from .calculator import (
     PlanningError,
@@ -19,6 +21,7 @@ from .calculator import (
     save_config,
 )
 from .i18n import t
+from .version import APP_WINDOW_TITLE
 
 
 FIELD_GROUPS = [
@@ -124,7 +127,7 @@ class PlannerApp(tk.Tk):
         self.text_widgets: dict[str, tk.Text] = {}
         self.current_plan = None
         self.wizard_index = 0
-        self.title(t(self.config_model.language, "app_title"))
+        self.title(APP_WINDOW_TITLE)
         self.geometry("1120x780")
         self.minsize(920, 620)
         self._build_ui()
@@ -138,14 +141,14 @@ class PlannerApp(tk.Tk):
             child.destroy()
         self.vars = {}
         self.text_widgets = {}
-        self.title(t(self.language, "app_title"))
+        self.title(APP_WINDOW_TITLE)
 
         shell = ttk.Frame(self, padding=10)
         shell.pack(fill=tk.BOTH, expand=True)
 
         header = ttk.Frame(shell)
         header.pack(fill=tk.X, pady=(0, 8))
-        ttk.Label(header, text=t(self.language, "app_title"), font=("Segoe UI", 16, "bold")).pack(
+        ttk.Label(header, text=APP_WINDOW_TITLE, font=("Segoe UI", 16, "bold")).pack(
             side=tk.LEFT
         )
         ttk.Label(header, text=t(self.language, "language")).pack(side=tk.RIGHT, padx=(8, 0))
@@ -284,7 +287,7 @@ class PlannerApp(tk.Tk):
 
         self.summary_text = self._make_text(summary_frame)
         self.summary_text.insert("1.0", t(self.language, "no_results"))
-        self.sensitivity_text = self._make_text(sensitivity_frame)
+        self.sensitivity_table = self._make_sensitivity_table(sensitivity_frame)
         self.json_text = self._make_text(json_frame)
 
     def _make_text(self, parent: ttk.Frame) -> tk.Text:
@@ -296,6 +299,50 @@ class PlannerApp(tk.Tk):
         text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         return text
+
+    def _make_sensitivity_table(self, parent: ttk.Frame) -> ttk.Treeview:
+        columns = (
+            "scenario",
+            "valid_control",
+            "valid_intervention",
+            "valid_total",
+            "invited_total",
+        )
+        frame = ttk.Frame(parent)
+        frame.pack(fill=tk.BOTH, expand=True)
+        tree = ttk.Treeview(frame, columns=columns, show="headings", height=14)
+        headings = {
+            "scenario": t(self.language, "sens_col_scenario"),
+            "valid_control": t(self.language, "sens_col_valid_control"),
+            "valid_intervention": t(self.language, "sens_col_valid_intervention"),
+            "valid_total": t(self.language, "sens_col_valid_total"),
+            "invited_total": t(self.language, "sens_col_invited_total"),
+        }
+        widths = {
+            "scenario": 190,
+            "valid_control": 130,
+            "valid_intervention": 150,
+            "valid_total": 110,
+            "invited_total": 110,
+        }
+        for column in columns:
+            tree.heading(column, text=headings[column])
+            tree.column(
+                column,
+                width=widths[column],
+                minwidth=90,
+                anchor=tk.E if column != "scenario" else tk.W,
+                stretch=column == "scenario",
+            )
+        yscroll = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=tree.yview)
+        xscroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
+        tree.configure(yscrollcommand=yscroll.set, xscrollcommand=xscroll.set)
+        tree.grid(row=0, column=0, sticky="nsew")
+        yscroll.grid(row=0, column=1, sticky="ns")
+        xscroll.grid(row=1, column=0, sticky="ew")
+        frame.columnconfigure(0, weight=1)
+        frame.rowconfigure(0, weight=1)
+        return tree
 
     def _add_config_field(self, parent: ttk.Frame, field: str, row: int) -> int:
         label = ttk.Label(parent, text=t(self.language, f"field_{field}"))
@@ -544,12 +591,14 @@ class PlannerApp(tk.Tk):
             return
         report = render_report(self.current_plan, self.language)
         self._replace_text(self.summary_text, report)
-        sensitivity_lines = [t(self.language, "sensitivity_header")]
+        for item in self.sensitivity_table.get_children():
+            self.sensitivity_table.delete(item)
         for row in self.current_plan.sensitivity:
-            sensitivity_lines.append(
-                f"{row.label}\t{row.control}\t{row.intervention}\t{row.total}\t{row.invited_total}"
+            self.sensitivity_table.insert(
+                "",
+                tk.END,
+                values=(row.label, row.control, row.intervention, row.total, row.invited_total),
             )
-        self._replace_text(self.sensitivity_text, "\n".join(sensitivity_lines))
         self._replace_text(self.json_text, json.dumps(asdict(self.current_plan), indent=2, ensure_ascii=False))
 
     def _replace_text(self, text: tk.Text, content: str) -> None:

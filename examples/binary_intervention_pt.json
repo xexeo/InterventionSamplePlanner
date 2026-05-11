@@ -1,4 +1,7 @@
 {
+  "$schema": "../schemas/study_config.schema.json",
+  "_file_version": "1.0",
+  "_file_date": "2026-05-11",
   "study_name": "Validação de conclusão de fase",
   "language": "pt",
   "analysis_unit": "jogador",

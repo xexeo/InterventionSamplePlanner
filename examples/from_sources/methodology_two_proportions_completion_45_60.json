@@ -1,0 +1,43 @@
+{
+  "$schema": "../../schemas/study_config.schema.json",
+  "_file_version": "1.0",
+  "_file_date": "2026-05-11",
+  "study_name": "Game level completion intervention",
+  "language": "en",
+  "analysis_unit": "player",
+  "observation_unit": "player",
+  "outcome_type": "binary",
+  "alternative": "two_sided",
+  "alpha": 0.05,
+  "power": 0.8,
+  "primary_comparisons": 1,
+  "allocation_ratio": 1.0,
+  "effect_size_d": 0.5,
+  "mean_control": null,
+  "mean_intervention": null,
+  "sd_pooled": null,
+  "proportion_control": 0.45,
+  "proportion_intervention": 0.6,
+  "apply_fpc": false,
+  "finite_population": null,
+  "cluster_average_size": 1.0,
+  "intraclass_correlation": 0.0,
+  "response_rate": 1.0,
+  "completion_rate": 1.0,
+  "usable_data_rate": 1.0,
+  "extra_buffer_rate": 0.0,
+  "intervention_label": "Adaptive version",
+  "control_label": "Standard version",
+  "notes": "Detect an increase from 45% to 60% in completion rate.",
+  "source_case": {
+    "source_name": "Methodology chapter, comparison between two proportions",
+    "source_file": "resumoteoria.md",
+    "real_life_problem": "A game study compares whether an adaptive version increases level completion compared with the standard version.",
+    "calculator_expected": {
+      "initial_valid_control": 173,
+      "initial_valid_intervention": 173,
+      "initial_valid_total": 346
+    },
+    "note": "This is the two-proportions example from the methodology text used as the rule for this app."
+  }
+}

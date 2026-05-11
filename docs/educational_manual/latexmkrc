@@ -1,0 +1,8 @@
+# File version: 1.0; date: 2026-05-11
+
+$pdf_mode = 4;
+$lualatex = 'lualatex -interaction=nonstopmode -file-line-error %O %S';
+$bibtex_use = 2;
+$biber = 'biber %O %B';
+$makeindex = 'makeindex %O -o %D %S';
+$clean_ext = 'aux bbl bcf blg idx ilg ind log out run.xml toc lof lot fls fdb_latexmk synctex.gz';

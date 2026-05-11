@@ -1,10 +1,12 @@
+# File version: 1.0; date: 2026-05-11
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "intervention-sample-planner"
-version = "0.1.0"
+version = "1.0.0"
 description = "Local API and Tkinter app for planning sample sizes for two-group intervention studies."
 readme = "README.md"
 requires-python = ">=3.10"
