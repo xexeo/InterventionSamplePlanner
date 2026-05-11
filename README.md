@@ -1,286 +1,91 @@
+<!-- File version: 2.0; date: 2026-05-11 -->
+
 # Intervention Sample Planner
 
-<!-- File version: 1.0; date: 2026-05-11 -->
+Intervention Sample Planner, or `ISP`, is a local Python API and Tkinter desktop app for planning or evaluating intervention studies in human processes such as learning, training, usability, and workflow improvement.
 
-Intervention Sample Planner is a local desktop app for planning the sample size of a two-group intervention study.
+Version `2.0` expands the app beyond the original two-group design. It now supports:
 
-Current application version: **ISP v1.0**.
+- `Two independent groups`
+- `Pre-test/post-test with control group`
+- `One-group pre-test/post-test`
+- `Plan required sample`
+- `Evaluate achieved result`
+- recommended ranges with explicit override
+- explanations loaded from a separate JSON file
+- a suggestions tab with design advice and caution flags
 
-Documentation policy: the English Markdown files are the canonical originals. Files ending in `_pt.md` are Portuguese translations of those English originals.
+## What it does
 
-It is designed for experiments where one group receives an intervention and another group does not, such as:
+The app helps answer questions such as:
 
-- an educational game versus a standard lesson;
-- a new tutorial versus the current tutorial;
-- an adaptive feedback version versus a fixed feedback version;
-- a health, training, usability, or learning intervention versus a control condition.
+- How many valid participants are needed to compare intervention and control?
+- How many people must complete both the pre-test and the post-test?
+- How many people should be invited if some will not start or will not finish?
+- If a study already ran, what approximate p-value and achieved power correspond to the observed result?
 
-The app does not only answer "how many people?". It separates the methodological stages that researchers often mix together:
+The current implementation is strongest for continuous outcomes. Binary outcomes are currently supported for the `Two independent groups` path.
 
-1. How many valid analyzable cases are needed if everyone provides data?
-2. How should those cases be divided between intervention and control?
-3. How much does the target change when the population is finite, data are clustered, or alpha is adjusted for multiple planned comparisons?
-4. How many people must be assigned, recruited, or invited after dropout, nonresponse, and invalid data are considered?
-5. How should the sample-size decision be explained in a paper, TCC, dissertation, thesis, protocol, or ethics submission?
+## Typical research paths
 
-## Main Features
+### 1. Two independent groups
 
-- Local Tkinter app, no web server required.
-- Pure Python calculation API for reuse in scripts, notebooks, tests, or future interfaces.
-- Wizard mode with explanations for each question.
-- Direct configuration mode with every variable shown in one place.
-- A `?` help button beside each field.
-- English and Portuguese interface/report support.
-- Results tabs for summary, sensitivity, and JSON.
-- Formatted sensitivity table.
-- Save and load study configurations as JSON.
-- Export the planning report as text.
-- Source-based example cases and unit tests.
+Use this when one group receives the intervention and another group does not. Example: a researcher in educational games wants to test whether using Uno plus a lesson improves children's post-test understanding of greater-than and less-than compared with lesson only.
 
-## What It Calculates
+### 2. Pre-test/post-test with control group
 
-Current version:
+Use this when both groups are measured before and after. Example: one group completes a pre-test, plays Uno, receives a short lesson, and completes a post-test; the control group completes the same pre-test and post-test but receives only the lesson.
 
-- Two independent means using Cohen's `d`.
-- Two independent proportions, such as completion, success, error, dropout, or return rate.
-- Equal or unequal allocation between intervention and control.
-- Two-sided or one-sided planning.
-- Bonferroni alpha adjustment for multiple planned primary comparisons.
-- Optional finite-population correction.
-- Optional cluster design effect: `DEFF = 1 + (m - 1) * ICC`.
-- Response/start rate, completion rate, usable-data rate, and extra buffer.
-- Sensitivity scenarios for smaller/larger effect values and stronger target power.
+### 3. One-group pre-test/post-test
 
-The calculations use normal approximations. Exact tools such as G*Power or R `pwr` can sometimes return one additional participant per group because they use t-distribution or iterative exact methods.
+Use this when the same participants are measured before and after and there is no control group. Example: a researcher wants a first estimate of the learning effect of Uno between a pre-test and a post-test before running a controlled trial.
 
-## Run the App
+## Inverse mode
 
-From the repository folder:
+`Evaluate achieved result` is the inverse workflow. Instead of asking how many participants are needed, it asks what an achieved sample and observed effect imply. It reports approximate quantities such as:
 
-```powershell
-cd D:\GitHub\InterventionSamplePlanner
-python run_app.py
-```
+- observed effect entered
+- approximate z statistic
+- approximate p-value
+- approximate achieved power
 
-or:
+This mode is useful when a pilot or completed study did not find the desired effect and the researcher wants to understand what the collected sample was able to show.
 
-```powershell
-python -m intervention_sample_planner
-```
+## Effect size in plain language
 
-If you are using the generated Windows executable, open:
+Effect size is the hardest input for many users, so `ISP v2.0` treats it more explicitly.
 
-```text
-dist\InterventionSamplePlanner\InterventionSamplePlanner.exe
-```
+- In `Two independent groups`, the continuous effect size is the standardized difference between groups.
+- In `Pre-test/post-test with control group`, it is the standardized difference in gain, or the post-test effect after baseline is accounted for.
+- In `One-group pre-test/post-test`, it is the standardized mean change in the same participants.
 
-or, if built as one file:
+Traditional anchor values such as `0.2`, `0.5`, and `0.8` can be useful as orientation, but the best effect size is the smallest effect that would be meaningful in the real study.
 
-```text
-dist\InterventionSamplePlanner.exe
-```
+## Explanations and recommendations
 
-## Quick Test Problems
+The app now reads long-form variable explanations and recommended ranges from:
 
-Use these cases to check whether the app is behaving as expected.
+[explanations.json](/C:/Users/Xexeo/OneDrive/Documents/New%20project/InterventionSamplePlanner/intervention_sample_planner/explanations.json)
 
-### 1. Mean Difference, Teaching Intervention
+This JSON is intended to stay aligned with the operational manual and the educational manual.
 
-Problem: a new teaching method is compared with a standard lecture. The researcher wants 80% power to detect a medium standardized mean difference.
-
-Inputs:
-
-- outcome type: continuous;
-- Cohen's d: `0.5`;
-- alpha: `0.05`;
-- power: `0.80`;
-- allocation ratio: `1`;
-- response, completion, usable data: `1`.
-
-Expected app result:
-
-- valid control: `63`;
-- valid intervention: `63`;
-- valid total: `126`.
-
-This matches the normal-approximation worked example in StatsIQ. Exact software may report `64` per group.
-
-### 2. Mean Difference With 15% Dropout
-
-Same case as above, but completion rate is `0.85`.
-
-Expected app result:
-
-- initial valid target: `63 + 63 = 126`;
-- participants to assign/start: `75 + 75 = 150`.
-
-Why: `63 / 0.85 = 74.12`, rounded up to `75` per group.
-
-### 3. Binary Outcome, Completion Rate
-
-Problem: a game version with adaptive support should raise level completion from 45% to 60%.
-
-Inputs:
-
-- outcome type: binary;
-- control proportion: `0.45`;
-- intervention proportion: `0.60`;
-- alpha: `0.05`;
-- power: `0.80`;
-- allocation ratio: `1`.
-
-Expected app result:
-
-- valid control: `173`;
-- valid intervention: `173`;
-- valid total: `346`.
-
-### 4. Clustered Classrooms
-
-Problem: students are nested in classes, and students in the same class are more similar than independent students.
-
-Inputs:
-
-- use the continuous `d = 0.5` case;
-- average cluster size: `25`;
-- ICC: `0.05`.
-
-Expected app result:
-
-- design effect: `2.2`;
-- corrected valid control: `139`;
-- corrected valid intervention: `139`;
-- corrected valid total: `278`.
-
-## Loading Examples
-
-Example JSON files are included in:
-
-```text
-examples\
-examples\from_sources\
-```
-
-Use `examples\` for simple app configurations and `examples\from_sources\` for documented cases that include source metadata and expected outputs.
-
-In the app:
-
-1. Open **Data / Configuration**.
-2. Click **Load config**.
-3. Choose one of the JSON files.
-4. Click **Calculate**.
-5. Check the **Results** tabs.
-
-The `examples/from_sources` files also include a `source_case` block with source URL, real-world problem, and expected calculator outputs. The app ignores those metadata fields, but the test suite uses them.
-
-## JSON Schema
-
-Configuration files can be documented and checked with JSON Schema:
-
-```text
-schemas/study_config.schema.json
-```
-
-The example JSON files include a `$schema` field that points to this schema. Editors such as VS Code can use it for autocomplete, field descriptions, and basic validation. The app itself is permissive: it ignores unknown metadata fields such as `$schema`, `_file_version`, `_file_date`, and `source_case` when loading a configuration.
-
-The schema describes the current `StudyConfig` fields, supported values, numeric ranges, and conditional rules such as requiring `finite_population` when `apply_fpc` is true.
-
-## Run Tests
+## Run locally
 
 ```powershell
 cd D:\GitHub\InterventionSamplePlanner
 python -m unittest discover -s tests
+python run_app.py
 ```
 
-The tests verify:
+## Build the executable
 
-- the examples from `resumoteoria.md`;
-- the source-based example JSON files;
-- dropout correction;
-- cluster design-effect correction;
-- config loading that ignores metadata fields.
+See:
 
-## API Use
+- [build.md](/C:/Users/Xexeo/OneDrive/Documents/New%20project/InterventionSamplePlanner/build.md)
+- [developers.md](/C:/Users/Xexeo/OneDrive/Documents/New%20project/InterventionSamplePlanner/developers.md)
+- [versions.md](/C:/Users/Xexeo/OneDrive/Documents/New%20project/InterventionSamplePlanner/versions.md)
 
-```python
-from intervention_sample_planner import StudyConfig, calculate_plan, render_report
+## Main documentation
 
-config = StudyConfig(
-    study_name="Educational intervention validation",
-    outcome_type="continuous",
-    effect_size_d=0.5,
-    alpha=0.05,
-    power=0.80,
-    allocation_ratio=1.0,
-    completion_rate=0.85,
-)
-
-plan = calculate_plan(config)
-print(plan.initial_valid.total)
-print(plan.assigned_needed.total)
-print(render_report(plan, "en"))
-```
-
-## How to Interpret Results
-
-The app reports several different sample numbers on purpose:
-
-- **Initial valid data target**: the theoretical valid/analyzable sample if everyone provides usable data.
-- **Corrected valid data target**: the valid sample after finite population and cluster/design corrections.
-- **Participants to assign/start**: how many people should begin after completion and usable-data losses are considered.
-- **People to invite/contact**: how many people to contact after the response/start rate is considered.
-
-For example, if a study needs 63 valid participants per group and expects 15% dropout, it should not recruit only 63 per group. It should start about 75 per group to preserve the valid-data target.
-
-## Methodological Orientation
-
-The app follows the methodological rule summarized in [`resumoteoria.md`](resumoteoria.md): sample size is part of evidence planning, not just a formula.
-
-The central assumptions are:
-
-- sample size must match the inference being claimed;
-- a causal or intervention claim needs comparison and control;
-- power analysis requires alpha, power, effect size, variability or rates, and allocation ratio;
-- the calculated sample is valid analyzable data, not invitations;
-- dropout, nonresponse, invalid data, clusters, and multiple comparisons should be planned before data collection;
-- conclusions should be proportional to the evidence.
-
-External sources used as orientation:
-
-- [StatsIQ worked example](https://www.statisticstutor.app/study-guides/statistical-power-sample-size-calculation-type-ii-error)
-- [StatsMasters effect size and power lesson](https://statsmasters.com/lessons/effect-size-power/)
-- [G*Power](https://www.psychologie.hhu.de/arbeitsgruppen/allgemeine-psychologie-und-arbeitspsychologie/gpower/news-page)
-- [G*Power 3.1 manual](https://www.psychologie.hhu.de/fileadmin/redaktion/Fakultaeten/Mathematisch-Naturwissenschaftliche_Fakultaet/Psychologie/AAP/gpower/GPowerManual.pdf)
-- [statsmodels power and sample-size documentation](https://www.statsmodels.org/stable/stats.html)
-- [R pwr.t.test documentation](https://search.r-project.org/CRAN/refmans/pwr/html/pwr.t.test.html)
-- [OpenEpi cohort and clinical-trial sample-size documentation](https://www.openepi.com/Documentation/SSCohortdoc.htm)
-- [J-PAL sample size and power examples](https://github.com/J-PAL/Sample_Size_and_Power)
-
-## Difference From the Orientation Sources
-
-This app was inspired by established sample-size and power tools, but it has a different purpose. The goal is not to replace specialized statistical software. The goal is to guide a researcher through one common intervention-planning workflow and make the recruitment consequences explicit.
-
-| Source | What it is good for | How this app is different |
-| --- | --- | --- |
-| G*Power and the G*Power 3.1 manual | Broad desktop power-analysis software. It supports many test families, including exact, F, t, chi-square, z, and several regression/correlation cases. It also supports a priori, compromise, criterion, post-hoc, and sensitivity analysis, effect-size calculators, distribution plots, and a protocol output. | This app is narrower: it focuses on two-group intervention planning. It adds workflow language around valid data, assignment/start targets, invitation targets, attrition, usable-data loss, finite populations, clusters, and a paper-ready justification paragraph. |
-| statsmodels | Python library with reusable statistical power classes and functions. It is better for developers who want programmatic power analysis inside a larger Python workflow. | This app keeps a simple dependency-free API plus a Tkinter interface. It is easier for local planning and teaching, but much less complete than statsmodels. |
-| R `pwr.t.test` | Compact R function for solving one missing parameter in t-test power planning. It is exact enough for common t-test planning and integrates naturally with R analysis scripts. | This app adds guided explanations, bilingual labels, JSON project files, recruitment corrections, and a graphical workflow. It currently uses normal approximations, so it may differ by one participant per group from exact t-based functions. |
-| OpenEpi | Public-health style calculators for sample size and epidemiological designs, with inputs such as confidence, power, group ratio, and expected outcome frequency. | This app borrows that practical input style but is framed for intervention validation with a control group, dropout/nonresponse planning, and thesis/protocol writing. |
-| J-PAL examples | Applied research examples for impact evaluation, including clustered and field-experiment thinking. | This app includes a simple cluster design-effect correction but does not yet implement the full range of field-experiment power models, covariate adjustment, compliance assumptions, or randomization-level designs. |
-| StatsIQ and StatsMasters examples | Worked educational examples that show how alpha, power, effect size, and sample size interact. | This app turns similar examples into loadable JSON cases and tests, then extends them with correction stages for the number of people to start or invite. |
-
-## Limits
-
-This app is a planning companion. It does not replace a statistician for high-stakes decisions or complex designs.
-
-Use specialized review for:
-
-- clinical, legal, safety, or institutional decisions;
-- longitudinal outcomes;
-- repeated measures beyond simple two-group planning;
-- mixed models;
-- covariate-adjusted power;
-- non-normal or rare outcomes requiring specialized models;
-- stepped-wedge, crossover, adaptive, or Bayesian designs.
-
-For the Portuguese translation, see [README_pt.md](README_pt.md). For development details, see [developers.md](developers.md). For executable builds, see [build.md](build.md).
+- [resumoteoria.md](/C:/Users/Xexeo/OneDrive/Documents/New%20project/InterventionSamplePlanner/resumoteoria.md)
+- [manual.tex](/C:/Users/Xexeo/OneDrive/Documents/New%20project/InterventionSamplePlanner/docs/educational_manual/manual.tex)

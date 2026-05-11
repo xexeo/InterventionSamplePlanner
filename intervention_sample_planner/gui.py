@@ -1,6 +1,6 @@
 """Tkinter interface for Intervention Sample Planner."""
 
-# File version: 1.0; date: 2026-05-11
+# File version: 2.0; date: 2026-05-11
 
 from __future__ import annotations
 
@@ -20,16 +20,16 @@ from .calculator import (
     render_report,
     save_config,
 )
+from .content import get_design_content, get_field_content, get_general_content
 from .i18n import t
 from .version import APP_WINDOW_TITLE
 
 
 FIELD_GROUPS = [
+    ("design", ["study_name", "study_design", "analysis_mode", "language"]),
     (
-        "design",
+        "study_core",
         [
-            "study_name",
-            "language",
             "analysis_unit",
             "observation_unit",
             "outcome_type",
@@ -38,15 +38,19 @@ FIELD_GROUPS = [
             "power",
             "primary_comparisons",
             "allocation_ratio",
+            "pre_post_correlation",
         ],
     ),
     (
-        "continuous_outcome",
-        ["effect_size_d", "mean_control", "mean_intervention", "sd_pooled"],
-    ),
-    (
-        "binary_outcome",
-        ["proportion_control", "proportion_intervention"],
+        "effect_inputs",
+        [
+            "effect_size_d",
+            "mean_control",
+            "mean_intervention",
+            "sd_pooled",
+            "proportion_control",
+            "proportion_intervention",
+        ],
     ),
     (
         "corrections",
@@ -61,11 +65,17 @@ FIELD_GROUPS = [
             "extra_buffer_rate",
         ],
     ),
+    (
+        "inverse_inputs",
+        ["observed_control_n", "observed_intervention_n", "observed_total_n", "observed_effect_size"],
+    ),
     ("labels_notes", ["intervention_label", "control_label", "notes"]),
 ]
 
 FIELD_TYPES = {
     "study_name": "text",
+    "study_design": "design",
+    "analysis_mode": "mode",
     "language": "language",
     "analysis_unit": "text",
     "observation_unit": "text",
@@ -75,6 +85,7 @@ FIELD_TYPES = {
     "power": "rate",
     "primary_comparisons": "int",
     "allocation_ratio": "float",
+    "pre_post_correlation": "rate",
     "effect_size_d": "optional_float",
     "mean_control": "optional_float",
     "mean_intervention": "optional_float",
@@ -89,47 +100,29 @@ FIELD_TYPES = {
     "completion_rate": "rate",
     "usable_data_rate": "rate",
     "extra_buffer_rate": "rate",
+    "observed_control_n": "optional_int",
+    "observed_intervention_n": "optional_int",
+    "observed_total_n": "optional_int",
+    "observed_effect_size": "optional_float",
     "intervention_label": "text",
     "control_label": "text",
     "notes": "multiline",
 }
 
-WIZARD_FIELDS = [
-    "study_name",
-    "outcome_type",
-    "effect_size_d",
-    "proportion_control",
-    "proportion_intervention",
-    "alpha",
-    "power",
-    "allocation_ratio",
-    "response_rate",
-    "completion_rate",
-    "usable_data_rate",
-    "primary_comparisons",
-    "cluster_average_size",
-    "intraclass_correlation",
-]
-
-WIZARD_KEY_OVERRIDES = {
-    "cluster_average_size": "clusters",
-    "intraclass_correlation": "clusters",
-}
-
 
 class PlannerApp(tk.Tk):
-    """Main Tkinter window."""
-
     def __init__(self) -> None:
         super().__init__()
         self.config_model = StudyConfig()
         self.vars: dict[str, tk.Variable] = {}
+        self.range_override_vars: dict[str, tk.BooleanVar] = {}
         self.text_widgets: dict[str, tk.Text] = {}
         self.current_plan = None
+        self.range_issues: list[str] = []
         self.wizard_index = 0
         self.title(APP_WINDOW_TITLE)
-        self.geometry("1120x780")
-        self.minsize(920, 620)
+        self.geometry("1220x820")
+        self.minsize(980, 680)
         self._build_ui()
 
     @property
@@ -140,28 +133,26 @@ class PlannerApp(tk.Tk):
         for child in self.winfo_children():
             child.destroy()
         self.vars = {}
+        self.range_override_vars = {}
         self.text_widgets = {}
-        self.title(APP_WINDOW_TITLE)
 
         shell = ttk.Frame(self, padding=10)
         shell.pack(fill=tk.BOTH, expand=True)
 
         header = ttk.Frame(shell)
         header.pack(fill=tk.X, pady=(0, 8))
-        ttk.Label(header, text=APP_WINDOW_TITLE, font=("Segoe UI", 16, "bold")).pack(
-            side=tk.LEFT
-        )
-        ttk.Label(header, text=t(self.language, "language")).pack(side=tk.RIGHT, padx=(8, 0))
+        ttk.Label(header, text=APP_WINDOW_TITLE, font=("Segoe UI", 16, "bold")).pack(side=tk.LEFT)
         self.language_var = tk.StringVar(value=self.language)
-        language_combo = ttk.Combobox(
+        ttk.Label(header, text=t(self.language, "language")).pack(side=tk.RIGHT, padx=(8, 0))
+        combo = ttk.Combobox(
             header,
             textvariable=self.language_var,
             values=["en", "pt"],
             width=6,
             state="readonly",
         )
-        language_combo.pack(side=tk.RIGHT)
-        language_combo.bind("<<ComboboxSelected>>", self._on_language_change)
+        combo.pack(side=tk.RIGHT)
+        combo.bind("<<ComboboxSelected>>", self._on_language_change)
 
         self.notebook = ttk.Notebook(shell)
         self.notebook.pack(fill=tk.BOTH, expand=True)
@@ -187,13 +178,11 @@ class PlannerApp(tk.Tk):
         self._build_ui()
 
     def _build_wizard_tab(self) -> None:
-        intro = ttk.Label(
+        ttk.Label(
             self.wizard_tab,
             text=t(self.language, "wizard_intro"),
-            wraplength=920,
-            font=("Segoe UI", 10),
-        )
-        intro.pack(anchor=tk.W, pady=(0, 12))
+            wraplength=980,
+        ).pack(anchor=tk.W, pady=(0, 12))
 
         self.wizard_card = ttk.Frame(self.wizard_tab, padding=12, relief=tk.GROOVE)
         self.wizard_card.pack(fill=tk.BOTH, expand=True)
@@ -203,24 +192,19 @@ class PlannerApp(tk.Tk):
         self.wizard_question = ttk.Label(
             self.wizard_card,
             text="",
-            wraplength=880,
+            wraplength=920,
             font=("Segoe UI", 14, "bold"),
         )
         self.wizard_question.pack(anchor=tk.W, pady=(12, 4))
-        self.wizard_why = ttk.Label(self.wizard_card, text="", wraplength=880)
-        self.wizard_why.pack(anchor=tk.W, pady=(0, 16))
-
+        self.wizard_why = ttk.Label(self.wizard_card, text="", wraplength=920, justify=tk.LEFT)
+        self.wizard_why.pack(anchor=tk.W, pady=(0, 14))
         self.wizard_input = ttk.Frame(self.wizard_card)
         self.wizard_input.pack(fill=tk.X, pady=(0, 16))
 
         buttons = ttk.Frame(self.wizard_card)
-        buttons.pack(fill=tk.X, pady=(8, 0))
-        ttk.Button(buttons, text=t(self.language, "reset"), command=self._reset_wizard).pack(
-            side=tk.LEFT
-        )
-        self.prev_button = ttk.Button(
-            buttons, text=t(self.language, "previous"), command=self._wizard_previous
-        )
+        buttons.pack(fill=tk.X)
+        ttk.Button(buttons, text=t(self.language, "reset"), command=self._reset_wizard).pack(side=tk.LEFT)
+        self.prev_button = ttk.Button(buttons, text=t(self.language, "previous"), command=self._wizard_previous)
         self.prev_button.pack(side=tk.RIGHT, padx=(8, 0))
         self.next_button = ttk.Button(buttons, text=t(self.language, "next"), command=self._wizard_next)
         self.next_button.pack(side=tk.RIGHT)
@@ -231,22 +215,16 @@ class PlannerApp(tk.Tk):
         top = ttk.Frame(self.data_tab)
         top.pack(fill=tk.X, pady=(0, 8))
         ttk.Label(top, text=t(self.language, "direct_mode_hint")).pack(side=tk.LEFT)
-        ttk.Button(top, text=t(self.language, "calculate"), command=self.calculate).pack(
-            side=tk.RIGHT, padx=(8, 0)
-        )
+        ttk.Button(top, text=t(self.language, "calculate"), command=self.calculate).pack(side=tk.RIGHT, padx=(8, 0))
         ttk.Button(top, text=t(self.language, "load_config"), command=self.load_configuration).pack(
             side=tk.RIGHT, padx=(8, 0)
         )
-        ttk.Button(top, text=t(self.language, "save_config"), command=self.save_configuration).pack(
-            side=tk.RIGHT, padx=(8, 0)
-        )
+        ttk.Button(top, text=t(self.language, "save_config"), command=self.save_configuration).pack(side=tk.RIGHT)
 
         canvas = tk.Canvas(self.data_tab, highlightthickness=0)
         scrollbar = ttk.Scrollbar(self.data_tab, orient=tk.VERTICAL, command=canvas.yview)
         self.data_inner = ttk.Frame(canvas)
-        self.data_inner.bind(
-            "<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
+        self.data_inner.bind("<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all")))
         window_id = canvas.create_window((0, 0), window=self.data_inner, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
         canvas.bind("<Configure>", lambda event: canvas.itemconfigure(window_id, width=event.width))
@@ -255,59 +233,56 @@ class PlannerApp(tk.Tk):
 
         row = 0
         for group_key, fields in FIELD_GROUPS:
-            header = ttk.Label(
+            ttk.Label(
                 self.data_inner,
                 text=t(self.language, group_key),
                 font=("Segoe UI", 11, "bold"),
-            )
-            header.grid(row=row, column=0, columnspan=4, sticky="w", pady=(12, 4))
+            ).grid(row=row, column=0, columnspan=5, sticky="w", pady=(12, 4))
             row += 1
             for field in fields:
+                if not self._show_field(field):
+                    continue
                 row = self._add_config_field(self.data_inner, field, row)
 
         self.data_inner.columnconfigure(2, weight=1)
+        self.data_inner.columnconfigure(3, weight=1)
 
     def _build_results_tab(self) -> None:
         top = ttk.Frame(self.results_tab)
         top.pack(fill=tk.X, pady=(0, 8))
         ttk.Button(top, text=t(self.language, "calculate"), command=self.calculate).pack(side=tk.RIGHT)
-        ttk.Button(top, text=t(self.language, "save_report"), command=self.save_report).pack(
-            side=tk.RIGHT, padx=(0, 8)
-        )
+        ttk.Button(top, text=t(self.language, "save_report"), command=self.save_report).pack(side=tk.RIGHT, padx=(0, 8))
 
         self.results_notebook = ttk.Notebook(self.results_tab)
         self.results_notebook.pack(fill=tk.BOTH, expand=True)
 
         summary_frame = ttk.Frame(self.results_notebook, padding=6)
         sensitivity_frame = ttk.Frame(self.results_notebook, padding=6)
+        suggestions_frame = ttk.Frame(self.results_notebook, padding=6)
         json_frame = ttk.Frame(self.results_notebook, padding=6)
         self.results_notebook.add(summary_frame, text=t(self.language, "summary_tab"))
         self.results_notebook.add(sensitivity_frame, text=t(self.language, "sensitivity_tab"))
+        self.results_notebook.add(suggestions_frame, text=t(self.language, "suggestions_tab"))
         self.results_notebook.add(json_frame, text=t(self.language, "json_tab"))
 
         self.summary_text = self._make_text(summary_frame)
         self.summary_text.insert("1.0", t(self.language, "no_results"))
         self.sensitivity_table = self._make_sensitivity_table(sensitivity_frame)
+        self.suggestions_text = self._make_text(suggestions_frame)
         self.json_text = self._make_text(json_frame)
 
     def _make_text(self, parent: ttk.Frame) -> tk.Text:
         frame = ttk.Frame(parent)
         frame.pack(fill=tk.BOTH, expand=True)
-        text = tk.Text(frame, wrap=tk.WORD, height=20, font=("Consolas", 10))
-        scrollbar = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=text.yview)
-        text.configure(yscrollcommand=scrollbar.set)
+        text = tk.Text(frame, wrap=tk.WORD, font=("Consolas", 10))
+        scroll = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=text.yview)
+        text.configure(yscrollcommand=scroll.set)
         text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        scroll.pack(side=tk.RIGHT, fill=tk.Y)
         return text
 
     def _make_sensitivity_table(self, parent: ttk.Frame) -> ttk.Treeview:
-        columns = (
-            "scenario",
-            "valid_control",
-            "valid_intervention",
-            "valid_total",
-            "invited_total",
-        )
+        columns = ("scenario", "valid_control", "valid_intervention", "valid_total", "invited_total")
         frame = ttk.Frame(parent)
         frame.pack(fill=tk.BOTH, expand=True)
         tree = ttk.Treeview(frame, columns=columns, show="headings", height=14)
@@ -319,21 +294,15 @@ class PlannerApp(tk.Tk):
             "invited_total": t(self.language, "sens_col_invited_total"),
         }
         widths = {
-            "scenario": 190,
-            "valid_control": 130,
-            "valid_intervention": 150,
+            "scenario": 210,
+            "valid_control": 120,
+            "valid_intervention": 140,
             "valid_total": 110,
             "invited_total": 110,
         }
         for column in columns:
             tree.heading(column, text=headings[column])
-            tree.column(
-                column,
-                width=widths[column],
-                minwidth=90,
-                anchor=tk.E if column != "scenario" else tk.W,
-                stretch=column == "scenario",
-            )
+            tree.column(column, width=widths[column], minwidth=90, anchor=tk.W if column == "scenario" else tk.E)
         yscroll = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=tree.yview)
         xscroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
         tree.configure(yscrollcommand=yscroll.set, xscrollcommand=xscroll.set)
@@ -345,17 +314,20 @@ class PlannerApp(tk.Tk):
         return tree
 
     def _add_config_field(self, parent: ttk.Frame, field: str, row: int) -> int:
-        label = ttk.Label(parent, text=t(self.language, f"field_{field}"))
-        label.grid(row=row, column=0, sticky="w", padx=(0, 8), pady=4)
-        ttk.Button(
-            parent,
-            text="?",
-            width=3,
-            command=lambda field=field: self._show_help(field),
-        ).grid(row=row, column=1, sticky="w", padx=(0, 8), pady=4)
-
+        ttk.Label(parent, text=t(self.language, f"field_{field}")).grid(row=row, column=0, sticky="w", padx=(0, 8), pady=4)
+        ttk.Button(parent, text="?", width=3, command=lambda field=field: self._show_help(field)).grid(
+            row=row, column=1, sticky="w", padx=(0, 8), pady=4
+        )
         widget = self._create_input(parent, field)
         widget.grid(row=row, column=2, sticky="ew", pady=4)
+        range_label = ttk.Label(parent, text=self._range_text(field), wraplength=320, foreground="#555555")
+        range_label.grid(row=row, column=3, sticky="w", padx=(12, 8), pady=4)
+        if self._has_recommended_range(field):
+            override = tk.BooleanVar(value=field in self.config_model.range_override_fields)
+            self.range_override_vars[field] = override
+            ttk.Checkbutton(parent, text=t(self.language, "range_override"), variable=override).grid(
+                row=row, column=4, sticky="w", pady=4
+            )
         return row + 1
 
     def _create_input(self, parent: ttk.Frame, field: str) -> tk.Widget:
@@ -372,46 +344,154 @@ class PlannerApp(tk.Tk):
         self.vars[field] = var
         if kind == "language":
             return ttk.Combobox(parent, textvariable=var, values=["en", "pt"], state="readonly")
+        if kind == "design":
+            return ttk.Combobox(
+                parent,
+                textvariable=var,
+                values=self._design_values(),
+                state="readonly",
+            )
+        if kind == "mode":
+            return ttk.Combobox(parent, textvariable=var, values=self._mode_values(), state="readonly")
         if kind == "outcome":
-            values = [t(self.language, "outcome_continuous"), t(self.language, "outcome_binary")]
-            return ttk.Combobox(parent, textvariable=var, values=values, state="readonly")
+            return ttk.Combobox(parent, textvariable=var, values=self._outcome_values(), state="readonly")
         if kind == "alternative":
-            values = [
-                t(self.language, "alternative_two_sided"),
-                t(self.language, "alternative_greater"),
-                t(self.language, "alternative_less"),
-            ]
-            return ttk.Combobox(parent, textvariable=var, values=values, state="readonly")
+            return ttk.Combobox(parent, textvariable=var, values=self._alternative_values(), state="readonly")
         return ttk.Entry(parent, textvariable=var)
 
     def _show_help(self, field: str) -> None:
-        messagebox.showinfo(
-            t(self.language, f"field_{field}"),
-            t(self.language, f"help_{field}"),
-            parent=self,
-        )
+        content = get_field_content(self.language, field)
+        body = content.get("help", "")
+        if self._has_recommended_range(field):
+            body = f"{body}\n\n{t(self.language, 'range_label')} {self._range_text(field)}"
+        messagebox.showinfo(t(self.language, f"field_{field}"), body or field, parent=self)
+
+    def _design_values(self) -> list[str]:
+        return [
+            t(self.language, "design_parallel_two_group"),
+            t(self.language, "design_pretest_posttest_control"),
+            t(self.language, "design_one_group_pre_post"),
+        ]
+
+    def _mode_values(self) -> list[str]:
+        return [t(self.language, "mode_plan"), t(self.language, "mode_evaluate")]
+
+    def _outcome_values(self) -> list[str]:
+        if self._current_study_design() != "parallel_two_group":
+            return [t(self.language, "outcome_continuous")]
+        return [t(self.language, "outcome_continuous"), t(self.language, "outcome_binary")]
+
+    def _alternative_values(self) -> list[str]:
+        return [
+            t(self.language, "alternative_two_sided"),
+            t(self.language, "alternative_greater"),
+            t(self.language, "alternative_less"),
+        ]
+
+    def _show_field(self, field: str) -> bool:
+        design = self._current_study_design()
+        mode = self._current_analysis_mode()
+        outcome = self._current_outcome_type()
+        if field == "allocation_ratio":
+            return design != "one_group_pre_post"
+        if field == "pre_post_correlation":
+            return design == "pretest_posttest_control"
+        if field in {"mean_control", "mean_intervention", "sd_pooled"}:
+            return mode == "plan" and outcome == "continuous" and design != "one_group_pre_post"
+        if field == "effect_size_d":
+            return mode == "plan" and not (design == "parallel_two_group" and outcome == "binary")
+        if field in {"proportion_control", "proportion_intervention"}:
+            return mode == "plan" and design == "parallel_two_group" and outcome == "binary"
+        if field in {"observed_control_n", "observed_intervention_n"}:
+            return mode == "evaluate" and design != "one_group_pre_post"
+        if field == "observed_total_n":
+            return mode == "evaluate" and design == "one_group_pre_post"
+        if field == "observed_effect_size":
+            return mode == "evaluate"
+        if field == "control_label":
+            return design != "one_group_pre_post"
+        return True
 
     def _visible_wizard_fields(self) -> list[str]:
+        fields = [
+            "study_design",
+            "analysis_mode",
+            "study_name",
+            "outcome_type",
+            "alpha",
+            "power",
+        ]
+        design = self._current_study_design()
+        mode = self._current_analysis_mode()
         outcome = self._current_outcome_type()
-        visible: list[str] = []
-        for field in WIZARD_FIELDS:
-            if field == "effect_size_d" and outcome != "continuous":
-                continue
-            if field in {"proportion_control", "proportion_intervention"} and outcome != "binary":
-                continue
-            visible.append(field)
-        return visible
+        if mode == "plan":
+            if design == "parallel_two_group":
+                fields.append("allocation_ratio")
+                if outcome == "binary":
+                    fields.extend(["proportion_control", "proportion_intervention"])
+                else:
+                    fields.append("effect_size_d")
+            elif design == "pretest_posttest_control":
+                fields.extend(["allocation_ratio", "effect_size_d", "pre_post_correlation"])
+            else:
+                fields.append("effect_size_d")
+            fields.extend(
+                [
+                    "response_rate",
+                    "completion_rate",
+                    "usable_data_rate",
+                    "primary_comparisons",
+                    "cluster_average_size",
+                    "intraclass_correlation",
+                ]
+            )
+        else:
+            if design == "one_group_pre_post":
+                fields.extend(["observed_total_n", "observed_effect_size"])
+            else:
+                if design == "parallel_two_group":
+                    fields.append("allocation_ratio")
+                if design == "pretest_posttest_control":
+                    fields.append("pre_post_correlation")
+                fields.extend(["observed_control_n", "observed_intervention_n", "observed_effect_size"])
+        return fields
+
+    def _current_study_design(self) -> str:
+        var = self.vars.get("study_design")
+        if not var:
+            return self.config_model.study_design
+        text = str(var.get())
+        mapping = {
+            t(self.language, "design_parallel_two_group"): "parallel_two_group",
+            t(self.language, "design_pretest_posttest_control"): "pretest_posttest_control",
+            t(self.language, "design_one_group_pre_post"): "one_group_pre_post",
+            "parallel_two_group": "parallel_two_group",
+            "pretest_posttest_control": "pretest_posttest_control",
+            "one_group_pre_post": "one_group_pre_post",
+        }
+        return mapping.get(text, self.config_model.study_design)
+
+    def _current_analysis_mode(self) -> str:
+        var = self.vars.get("analysis_mode")
+        if not var:
+            return self.config_model.analysis_mode
+        text = str(var.get())
+        mapping = {
+            t(self.language, "mode_plan"): "plan",
+            t(self.language, "mode_evaluate"): "evaluate",
+            "plan": "plan",
+            "evaluate": "evaluate",
+        }
+        return mapping.get(text, self.config_model.analysis_mode)
 
     def _current_outcome_type(self) -> str:
         var = self.vars.get("outcome_type")
         if not var:
             return self.config_model.outcome_type
-        value = str(var.get())
-        if value == t(self.language, "outcome_binary"):
+        text = str(var.get())
+        if text in {t(self.language, "outcome_binary"), "binary"}:
             return "binary"
-        if value == t(self.language, "outcome_continuous"):
-            return "continuous"
-        return self.config_model.outcome_type
+        return "continuous"
 
     def _render_wizard_step(self) -> None:
         for child in self.wizard_input.winfo_children():
@@ -419,48 +499,69 @@ class PlannerApp(tk.Tk):
         fields = self._visible_wizard_fields()
         self.wizard_index = min(self.wizard_index, len(fields) - 1)
         field = fields[self.wizard_index]
-        key = WIZARD_KEY_OVERRIDES.get(field, field)
         self.wizard_progress.configure(text=f"{self.wizard_index + 1} / {len(fields)}")
-        self.wizard_question.configure(text=t(self.language, f"wizard_question_{key}"))
-        self.wizard_why.configure(text=t(self.language, f"wizard_why_{key}"))
+        self.wizard_question.configure(text=self._wizard_question(field))
+        self.wizard_why.configure(text=self._wizard_why(field))
 
         ttk.Label(self.wizard_input, text=t(self.language, f"field_{field}")).grid(
             row=0, column=0, sticky="w", padx=(0, 8)
         )
-        ttk.Button(
-            self.wizard_input,
-            text="?",
-            width=3,
-            command=lambda field=field: self._show_help(field),
-        ).grid(row=0, column=1, padx=(0, 8))
+        ttk.Button(self.wizard_input, text="?", width=3, command=lambda field=field: self._show_help(field)).grid(
+            row=0, column=1, padx=(0, 8)
+        )
         widget = self._create_wizard_input(self.wizard_input, field)
         widget.grid(row=0, column=2, sticky="ew")
+        ttk.Label(
+            self.wizard_input,
+            text=self._range_text(field),
+            wraplength=300,
+            foreground="#555555",
+        ).grid(row=1, column=2, sticky="w", pady=(6, 0))
+        if self._has_recommended_range(field):
+            override = self.range_override_vars.setdefault(
+                field, tk.BooleanVar(value=field in self.config_model.range_override_fields)
+            )
+            ttk.Checkbutton(
+                self.wizard_input,
+                text=t(self.language, "range_override"),
+                variable=override,
+            ).grid(row=2, column=2, sticky="w", pady=(6, 0))
         self.wizard_input.columnconfigure(2, weight=1)
-
         self.prev_button.configure(state=tk.NORMAL if self.wizard_index > 0 else tk.DISABLED)
         self.next_button.configure(
             text=t(self.language, "finish") if self.wizard_index == len(fields) - 1 else t(self.language, "next")
         )
 
     def _create_wizard_input(self, parent: ttk.Frame, field: str) -> tk.Widget:
-        if field not in self.vars and FIELD_TYPES[field] != "multiline":
-            self.vars[field] = tk.StringVar()
         kind = FIELD_TYPES[field]
-        if kind == "outcome":
-            values = [t(self.language, "outcome_continuous"), t(self.language, "outcome_binary")]
-            return ttk.Combobox(parent, textvariable=self.vars[field], values=values, state="readonly")
-        if kind == "alternative":
-            values = [
-                t(self.language, "alternative_two_sided"),
-                t(self.language, "alternative_greater"),
-                t(self.language, "alternative_less"),
-            ]
-            return ttk.Combobox(parent, textvariable=self.vars[field], values=values, state="readonly")
         if kind == "bool":
             if field not in self.vars:
                 self.vars[field] = tk.BooleanVar()
             return ttk.Checkbutton(parent, variable=self.vars[field])
+        if field not in self.vars:
+            self.vars[field] = tk.StringVar()
+        if kind == "design":
+            return ttk.Combobox(parent, textvariable=self.vars[field], values=self._design_values(), state="readonly")
+        if kind == "mode":
+            return ttk.Combobox(parent, textvariable=self.vars[field], values=self._mode_values(), state="readonly")
+        if kind == "outcome":
+            return ttk.Combobox(parent, textvariable=self.vars[field], values=self._outcome_values(), state="readonly")
+        if kind == "alternative":
+            return ttk.Combobox(parent, textvariable=self.vars[field], values=self._alternative_values(), state="readonly")
         return ttk.Entry(parent, textvariable=self.vars[field])
+
+    def _wizard_question(self, field: str) -> str:
+        if field == "study_design":
+            content = get_design_content(self.language, "parallel_two_group")
+            return str(content.get("wizard_question", t(self.language, "field_study_design")))
+        return t(self.language, f"wizard_question_{field}")
+
+    def _wizard_why(self, field: str) -> str:
+        if field == "study_design":
+            content = get_design_content(self.language, "parallel_two_group")
+            return str(content.get("wizard_why", t(self.language, "wizard_why_default")))
+        content = get_field_content(self.language, field)
+        return str(content.get("help", t(self.language, "wizard_why_default")))
 
     def _wizard_next(self) -> None:
         try:
@@ -474,6 +575,8 @@ class PlannerApp(tk.Tk):
             self.notebook.select(self.results_tab)
             return
         self.wizard_index += 1
+        self._build_ui()
+        self.wizard_index = min(self.wizard_index, len(self._visible_wizard_fields()) - 1)
         self._render_wizard_step()
 
     def _wizard_previous(self) -> None:
@@ -483,8 +586,7 @@ class PlannerApp(tk.Tk):
     def _reset_wizard(self) -> None:
         self.wizard_index = 0
         self.config_model = StudyConfig(language=self.language)
-        self._sync_config_to_vars()
-        self._render_wizard_step()
+        self._build_ui()
 
     def _sync_config_to_vars(self) -> None:
         for field in FIELD_TYPES:
@@ -492,14 +594,31 @@ class PlannerApp(tk.Tk):
             if field == "notes" and field in self.text_widgets:
                 self.text_widgets[field].delete("1.0", tk.END)
                 self.text_widgets[field].insert("1.0", value or "")
-            elif field == "outcome_type" and field in self.vars:
-                self.vars[field].set(self._display_outcome(value))
-            elif field == "alternative" and field in self.vars:
-                self.vars[field].set(self._display_alternative(value))
             elif field in self.vars:
-                self.vars[field].set("" if value is None else str(value))
+                self.vars[field].set(self._display_value(field, value))
         if hasattr(self, "language_var"):
             self.language_var.set(self.config_model.language)
+
+    def _display_value(self, field: str, value: Any) -> str:
+        if value is None:
+            return ""
+        if field == "study_design":
+            return {
+                "parallel_two_group": t(self.language, "design_parallel_two_group"),
+                "pretest_posttest_control": t(self.language, "design_pretest_posttest_control"),
+                "one_group_pre_post": t(self.language, "design_one_group_pre_post"),
+            }[str(value)]
+        if field == "analysis_mode":
+            return {"plan": t(self.language, "mode_plan"), "evaluate": t(self.language, "mode_evaluate")}[str(value)]
+        if field == "outcome_type":
+            return t(self.language, "outcome_binary") if value == "binary" else t(self.language, "outcome_continuous")
+        if field == "alternative":
+            return {
+                "two_sided": t(self.language, "alternative_two_sided"),
+                "greater": t(self.language, "alternative_greater"),
+                "less": t(self.language, "alternative_less"),
+            }[str(value)]
+        return str(value)
 
     def _sync_config_from_vars(self) -> None:
         data = config_to_dict(self.config_model)
@@ -520,13 +639,64 @@ class PlannerApp(tk.Tk):
             elif kind in {"float", "optional_float", "rate"}:
                 optional = kind == "optional_float"
                 data[field] = self._parse_number(raw, field, optional=optional, rate=kind == "rate")
+            elif kind == "design":
+                data[field] = self._current_study_design()
+            elif kind == "mode":
+                data[field] = self._current_analysis_mode()
             elif kind == "outcome":
-                data[field] = self._internal_outcome(str(raw))
+                data[field] = self._current_outcome_type()
             elif kind == "alternative":
                 data[field] = self._internal_alternative(str(raw))
             else:
                 data[field] = str(raw)
-        self.config_model = StudyConfig(**data)
+        data["range_override_fields"] = [field for field, var in self.range_override_vars.items() if bool(var.get())]
+        candidate = StudyConfig(**data)
+        self.range_issues = self._validate_recommended_ranges(candidate)
+        self.config_model = candidate
+
+    def _validate_recommended_ranges(self, config: StudyConfig) -> list[str]:
+        issues: list[str] = []
+        for field in FIELD_TYPES:
+            content = get_field_content(config.language, field)
+            rec = content.get("recommended")
+            if not rec:
+                continue
+            value = getattr(config, field, None)
+            if value is None or isinstance(value, bool) or isinstance(value, str):
+                continue
+            minimum = rec.get("min")
+            maximum = rec.get("max")
+            out_of_range = (minimum is not None and value < minimum) or (maximum is not None and value > maximum)
+            if not out_of_range:
+                continue
+            message = (
+                f"{t(config.language, f'field_{field}')} = {value} is outside the recommended range "
+                f"[{minimum}, {maximum}]. {rec.get('justification', '')}"
+            )
+            if field in config.range_override_fields:
+                issues.append(message)
+            else:
+                raise PlanningError(message)
+        return issues
+
+    def _has_recommended_range(self, field: str) -> bool:
+        return bool(get_field_content(self.language, field).get("recommended"))
+
+    def _range_text(self, field: str) -> str:
+        content = get_field_content(self.language, field)
+        rec = content.get("recommended")
+        if not rec:
+            return ""
+        minimum = rec.get("min")
+        maximum = rec.get("max")
+        typical = ", ".join(rec.get("typical", []))
+        pieces = [f"[{minimum}, {maximum}]"]
+        if typical:
+            pieces.append(f"typical: {typical}")
+        justification = rec.get("justification", "")
+        if justification:
+            pieces.append(justification)
+        return " ".join(str(piece) for piece in pieces if piece)
 
     def _parse_number(self, raw: Any, field: str, optional: bool = False, rate: bool = False) -> float | None:
         text = str(raw).strip().replace(",", ".")
@@ -557,23 +727,10 @@ class PlannerApp(tk.Tk):
         assert value is not None
         return int(value)
 
-    def _display_outcome(self, value: str) -> str:
-        return t(self.language, "outcome_binary") if value == "binary" else t(self.language, "outcome_continuous")
-
-    def _internal_outcome(self, value: str) -> str:
-        return "binary" if value == t(self.language, "outcome_binary") or value == "binary" else "continuous"
-
-    def _display_alternative(self, value: str) -> str:
-        if value == "greater":
-            return t(self.language, "alternative_greater")
-        if value == "less":
-            return t(self.language, "alternative_less")
-        return t(self.language, "alternative_two_sided")
-
     def _internal_alternative(self, value: str) -> str:
-        if value == t(self.language, "alternative_greater") or value == "greater":
+        if value in {t(self.language, "alternative_greater"), "greater"}:
             return "greater"
-        if value == t(self.language, "alternative_less") or value == "less":
+        if value in {t(self.language, "alternative_less"), "less"}:
             return "less"
         return "two_sided"
 
@@ -589,8 +746,7 @@ class PlannerApp(tk.Tk):
     def _update_results(self) -> None:
         if not self.current_plan:
             return
-        report = render_report(self.current_plan, self.language)
-        self._replace_text(self.summary_text, report)
+        self._replace_text(self.summary_text, render_report(self.current_plan, self.language))
         for item in self.sensitivity_table.get_children():
             self.sensitivity_table.delete(item)
         for row in self.current_plan.sensitivity:
@@ -599,6 +755,15 @@ class PlannerApp(tk.Tk):
                 tk.END,
                 values=(row.label, row.control, row.intervention, row.total, row.invited_total),
             )
+        suggestion_lines = list(self.current_plan.suggestions)
+        if self.range_issues:
+            suggestion_lines.append("")
+            suggestion_lines.append(get_general_content(self.language, "suggestions_title", "Suggestions"))
+            suggestion_lines.extend(self.range_issues)
+        if self.current_plan.warnings:
+            suggestion_lines.append("")
+            suggestion_lines.extend(self.current_plan.warnings)
+        self._replace_text(self.suggestions_text, "\n".join(suggestion_lines))
         self._replace_text(self.json_text, json.dumps(asdict(self.current_plan), indent=2, ensure_ascii=False))
 
     def _replace_text(self, text: tk.Text, content: str) -> None:

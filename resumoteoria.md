@@ -1,427 +1,259 @@
-# Operational Summary of Sample-Size Theory
+<!-- File version: 2.0; date: 2026-05-11 -->
 
-<!-- File version: 1.0; date: 2026-05-11 -->
+# Operational Theory Summary for ISP v2.0
 
-This file is a short operational guide for planning sample size in two-group intervention studies: one group receives the intervention and the other group does not. It is meant to help users apply the app, choose the right inputs, and write a defensible sample-size justification.
+This operational manual explains how to use `ISP v2.0` in a practical way. It is shorter than the educational LaTeX manual, but it is written to support real decisions in the app.
 
-Documentation policy: this English file is the canonical original. `resumoteoria_pt.md` is its Portuguese translation.
+## 1. What changed in v2.0
 
-It is not a full statistics textbook. It is a practical checklist for turning a research question into a sample-size plan.
+`ISP v1.0` focused on one design: two independent groups. `ISP v2.0` adds:
 
-## Central Idea
+- `Two independent groups`
+- `Pre-test/post-test with control group`
+- `One-group pre-test/post-test`
+- `Plan required sample`
+- `Evaluate achieved result`
+- recommended ranges with explicit override
+- explanations in `intervention_sample_planner/explanations.json`
+- a dedicated `Suggestions` tab
 
-Sample size is not only a calculation. It is a decision about the strength of evidence the study needs to produce.
+## 2. Start by choosing the research path
 
-The useful question is not only:
+The first decision in the wizard is no longer the outcome type. It is the research path.
 
-```text
-How many people do I need?
-```
+### Path A. Two independent groups
 
-It is:
+Use this when different people belong to intervention and control, and the main claim is about a difference between groups.
 
-```text
-What conclusion do I want to support, with what risk of error, using what data, in what population or context?
-```
+Educational-games example:
+A researcher in educational games wants to verify whether using the game Uno helps children understand the concepts of greater-than and less-than. One group plays Uno with guided prompts and then receives a short lesson. Another group receives only the lesson. Both groups complete a final test, and the main comparison is between the groups.
 
-A sample is sufficient when it can answer the study question without claiming more than the evidence supports.
+### Path B. Pre-test/post-test with control group
 
-## Four Questions Before Any Formula
+Use this when both groups are measured before and after.
 
-Before calculating, define:
+Educational-games example:
+A researcher wants to examine whether Uno changes mathematical comparison concepts beyond ordinary instruction. Children in both groups complete a pre-test. The intervention group then plays Uno and receives a short lesson. The control group receives only the lesson. Both groups complete the same post-test. In this path, the pre-test helps control baseline differences and improve precision.
 
-1. What is the unit of inference?
-   Examples: student, player, class, session, response, document, computational run.
+### Path C. One-group pre-test/post-test
 
-2. What kind of result will be analyzed?
-   Examples: learning mean, completion rate, error proportion, correlation, interview, log, case.
+Use this when there is no control group and the same participants are measured before and after.
 
-3. What effect would be large enough to matter?
-   Examples: a 0.5 point gain on a scale, an increase from 45% to 60% completion, a meaningful reduction in errors.
+Educational-games example:
+A researcher wants a first estimate of whether playing Uno between two measurements improves understanding of greater-than and less-than. The same children complete a pre-test, play Uno in a guided session, and then complete a post-test. This can be a useful pilot design, but it is weaker for causal inference because change over time may come from factors other than the game.
 
-4. How much uncertainty is acceptable?
-   Examples: alpha 0.05, power 80%, margin of error 5%, documented saturation.
+## 3. Then choose the run type
 
-## When the Study Compares Two Groups
+### Plan required sample
 
-For validating an intervention, the common design is:
+Use this when the study has not been run yet and you want to estimate:
 
-```text
-Intervention group vs control group
-```
+- valid analyzable participants needed
+- participants who must start
+- participants who must be invited
 
-This design should state:
+### Evaluate achieved result
 
-- the main hypothesis;
-- the primary outcome;
-- the significance level, or alpha;
-- the desired power;
-- the smallest relevant effect size;
-- the allocation ratio between groups;
-- expected losses, dropout, nonresponse, and invalid data.
+Use this when the study or pilot already exists and you want to estimate what the observed sample and observed effect imply.
 
-## Type I Error, Type II Error, and Power
+This inverse workflow helps answer:
 
-Type I error means concluding that there is an effect when there is no real effect.
+- Was the study underpowered?
+- What approximate p-value corresponds to the observed effect?
+- If the desired effect was not found, what effect was actually observed?
 
-```text
-P(Type I error) = alpha
-```
+## 4. Recommended ranges and why they exist
 
-Type II error means failing to detect a real relevant effect.
+The app now checks recommended or typical ranges. You can explicitly allow a value outside the range, but the app will record this and show it again in the `Suggestions` tab.
 
-```text
-P(Type II error) = beta
-```
+| Variable | Recommended or typical range | Common traditional values | Why this range is used |
+|---|---|---|---|
+| `alpha` | `0.01` to `0.10` | `0.05`, `0.01` | Outside this range, the evidential standard becomes unusual and should be justified. |
+| `power` | `0.80` to `0.95` | `0.80`, `0.90` | Below `0.80` is often weak for confirmatory work; above `0.95` may become impractical. |
+| `primary_comparisons` | `1` to `10` | `1`, `2`, `3` | Many primary comparisons often indicate the research question should be narrowed. |
+| `allocation_ratio` | `0.5` to `2.0` | `1.0` | Strong imbalance often wastes information unless justified operationally. |
+| `effect_size_d` | `0.10` to `1.20` | `0.20`, `0.50`, `0.80` | Tiny effects can require huge samples; huge effects should not be assumed without evidence. |
+| `pre_post_correlation` | `0.30` to `0.80` | `0.50`, `0.60` | This is a common range for many educational and usability measures. |
+| `response_rate` | `0.40` to `1.00` | `0.60`, `0.80`, `0.90` | Low values make recruitment fragile. |
+| `completion_rate` | `0.70` to `1.00` | `0.85`, `0.90`, `0.95` | Lower values signal attrition risk. In repeated measures, completion means both measurements. |
+| `usable_data_rate` | `0.80` to `1.00` | `0.90`, `0.95`, `0.98` | Low values often indicate a data-quality problem, not just a sample-size problem. |
+| `extra_buffer_rate` | `0.00` to `0.20` | `0.00`, `0.05`, `0.10` | Small buffers are common; large ones may indicate weak planning assumptions. |
+| `cluster_average_size` | `1` to `50` | `1`, `20`, `30` | Larger clusters make the ICC much more important. |
+| `intraclass_correlation` | `0.00` to `0.20` | `0.01`, `0.05`, `0.10` | Small ICC values are common, but even `0.05` can greatly inflate sample needs. |
 
-Power is the chance of detecting the planned effect if it really exists.
+## 5. The difficult variable: effect size
 
-```text
-power = 1 - beta
-```
+Effect size is not a decorative number. It is the smallest effect that would matter enough to justify the intervention.
 
-Common values:
+### 5.1 In two independent groups
 
-| Decision | Common value |
-| --- | --- |
-| Alpha | 0.05 |
-| Power | 0.80 |
-| More rigorous alpha | 0.01 |
-| More rigorous power | 0.90 or 0.95 |
+For continuous outcomes, `effect_size_d` is the standardized difference between groups. A traditional interpretation is:
 
-These are conventions, not laws. Different choices should be justified when the practical, ethical, or scientific cost of error is different.
+- `0.2`: small
+- `0.5`: medium
+- `0.8`: large
 
-## Comparing Two Means
+These are only rough anchors. If a learning test has a pooled standard deviation of `10` points and a `5`-point improvement would already justify using the intervention, then:
 
-Use this when the primary outcome is a mean:
+`d = 5 / 10 = 0.5`
 
-- learning score;
-- engagement score;
-- usability scale;
-- average time;
-- performance score.
+### 5.2 In pre-test/post-test with control
 
-The effect is Cohen's `d`:
+Here the question is often about the difference in gain. The intervention group may improve more than the control group between pre-test and post-test.
 
-```text
-d = (intervention_mean - control_mean) / pooled_standard_deviation
-```
+In the Uno example:
+- both groups begin with similar pre-test scores
+- the intervention group plays Uno and then has a short lesson
+- the control group has only the short lesson
+- the effect of interest is how much more the intervention group improves
 
-For equal group sizes:
+In practical terms, `effect_size_d` should represent the smallest standardized difference in gain that would matter.
 
-```text
-n_per_group = 2 * (z_alpha + z_power)^2 / d^2
-```
+### 5.3 In one-group pre-test/post-test
+
+There is no control group, so the effect is the standardized change in the same participants.
+
+This is useful for pilots, usability learning, or early classroom innovation studies. But interpretation is weaker because improvement may reflect practice, familiarity with the test, maturation, or ordinary teaching.
+
+### 5.4 In post-only opinion or usability research
+
+Sometimes there is only a survey after exposure to a system, game, or lesson. In that case, the effect size should still come from a meaningful difference, but the interpretation is often harder because there is no baseline measurement.
+
+For example:
+- if satisfaction is measured on a 1-to-5 scale
+- and a difference of `0.4` points would justify changing the interface
+- and the pooled standard deviation is expected to be `0.8`
+
+then:
+
+`d = 0.4 / 0.8 = 0.5`
+
+## 6. Traditional numbers and why they appear so often
+
+These values appear in the software because they are common in real research:
+
+- `alpha = 0.05`
+- `power = 0.80`
+- `power = 0.90`
+- `effect_size_d = 0.20, 0.50, 0.80`
+- `completion_rate = 0.85` or `0.90`
+- `usable_data_rate = 0.95`
+- `ICC = 0.05`
+
+They are common because they are often practical, not because they are mandatory.
+
+## 7. Worked operational examples
+
+### Example 1. Uno with control group and post-test comparison
+
+Scenario:
+A researcher in educational games wants to verify whether the use of Uno helps children understand greater-than and less-than. The intervention group plays Uno with guided prompts and then receives a short lesson. The control group receives only the lesson. Both groups complete a final test. The researcher expects a meaningful standardized difference of `0.5`.
+
+Wizard choices:
+
+- path: `Two independent groups`
+- run type: `Plan required sample`
+- outcome: `Continuous`
+- effect size: `0.5`
+- alpha: `0.05`
+- power: `0.80`
+- allocation ratio: `1`
+- completion rate: `0.90`
+- usable data rate: `0.95`
+
+Why this wizard:
+The main claim is a between-group difference after the intervention.
+
+### Example 2. Uno with pre-test/post-test and control
+
+Scenario:
+A researcher wants a stronger learning design. Both groups complete a pre-test. The intervention group then plays Uno and attends a short lesson. The control group attends only the lesson. Both groups complete the same post-test. The researcher expects the pre-test and post-test to correlate about `0.60`, and wants to detect a meaningful standardized difference in gain of `0.4`.
+
+Wizard choices:
+
+- path: `Pre-test/post-test with control group`
+- run type: `Plan required sample`
+- outcome: `Continuous`
+- effect size: `0.4`
+- pre/post correlation: `0.60`
+- alpha: `0.05`
+- power: `0.80`
+- completion rate: `0.85`
+
+Why this wizard:
+The same children are measured twice, but there is still a control group.
+
+### Example 3. Uno with one group only
+
+Scenario:
+A researcher cannot yet recruit a comparison group and wants a pilot. The same children complete a pre-test, participate in a guided Uno session, and complete a post-test. Final adherence is defined as completing both tests. The researcher wants to detect a standardized mean change of `0.5`.
+
+Wizard choices:
+
+- path: `One-group pre-test/post-test`
+- run type: `Plan required sample`
+- outcome: `Continuous`
+- effect size: `0.5`
+- alpha: `0.05`
+- power: `0.80`
+- completion rate: `0.85`
+
+Why this wizard:
+There is no control group and the outcome is the change in the same participants.
+
+## 8. The inverse problem
+
+The app can also do the reverse calculation.
 
 Example:
+A Uno pilot with one group collected `28` children who completed both tests and produced an observed standardized change of `0.35`.
 
-- alpha = 0.05, two-sided;
-- power = 0.80;
-- d = 0.5.
+Wizard choices:
 
-Approximate result:
+- path: `One-group pre-test/post-test`
+- run type: `Evaluate achieved result`
+- alpha: `0.05`
+- observed total n: `28`
+- observed effect: `0.35`
 
-```text
-63 participants per group
-126 participants total
-```
+The app then estimates:
 
-Interpretation: the study is planned to detect a standardized mean difference of 0.5 between intervention and control.
+- approximate z statistic
+- approximate p-value
+- approximate achieved power for the observed effect
 
-## Comparing Two Proportions
+This is useful when the desired effect was not found. A non-significant result may mean:
 
-Use this when the primary outcome is a rate:
+- the intervention really had little or no effect
+- the study had too little precision
+- the observed effect was smaller than planned
 
-- completed or did not complete;
-- succeeded or failed;
-- returned or did not return;
-- dropped out or stayed;
-- chose or did not choose an option.
+## 9. What to do when the desired effect is not found
 
-Main inputs:
+The absence of the desired effect does not mean there was no effect at all.
 
-```text
-control_proportion
-intervention_proportion
-alpha
-power
-allocation_ratio
-```
+At the end of the study, it is often useful to calculate and report:
 
-Example:
+- the effect actually observed
+- the approximate uncertainty around it
+- whether the collected sample had enough precision for the effect you cared about
 
-- 45% complete in the control group;
-- 60% complete in the intervention group;
-- alpha = 0.05, two-sided;
-- power = 0.80.
+In practical terms:
 
-Approximate result:
+- planning asks: `What effect do I want to be able to detect?`
+- evaluation asks: `What effect did I actually observe, and what was this study able to show about it?`
 
-```text
-173 participants per group
-346 participants total
-```
+## 10. Suggestions tab
 
-Interpretation: comparing proportions often requires larger samples than researchers expect, especially when the expected difference is moderate.
+The `Suggestions` tab is the place where the software becomes more judgmental in a helpful way.
 
-## Unequal Groups
+It highlights things such as:
 
-If group sizes are unequal, define the ratio:
+- low response rate
+- low completion rate
+- low usable-data rate
+- cluster inflation
+- no-control-group limitations
+- values accepted outside recommended ranges
 
-```text
-k = intervention_n / control_n
-```
-
-Example:
-
-```text
-k = 2
-```
-
-means the intervention group is planned to be twice as large as the control group.
-
-Unequal groups may be necessary because of access or logistics, but they usually increase the total sample needed for the same statistical strength.
-
-## Initial Sample, Valid Sample, and Invitations
-
-The number produced by the main formula is usually the number of valid analyzable cases, not the number of invitations.
-
-Separate these stages:
-
-| Stage | Meaning |
-| --- | --- |
-| Initial valid target | Required analyzable cases if everyone provides usable data |
-| Corrected valid target | Valid cases after finite-population, cluster, or multiple-comparison correction |
-| Participants to start | People who should begin after dropout and invalid-data losses are considered |
-| People to invite/contact | People who should be contacted after the response/start rate is considered |
-
-Simple loss correction:
-
-```text
-recruited_n = required_n / (1 - loss_rate)
-```
-
-Example:
-
-```text
-63 / 0.85 = 74.12
-```
-
-Round up:
-
-```text
-75 participants per group
-```
-
-## Response Rate and Invalid Data
-
-When not everyone invited participates:
-
-```text
-invitations = valid_n / response_rate
-```
-
-When some completed data are invalid:
-
-```text
-effective_rate = response_rate * completion_rate * usable_data_rate
-```
-
-Then:
-
-```text
-invitations = valid_n / effective_rate
-```
-
-Example:
-
-- 292 valid responses needed;
-- response rate = 40%;
-- invalid or incomplete response loss = 10%.
-
-Effective rate:
-
-```text
-0.40 * 0.90 = 0.36
-```
-
-Invitations:
-
-```text
-292 / 0.36 = 812 invitations
-```
-
-## Finite Population
-
-Use finite-population correction only when the conclusion is restricted to a small known population.
-
-Examples:
-
-- all students in one course;
-- all participants in one workshop;
-- all players in a closed test.
-
-Formula:
-
-```text
-n = (N * n0) / (N + n0 - 1)
-```
-
-Where:
-
-- `N` is the finite population size;
-- `n0` is the sample without correction;
-- `n` is the corrected sample.
-
-Do not use this correction when the intended conclusion is about a broad population.
-
-## Classes, Groups, and Clusters
-
-When participants are grouped, they are not fully independent.
-
-Examples:
-
-- students inside the same class;
-- players inside the same team;
-- participants inside the same workshop;
-- patients inside the same service.
-
-Design-effect correction:
-
-```text
-DEFF = 1 + (m - 1) * ICC
-```
-
-Where:
-
-- `m` is the average cluster size;
-- `ICC` is the intraclass correlation.
-
-Adjusted sample:
-
-```text
-adjusted_n = independent_n * DEFF
-```
-
-Example:
-
-- independent sample = 126;
-- average class size = 25;
-- ICC = 0.05.
-
-```text
-DEFF = 1 + 24 * 0.05 = 2.2
-126 * 2.2 = 278
-```
-
-Result:
-
-```text
-278 students
-```
-
-## Multiple Comparisons
-
-If the study tests several primary outcomes, the false-positive risk increases.
-
-A simple correction is Bonferroni:
-
-```text
-adjusted_alpha = alpha / number_of_comparisons
-```
-
-Example:
-
-```text
-0.05 / 5 = 0.01
-```
-
-This reduces false positives but increases the required sample. Define in advance which comparisons are primary and which are exploratory.
-
-## Small Studies
-
-A small sample is not automatically a bad sample.
-
-It can be appropriate when the goal is:
-
-- pilot testing;
-- instrument testing;
-- formative evaluation;
-- problem diagnosis;
-- prototype refinement;
-- in-depth interview;
-- case study;
-- hypothesis generation.
-
-It is insufficient when the text promises:
-
-- general effectiveness;
-- definitive superiority;
-- population impact;
-- conclusive validation;
-- absence of rare problems;
-- broad generalization without a compatible design.
-
-## If the Available Sample Is Small
-
-Reformulate the question so it matches the evidence you can actually collect.
-
-Avoid:
-
-```text
-The intervention improves student learning.
-```
-
-Prefer, when the design is small or exploratory:
-
-```text
-In this observed context, the intervention produced preliminary indications of improvement and identified conditions for a future evaluation with greater statistical power.
-```
-
-This does not weaken the study. It makes the conclusion proportional to the evidence.
-
-## Planning Checklist
-
-Before data collection:
-
-- Did I define the population or context?
-- Did I define the unit of analysis?
-- Did I define the unit of observation?
-- Did I choose the primary outcome?
-- Did I decide whether the outcome is a mean or a proportion?
-- Did I justify the relevant effect size?
-- Did I choose alpha and power?
-- Did I decide whether the test is two-sided or one-sided?
-- Did I define the intervention/control allocation ratio?
-- Did I consider losses, dropout, and invalid data?
-- Did I consider response rate?
-- Did I consider finite population, if applicable?
-- Did I consider clusters, if applicable?
-- Did I consider multiple comparisons?
-- Did I write the real limit of the conclusion?
-
-## How to Write the Sample-Size Justification
-
-Template for two means:
-
-```text
-The experiment compared two independent groups: intervention and control. The sample size was planned to detect a standardized mean difference of d = [value] in the primary outcome, with alpha = [value], a [two-sided/one-sided] test, and power of [value]. The planned allocation ratio was [ratio]. The calculation indicated [n] valid participants per group. Considering [rate] of losses, dropout, or invalid data, the study should start approximately [corrected_n] participants per group. Conclusions will be limited to the population, context, and measure defined in the design.
-```
-
-Template for two proportions:
-
-```text
-The experiment compared the proportion of [event] between the intervention group and the control group. Planning assumed an expected proportion of [control_p] in the control group and [intervention_p] in the intervention group, with alpha = [value], a [two-sided/one-sided] test, and power of [value]. The calculation indicated [n] valid participants per group. After corrections for response, completion, and usable data, the study should invite approximately [invitations] people. Results will be interpreted in proportion to the design and observed losses.
-```
-
-Template for a small or formative study:
-
-```text
-Given restrictions in time, access, and intervention maturity, this study was planned as an exploratory and formative evaluation. The goal is not to estimate a definitive population effect, but to identify indications, usability issues, comprehension, acceptability, and conditions for a later evaluation. Quantitative results will be treated descriptively, and qualitative data will be used to interpret the observed patterns.
-```
-
-## Final Rule
-
-Every study should collect enough evidence to answer the question it asks.
-
-And every study should ask a question that can be answered by the evidence it can collect.
+The goal is not to block the study, but to make the tradeoffs explicit.

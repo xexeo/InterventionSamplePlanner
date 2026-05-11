@@ -1,0 +1,342 @@
+{
+  "_file_version": "2.0",
+  "_file_date": "2026-05-11",
+  "en": {
+    "general": {
+      "range_ok": "Inside the typical or recommended range.",
+      "range_override": "Allow value outside the recommended range",
+      "suggestions_title": "Suggestions and design notes",
+      "inverse_mode_hint": "Inverse mode estimates what the achieved sample and observed effect imply for approximate power and p-value."
+    },
+    "designs": {
+      "parallel_two_group": {
+        "label": "Two independent groups",
+        "wizard_question": "Which research path should the study follow?",
+        "wizard_why": "Different research paths need different assumptions and different calculations.",
+        "description": "Use this when one group receives the intervention and another group does not, and the main comparison is between groups."
+      },
+      "pretest_posttest_control": {
+        "label": "Pre-test/post-test with control group",
+        "description": "Use this when both groups are measured before and after, for example a learning game plus lesson compared with lesson only."
+      },
+      "one_group_pre_post": {
+        "label": "One-group pre-test/post-test",
+        "description": "Use this when the same people are measured before and after the intervention and there is no control group."
+      },
+      "plan": {
+        "label": "Plan required sample",
+        "description": "Estimate how many valid participants, starters, and invitations are needed."
+      },
+      "evaluate": {
+        "label": "Evaluate achieved result",
+        "description": "Enter an achieved sample and observed effect to estimate approximate p-value and achieved power."
+      }
+    },
+    "fields": {
+      "study_design": {
+        "help": "Choose the structure that best matches how data will be collected. Parallel two-group means different people in intervention and control. Pre-test/post-test with control means the same people are measured before and after in both groups. One-group pre-test/post-test means there is no control group and the same participants are measured twice."
+      },
+      "analysis_mode": {
+        "help": "Choose planning mode when you want to know the sample required before data collection. Choose achieved-result mode when you already have a sample and want to estimate what that sample and observed effect imply."
+      },
+      "alpha": {
+        "help": "Alpha controls the planned false-positive risk. A traditional value in many behavioral studies is 0.05. Stronger confirmatory work may use 0.01. Exploratory projects sometimes use 0.10, but that should be justified.",
+        "recommended": {
+          "min": 0.01,
+          "max": 0.10,
+          "typical": ["0.05", "0.01"],
+          "justification": "Most social, educational, and usability studies work between 0.01 and 0.10. Values outside this range are possible, but they should be explicitly justified because they materially change the evidential standard."
+        }
+      },
+      "power": {
+        "help": "Power is the probability of detecting the planned effect if it exists. Traditional planning values are 0.80 and 0.90. Larger values require larger samples.",
+        "recommended": {
+          "min": 0.80,
+          "max": 0.95,
+          "typical": ["0.80", "0.90"],
+          "justification": "Values below 0.80 are often considered weak for confirmatory work. Values above 0.95 are possible, but may become infeasible without strong practical reason."
+        }
+      },
+      "primary_comparisons": {
+        "help": "Count only planned primary comparisons, not every exploratory chart or follow-up test. If there are several primary tests, alpha is adjusted.",
+        "recommended": {
+          "min": 1,
+          "max": 10,
+          "typical": ["1", "2", "3"],
+          "justification": "Most focused studies have one or a few primary confirmatory comparisons. A large number of primary comparisons usually means the research question should be narrowed or the multiplicity strategy reconsidered."
+        }
+      },
+      "allocation_ratio": {
+        "help": "Allocation ratio is intervention divided by control. Use 1 for equal groups. If you expect twice as many intervention participants as controls, use 2.",
+        "recommended": {
+          "min": 0.5,
+          "max": 2.0,
+          "typical": ["1.0"],
+          "justification": "Balanced groups are usually the most efficient. Strongly unbalanced designs often waste information unless there is a real operational reason."
+        }
+      },
+      "effect_size_d": {
+        "help": "For parallel two-group studies, this is the standardized difference between groups. For one-group pre-test/post-test, this is the standardized mean change for the same people. For pre-test/post-test with control, this is the standardized difference in change or the post-test effect after baseline is accounted for. Traditional reference points often mention 0.2 as small, 0.5 as medium, and 0.8 as large, but the best value is the smallest effect that would matter in practice.",
+        "recommended": {
+          "min": 0.10,
+          "max": 1.20,
+          "typical": ["0.20", "0.50", "0.80"],
+          "justification": "Very tiny standardized effects can require impractically large samples. Very large effects are possible, but should not be assumed without strong pilot or literature support."
+        }
+      },
+      "pre_post_correlation": {
+        "help": "Correlation between pre-test and post-test for the same people. In learning and attitude measures, values around 0.40 to 0.70 are common when the measure is reasonably stable. Higher correlation usually means the pre-test adds more precision.",
+        "recommended": {
+          "min": 0.30,
+          "max": 0.80,
+          "typical": ["0.50", "0.60"],
+          "justification": "This range is common in many educational and usability measures. If you have pilot data, use that instead of a generic value."
+        }
+      },
+      "proportion_control": {
+        "help": "Expected control-group rate. Enter 0.45 for 45%. Use previous classes, prior studies, or platform analytics when possible.",
+        "recommended": {
+          "min": 0.05,
+          "max": 0.95,
+          "typical": ["0.30", "0.50", "0.70"],
+          "justification": "Rates near 0 or 1 may need special modeling and are easy to guess badly. Mid-range values are common in learning completion and usability success tasks."
+        }
+      },
+      "proportion_intervention": {
+        "help": "Expected intervention-group rate. Enter 0.60 for 60%. The difference from the control rate is the effect the study is planned to detect.",
+        "recommended": {
+          "min": 0.05,
+          "max": 0.95,
+          "typical": ["0.40", "0.60", "0.80"],
+          "justification": "Extremely low or high rates are possible, but they should come from prior evidence because they strongly affect the sample."
+        }
+      },
+      "response_rate": {
+        "help": "Share of invited people expected to start or accept. In educational and survey-like studies, this can vary widely. Use pilot recruitment or previous projects when available.",
+        "recommended": {
+          "min": 0.40,
+          "max": 1.00,
+          "typical": ["0.60", "0.80", "0.90"],
+          "justification": "Very low response rates are possible, but they make recruitment fragile and usually deserve operational mitigation."
+        }
+      },
+      "completion_rate": {
+        "help": "Share of starters expected to finish all required measurement points. In pre-test/post-test designs, final adherence means completing both tests.",
+        "recommended": {
+          "min": 0.70,
+          "max": 1.00,
+          "typical": ["0.85", "0.90", "0.95"],
+          "justification": "Values below 0.70 indicate substantial attrition risk. In repeated-measure studies, completion should be defined as finishing all required waves."
+        }
+      },
+      "usable_data_rate": {
+        "help": "Share of completed cases expected to remain analyzable after exclusions, missing files, technical failures, and quality checks.",
+        "recommended": {
+          "min": 0.80,
+          "max": 1.00,
+          "typical": ["0.90", "0.95", "0.98"],
+          "justification": "If usable-data rate is much lower than 0.80, the data-collection process often needs redesign instead of only a larger sample."
+        }
+      },
+      "extra_buffer_rate": {
+        "help": "Extra conservative margin after other loss rates. Use when there is uncertainty not already represented, such as anticipated technical instability.",
+        "recommended": {
+          "min": 0.00,
+          "max": 0.20,
+          "typical": ["0.00", "0.05", "0.10"],
+          "justification": "A small extra buffer is common. Large buffers may mean the study assumptions are too uncertain and should be improved upstream."
+        }
+      },
+      "cluster_average_size": {
+        "help": "Average number of people per natural group, such as class, team, or workshop. Use 1 when people are effectively independent.",
+        "recommended": {
+          "min": 1.0,
+          "max": 50.0,
+          "typical": ["1", "20", "30"],
+          "justification": "Many educational and workshop studies fall in this range. Larger clusters are possible, but cluster effects become especially important."
+        }
+      },
+      "intraclass_correlation": {
+        "help": "ICC measures similarity inside clusters. Even 0.05 can matter a lot in classroom studies.",
+        "recommended": {
+          "min": 0.00,
+          "max": 0.20,
+          "typical": ["0.01", "0.05", "0.10"],
+          "justification": "Small ICC values are common in education, usability labs, and team settings. Higher values are possible, but should come from prior evidence."
+        }
+      },
+      "observed_effect_size": {
+        "help": "In achieved-result mode, enter the effect actually observed. For continuous designs this is a standardized effect. For binary parallel designs this is the observed difference in proportions."
+      }
+    }
+  },
+  "pt": {
+    "general": {
+      "range_ok": "Dentro da faixa típica ou recomendada.",
+      "range_override": "Permitir valor fora da faixa recomendada",
+      "suggestions_title": "Sugestões e observações de desenho",
+      "inverse_mode_hint": "O modo inverso estima o que a amostra alcançada e o efeito observado implicam para poder aproximado e valor-p."
+    },
+    "designs": {
+      "parallel_two_group": {
+        "label": "Dois grupos independentes",
+        "wizard_question": "Que caminho de pesquisa o estudo deve seguir?",
+        "wizard_why": "Caminhos de pesquisa diferentes exigem suposições e cálculos diferentes.",
+        "description": "Use quando um grupo recebe a intervenção e outro grupo não recebe, e a comparação principal é entre grupos."
+      },
+      "pretest_posttest_control": {
+        "label": "Pré-teste/pós-teste com grupo de controle",
+        "description": "Use quando os dois grupos são medidos antes e depois, por exemplo um jogo educativo mais aula comparado com apenas aula."
+      },
+      "one_group_pre_post": {
+        "label": "Pré-teste/pós-teste com um grupo",
+        "description": "Use quando as mesmas pessoas são medidas antes e depois da intervenção e não há grupo de controle."
+      },
+      "plan": {
+        "label": "Planejar amostra necessária",
+        "description": "Estime quantos participantes válidos, iniciados e convidados são necessários."
+      },
+      "evaluate": {
+        "label": "Avaliar resultado alcançado",
+        "description": "Informe a amostra alcançada e o efeito observado para estimar valor-p e poder alcançado aproximados."
+      }
+    },
+    "fields": {
+      "study_design": {
+        "help": "Escolha a estrutura que melhor corresponde à coleta. Dois grupos independentes significa pessoas diferentes em intervenção e controle. Pré-teste/pós-teste com controle significa que as mesmas pessoas são medidas antes e depois nos dois grupos. Pré-teste/pós-teste com um grupo significa ausência de controle e duas medições nas mesmas pessoas."
+      },
+      "analysis_mode": {
+        "help": "Escolha modo de planejamento quando quiser saber a amostra necessária antes da coleta. Escolha modo de resultado alcançado quando já tiver uma amostra e quiser estimar o que ela implica."
+      },
+      "alpha": {
+        "help": "Alfa controla o risco planejado de falso positivo. Um valor tradicional em muitos estudos comportamentais é 0,05. Trabalhos confirmatórios mais fortes podem usar 0,01. Projetos exploratórios às vezes usam 0,10, mas isso deve ser justificado.",
+        "recommended": {
+          "min": 0.01,
+          "max": 0.10,
+          "typical": ["0.05", "0.01"],
+          "justification": "Muitos estudos sociais, educacionais e de usabilidade trabalham entre 0,01 e 0,10. Valores fora dessa faixa são possíveis, mas devem ser justificados explicitamente porque mudam materialmente o padrão de evidência."
+        }
+      },
+      "power": {
+        "help": "Poder é a probabilidade de detectar o efeito planejado se ele existir. Valores tradicionais de planejamento são 0,80 e 0,90. Valores maiores exigem amostras maiores.",
+        "recommended": {
+          "min": 0.80,
+          "max": 0.95,
+          "typical": ["0.80", "0.90"],
+          "justification": "Valores abaixo de 0,80 costumam ser considerados fracos para trabalho confirmatório. Valores acima de 0,95 são possíveis, mas podem se tornar inviáveis sem razão prática forte."
+        }
+      },
+      "primary_comparisons": {
+        "help": "Conte apenas comparações primárias planejadas, não todo gráfico exploratório ou teste de seguimento. Se houver vários testes primários, o alfa é ajustado.",
+        "recommended": {
+          "min": 1,
+          "max": 10,
+          "typical": ["1", "2", "3"],
+          "justification": "A maioria dos estudos focados tem uma ou poucas comparações primárias confirmatórias. Um número grande de comparações primárias geralmente indica que a pergunta precisa ser estreitada."
+        }
+      },
+      "allocation_ratio": {
+        "help": "Razão de alocação é intervenção dividida por controle. Use 1 para grupos iguais. Se espera o dobro de participantes na intervenção, use 2.",
+        "recommended": {
+          "min": 0.5,
+          "max": 2.0,
+          "typical": ["1.0"],
+          "justification": "Grupos balanceados normalmente são mais eficientes. Desenhos muito desbalanceados costumam desperdiçar informação, a menos que exista motivo operacional real."
+        }
+      },
+      "effect_size_d": {
+        "help": "Em estudos paralelos de dois grupos, este é o efeito padronizado entre grupos. Em pré-teste/pós-teste com um grupo, é a mudança média padronizada nas mesmas pessoas. Em pré-teste/pós-teste com controle, é a diferença padronizada de mudança ou o efeito no pós-teste depois de considerar a linha de base. Referências tradicionais mencionam 0,2 como pequeno, 0,5 como médio e 0,8 como grande, mas o melhor valor é o menor efeito que importaria na prática.",
+        "recommended": {
+          "min": 0.10,
+          "max": 1.20,
+          "typical": ["0.20", "0.50", "0.80"],
+          "justification": "Efeitos padronizados muito pequenos podem exigir amostras impraticáveis. Efeitos muito grandes são possíveis, mas não devem ser assumidos sem apoio forte de piloto ou literatura."
+        }
+      },
+      "pre_post_correlation": {
+        "help": "Correlação entre pré-teste e pós-teste nas mesmas pessoas. Em medidas de aprendizagem e atitude, valores entre 0,40 e 0,70 são comuns quando a medida é razoavelmente estável. Correlação maior geralmente significa que o pré-teste acrescenta mais precisão.",
+        "recommended": {
+          "min": 0.30,
+          "max": 0.80,
+          "typical": ["0.50", "0.60"],
+          "justification": "Essa faixa é comum em muitas medidas educacionais e de usabilidade. Se você tiver dados piloto, use-os em vez de um valor genérico."
+        }
+      },
+      "proportion_control": {
+        "help": "Taxa esperada no grupo de controle. Digite 0,45 para 45%. Use turmas anteriores, estudos prévios ou análises da plataforma quando possível.",
+        "recommended": {
+          "min": 0.05,
+          "max": 0.95,
+          "typical": ["0.30", "0.50", "0.70"],
+          "justification": "Taxas muito próximas de 0 ou 1 podem exigir modelagem especial e são fáceis de supor mal. Valores intermediários são comuns em conclusão de aprendizagem e sucesso em tarefas."
+        }
+      },
+      "proportion_intervention": {
+        "help": "Taxa esperada no grupo com intervenção. Digite 0,60 para 60%. A diferença para a taxa de controle é o efeito para o qual o estudo será planejado.",
+        "recommended": {
+          "min": 0.05,
+          "max": 0.95,
+          "typical": ["0.40", "0.60", "0.80"],
+          "justification": "Taxas extremamente baixas ou altas são possíveis, mas devem vir de evidência prévia porque afetam fortemente a amostra."
+        }
+      },
+      "response_rate": {
+        "help": "Parcela dos convidados que deve iniciar ou aceitar. Em estudos educacionais e de survey isso pode variar muito. Use recrutamento piloto ou projetos anteriores quando houver.",
+        "recommended": {
+          "min": 0.40,
+          "max": 1.00,
+          "typical": ["0.60", "0.80", "0.90"],
+          "justification": "Taxas de resposta muito baixas são possíveis, mas tornam o recrutamento frágil e geralmente merecem mitigação operacional."
+        }
+      },
+      "completion_rate": {
+        "help": "Parcela dos iniciados que deve completar todos os pontos de medição exigidos. Em desenhos pré-teste/pós-teste, adesão final significa completar os dois testes.",
+        "recommended": {
+          "min": 0.70,
+          "max": 1.00,
+          "typical": ["0.85", "0.90", "0.95"],
+          "justification": "Valores abaixo de 0,70 indicam risco substancial de atrito. Em estudos com medidas repetidas, conclusão deve significar terminar todas as ondas exigidas."
+        }
+      },
+      "usable_data_rate": {
+        "help": "Parcela dos casos completos que deve permanecer analisável após exclusões, arquivos ausentes, falhas técnicas e checagens de qualidade.",
+        "recommended": {
+          "min": 0.80,
+          "max": 1.00,
+          "typical": ["0.90", "0.95", "0.98"],
+          "justification": "Se a taxa de dados utilizáveis for muito menor que 0,80, o processo de coleta geralmente precisa ser redesenhado em vez de apenas aumentar a amostra."
+        }
+      },
+      "extra_buffer_rate": {
+        "help": "Margem conservadora extra após as outras taxas de perda. Use quando houver incerteza que ainda não esteja representada, como instabilidade técnica antecipada.",
+        "recommended": {
+          "min": 0.00,
+          "max": 0.20,
+          "typical": ["0.00", "0.05", "0.10"],
+          "justification": "Uma reserva pequena é comum. Reservas grandes podem significar que as suposições do estudo estão incertas demais e precisam ser melhoradas antes."
+        }
+      },
+      "cluster_average_size": {
+        "help": "Número médio de pessoas por grupo natural, como turma, equipe ou oficina. Use 1 quando as pessoas forem efetivamente independentes.",
+        "recommended": {
+          "min": 1.0,
+          "max": 50.0,
+          "typical": ["1", "20", "30"],
+          "justification": "Muitos estudos educacionais e de oficina caem nessa faixa. Clusters maiores são possíveis, mas os efeitos de cluster ficam especialmente importantes."
+        }
+      },
+      "intraclass_correlation": {
+        "help": "ICC mede a similaridade dentro dos clusters. Mesmo 0,05 pode importar bastante em estudos com turmas.",
+        "recommended": {
+          "min": 0.00,
+          "max": 0.20,
+          "typical": ["0.01", "0.05", "0.10"],
+          "justification": "Valores pequenos de ICC são comuns em educação, laboratórios de usabilidade e equipes. Valores mais altos são possíveis, mas devem vir de evidência prévia."
+        }
+      },
+      "observed_effect_size": {
+        "help": "No modo de resultado alcançado, informe o efeito realmente observado. Para desenhos contínuos, é um efeito padronizado. Para desenho paralelo binário, é a diferença observada entre proporções."
+      }
+    }
+  }
+}

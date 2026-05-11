@@ -1,4 +1,4 @@
-# File version: 1.0; date: 2026-05-11
+# File version: 2.0; date: 2026-05-11
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -6,8 +6,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "intervention-sample-planner"
-version = "1.0.0"
-description = "Local API and Tkinter app for planning sample sizes for two-group intervention studies."
+version = "2.0.0"
+description = "Local API and Tkinter app for planning or evaluating several intervention-study designs."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -27,3 +27,6 @@ intervention-sample-planner = "intervention_sample_planner.gui:main"
 
 [tool.setuptools.packages.find]
 include = ["intervention_sample_planner*"]
+
+[tool.setuptools.package-data]
+intervention_sample_planner = ["*.json"]

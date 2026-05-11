@@ -1,7 +1,10 @@
 @echo off
-REM File version: 1.0; date: 2026-05-11
+REM File version: 2.0; date: 2026-05-11
 setlocal
 cd /d "%~dp0"
+
+if /I "%~1"=="clean" goto :clean
+if /I "%~1"=="clean-all" goto :clean_all
 
 where lualatex >nul 2>nul
 if %ERRORLEVEL% NEQ 0 (
@@ -62,10 +65,35 @@ echo Manual build finished.
 endlocal
 exit /b 0
 
+:clean
+where latexmk >nul 2>nul
+if %ERRORLEVEL% EQU 0 (
+    latexmk -c manual.tex
+)
+call :delete_generated
+echo Auxiliary files cleaned. Source files and PDF were kept.
+endlocal
+exit /b 0
+
+:clean_all
+where latexmk >nul 2>nul
+if %ERRORLEVEL% EQU 0 (
+    latexmk -CA manual.tex
+)
+call :delete_generated
+if exist "manual.pdf" del /f /q "manual.pdf"
+echo Generated files cleaned. Only source files were kept.
+endlocal
+exit /b 0
+
 :add_miktex_from_registry
 for /f "tokens=2,*" %%A in ('reg query "%~1" /v UserInstall 2^>nul ^| find "UserInstall"') do (
     if exist "%%B\miktex\bin\x64\lualatex.exe" (
         set "PATH=%%B\miktex\bin\x64;%PATH%"
     )
 )
+exit /b 0
+
+:delete_generated
+powershell -NoProfile -Command "Get-ChildItem -LiteralPath '.' -File | Where-Object { $_.BaseName -eq 'manual' -and $_.Extension -in @('.aux','.bbl','.bcf','.blg','.fdb_latexmk','.fls','.idx','.ilg','.ind','.log','.out','.run.xml','.synctex.gz','.toc','.lof','.lot','.nav','.snm','.vrb','.xdv') } | Remove-Item -Force -ErrorAction SilentlyContinue"
 exit /b 0

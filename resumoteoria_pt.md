@@ -1,427 +1,259 @@
-# Resumo Operacional da Teoria de Amostra
+<!-- File version: 2.0; date: 2026-05-11 -->
 
-<!-- File version: 1.0; date: 2026-05-11 -->
+# Resumo Operacional da Teoria para o ISP v2.0
 
-Este arquivo é um guia operacional curto para planejar tamanho de amostra em estudos de intervenção com dois grupos: um grupo recebe a intervenção e o outro não recebe. Ele ajuda usuários a aplicar o app, escolher entradas e escrever uma justificativa amostral defensável.
+Este manual operacional explica como usar o `ISP v2.0` de forma prática. Ele é mais curto que o manual educacional em LaTeX, mas foi escrito para apoiar decisões reais dentro do aplicativo.
 
-Política de documentação: `resumoteoria.md` é o original canônico em inglês. Este arquivo é sua tradução em português.
+## 1. O que mudou na versão 2.0
 
-Ele não é um livro de estatística. É um checklist prático para transformar uma pergunta de pesquisa em um plano de amostra.
+O `ISP v1.0` focava em um desenho: dois grupos independentes. O `ISP v2.0` acrescenta:
 
-## Ideia Central
+- `Dois grupos independentes`
+- `Pré-teste/pós-teste com grupo de controle`
+- `Pré-teste/pós-teste com um grupo`
+- `Planejar amostra necessária`
+- `Avaliar resultado alcançado`
+- faixas recomendadas com liberação explícita
+- explicações em `intervention_sample_planner/explanations.json`
+- uma aba dedicada de `Sugestões`
 
-Tamanho de amostra não é apenas uma conta. É uma decisão sobre a força da evidência que o estudo precisa produzir.
+## 2. Comece escolhendo o caminho de pesquisa
 
-A pergunta útil não é só:
+A primeira decisão do wizard não é mais o tipo de desfecho. Agora é o caminho de pesquisa.
 
-```text
-Quantas pessoas eu preciso?
-```
+### Caminho A. Dois grupos independentes
 
-É:
+Use quando pessoas diferentes pertencem à intervenção e ao controle, e a afirmação principal é sobre uma diferença entre grupos.
 
-```text
-Que conclusão quero sustentar, com que risco de erro, usando quais dados, em qual população ou contexto?
-```
+Exemplo em jogos educacionais:
+Um pesquisador da área de jogos educacionais pretende verificar se o uso do jogo Uno ajuda as crianças a compreender os conceitos de maior e menor. Um grupo joga Uno com mediação e depois recebe uma aula curta. Outro grupo recebe apenas a aula. Os dois grupos fazem um teste final, e a comparação principal é entre os grupos.
 
-Uma amostra é suficiente quando consegue responder à pergunta do estudo sem afirmar mais do que a evidência permite.
+### Caminho B. Pré-teste/pós-teste com grupo de controle
 
-## Quatro Perguntas Antes de Qualquer Fórmula
+Use quando os dois grupos são medidos antes e depois.
 
-Antes de calcular, defina:
+Exemplo em jogos educacionais:
+Um pesquisador deseja examinar se o Uno altera os conceitos de comparação matemática além da instrução comum. As crianças dos dois grupos fazem um pré-teste. O grupo de intervenção joga Uno e recebe uma aula curta. O grupo de controle recebe apenas a aula. Os dois grupos fazem o mesmo pós-teste. Neste caminho, o pré-teste ajuda a controlar diferenças iniciais e melhora a precisão.
 
-1. Qual é a unidade da inferência?
-   Exemplos: estudante, jogador, turma, sessão, resposta, documento, execução computacional.
+### Caminho C. Pré-teste/pós-teste com um grupo
 
-2. Que tipo de resultado será analisado?
-   Exemplos: média de aprendizagem, taxa de conclusão, proporção de erro, correlação, entrevista, log, caso.
+Use quando não existe grupo de controle e os mesmos participantes são medidos antes e depois.
 
-3. Que efeito seria grande o bastante para importar?
-   Exemplos: ganho de 0,5 ponto em uma escala, aumento de 45% para 60% de conclusão, redução relevante de erros.
+Exemplo em jogos educacionais:
+Um pesquisador quer uma primeira estimativa de se jogar Uno entre duas medições melhora a compreensão de maior e menor. As mesmas crianças fazem um pré-teste, jogam Uno em uma sessão guiada e depois fazem um pós-teste. Esse desenho pode ser útil como piloto, mas é mais fraco para inferência causal porque a mudança ao longo do tempo pode vir de fatores diferentes do jogo.
 
-4. Quanta incerteza é aceitável?
-   Exemplos: alfa 0,05, poder 80%, margem de erro 5%, saturação documentada.
+## 3. Depois escolha o tipo de execução
 
-## Quando o Estudo Compara Dois Grupos
+### Planejar amostra necessária
 
-Para validar uma intervenção, o desenho comum é:
+Use quando o estudo ainda não foi executado e você quer estimar:
 
-```text
-Grupo intervenção vs grupo controle
-```
+- participantes válidos analisáveis necessários
+- participantes que precisam iniciar
+- participantes que precisam ser convidados
 
-Esse desenho deve declarar:
+### Avaliar resultado alcançado
 
-- hipótese principal;
-- desfecho principal;
-- nível de significância, ou alfa;
-- poder desejado;
-- menor tamanho de efeito relevante;
-- razão de alocação entre os grupos;
-- perdas, desistência, não resposta e dados inválidos esperados.
+Use quando o estudo ou piloto já existe e você quer estimar o que a amostra alcançada e o efeito observado implicam.
 
-## Erro Tipo I, Erro Tipo II e Poder
+Esse fluxo inverso ajuda a responder:
 
-Erro Tipo I significa concluir que existe efeito quando não existe efeito real.
+- O estudo teve pouco poder?
+- Que valor-p aproximado corresponde ao efeito observado?
+- Se o efeito desejado não apareceu, que efeito foi realmente observado?
 
-```text
-P(erro Tipo I) = alfa
-```
+## 4. Faixas recomendadas e por que elas existem
 
-Erro Tipo II significa não detectar um efeito real relevante.
+O aplicativo agora verifica faixas recomendadas ou típicas. Você pode explicitamente permitir um valor fora da faixa, mas o aplicativo registrará isso e mostrará novamente na aba `Sugestões`.
 
-```text
-P(erro Tipo II) = beta
-```
+| Variável | Faixa recomendada ou típica | Valores tradicionais comuns | Por que essa faixa é usada |
+|---|---|---|---|
+| `alpha` | `0.01` a `0.10` | `0.05`, `0.01` | Fora dessa faixa, o padrão de evidência se torna incomum e deve ser justificado. |
+| `power` | `0.80` a `0.95` | `0.80`, `0.90` | Abaixo de `0.80` costuma ser fraco para trabalho confirmatório; acima de `0.95` pode ficar impraticável. |
+| `primary_comparisons` | `1` a `10` | `1`, `2`, `3` | Muitas comparações primárias geralmente indicam que a pergunta de pesquisa precisa ser estreitada. |
+| `allocation_ratio` | `0.5` a `2.0` | `1.0` | Forte desbalanceamento costuma desperdiçar informação, salvo justificativa operacional. |
+| `effect_size_d` | `0.10` a `1.20` | `0.20`, `0.50`, `0.80` | Efeitos muito pequenos podem exigir amostras enormes; efeitos muito grandes não devem ser assumidos sem evidência. |
+| `pre_post_correlation` | `0.30` a `0.80` | `0.50`, `0.60` | É uma faixa comum para muitas medidas educacionais e de usabilidade. |
+| `response_rate` | `0.40` a `1.00` | `0.60`, `0.80`, `0.90` | Valores baixos tornam o recrutamento frágil. |
+| `completion_rate` | `0.70` a `1.00` | `0.85`, `0.90`, `0.95` | Valores menores sinalizam risco de atrito. Em medidas repetidas, conclusão significa completar ambas as medições. |
+| `usable_data_rate` | `0.80` a `1.00` | `0.90`, `0.95`, `0.98` | Valores baixos geralmente indicam problema na coleta, não apenas de tamanho amostral. |
+| `extra_buffer_rate` | `0.00` a `0.20` | `0.00`, `0.05`, `0.10` | Reservas pequenas são comuns; reservas grandes podem indicar suposições fracas. |
+| `cluster_average_size` | `1` a `50` | `1`, `20`, `30` | Clusters maiores tornam o ICC muito mais importante. |
+| `intraclass_correlation` | `0.00` a `0.20` | `0.01`, `0.05`, `0.10` | ICCs pequenos são comuns, mas mesmo `0.05` pode inflar muito a amostra necessária. |
 
-Poder é a chance de detectar o efeito planejado se ele realmente existir.
+## 5. A variável difícil: tamanho de efeito
 
-```text
-poder = 1 - beta
-```
+Tamanho de efeito não é um número decorativo. É o menor efeito que importaria o bastante para justificar a intervenção.
 
-Valores comuns:
+### 5.1 Em dois grupos independentes
 
-| Decisão | Valor comum |
-| --- | --- |
-| Alfa | 0,05 |
-| Poder | 0,80 |
-| Alfa mais rigoroso | 0,01 |
-| Poder mais rigoroso | 0,90 ou 0,95 |
+Para desfechos contínuos, `effect_size_d` é a diferença padronizada entre grupos. Uma interpretação tradicional é:
 
-Esses valores são convenções, não leis. Escolhas diferentes devem ser justificadas quando o custo prático, ético ou científico do erro for diferente.
+- `0.2`: pequeno
+- `0.5`: médio
+- `0.8`: grande
 
-## Comparando Duas Médias
+Esses valores são apenas âncoras aproximadas. Se um teste de aprendizagem tem desvio padrão combinado de `10` pontos e uma melhora de `5` pontos já justificaria usar a intervenção, então:
 
-Use quando o desfecho principal é uma média:
+`d = 5 / 10 = 0.5`
 
-- escore de aprendizagem;
-- escore de engajamento;
-- escala de usabilidade;
-- tempo médio;
-- pontuação de desempenho.
+### 5.2 Em pré-teste/pós-teste com controle
 
-O efeito é o `d` de Cohen:
+Aqui a pergunta costuma ser sobre a diferença de ganho. O grupo de intervenção pode melhorar mais do que o grupo de controle entre o pré-teste e o pós-teste.
 
-```text
-d = (média_intervenção - média_controle) / desvio_padrão_combinado
-```
+No exemplo do Uno:
+- os dois grupos começam com pré-testes parecidos
+- o grupo de intervenção joga Uno e depois recebe uma aula curta
+- o grupo de controle recebe apenas a aula curta
+- o efeito de interesse é o quanto o grupo de intervenção melhora a mais
 
-Para grupos de mesmo tamanho:
+Na prática, `effect_size_d` deve representar a menor diferença padronizada de ganho que importaria.
 
-```text
-n_por_grupo = 2 * (z_alfa + z_poder)^2 / d^2
-```
+### 5.3 Em pré-teste/pós-teste com um grupo
+
+Não há grupo de controle, então o efeito é a mudança padronizada nos mesmos participantes.
+
+Isso é útil para pilotos, aprendizado em usabilidade ou inovação inicial em sala de aula. Mas a interpretação é mais fraca porque a melhora pode refletir prática, familiaridade com o teste, maturação ou ensino comum.
+
+### 5.4 Em pesquisa de opinião ou usabilidade apenas depois
+
+Às vezes existe apenas um questionário após exposição a um sistema, jogo ou aula. Nesse caso, o tamanho de efeito continua precisando vir de uma diferença significativa na prática, mas a interpretação costuma ser mais difícil porque não existe medida de linha de base.
+
+Por exemplo:
+- se satisfação é medida em uma escala de 1 a 5
+- e uma diferença de `0.4` ponto justificaria mudar a interface
+- e o desvio padrão combinado esperado é `0.8`
+
+então:
+
+`d = 0.4 / 0.8 = 0.5`
+
+## 6. Números tradicionais e por que aparecem tanto
+
+Esses valores aparecem no software porque são comuns em pesquisa real:
+
+- `alpha = 0.05`
+- `power = 0.80`
+- `power = 0.90`
+- `effect_size_d = 0.20, 0.50, 0.80`
+- `completion_rate = 0.85` ou `0.90`
+- `usable_data_rate = 0.95`
+- `ICC = 0.05`
+
+Eles são comuns porque muitas vezes são práticos, não porque sejam obrigatórios.
+
+## 7. Exemplos operacionais
+
+### Exemplo 1. Uno com grupo de controle e comparação no pós-teste
+
+Cenário:
+Um pesquisador da área de jogos educacionais pretende verificar se o uso do Uno ajuda as crianças a compreenderem maior e menor. O grupo de intervenção joga Uno com mediação e depois recebe uma aula curta. O grupo de controle recebe apenas a aula. Os dois grupos fazem um teste final. O pesquisador espera que uma diferença padronizada relevante seja `0.5`.
+
+Escolhas no wizard:
+
+- caminho: `Dois grupos independentes`
+- tipo de execução: `Planejar amostra necessária`
+- desfecho: `Contínuo`
+- tamanho de efeito: `0.5`
+- alpha: `0.05`
+- power: `0.80`
+- razão de alocação: `1`
+- completion rate: `0.90`
+- usable data rate: `0.95`
+
+Por que esse wizard:
+A afirmação principal é uma diferença entre grupos depois da intervenção.
+
+### Exemplo 2. Uno com pré-teste/pós-teste e controle
+
+Cenário:
+Um pesquisador quer um desenho de aprendizagem mais forte. Os dois grupos fazem um pré-teste. O grupo de intervenção depois joga Uno e participa de uma aula curta. O grupo de controle participa apenas da aula curta. Os dois grupos fazem o mesmo pós-teste. O pesquisador espera correlação pré/pós de aproximadamente `0.60` e quer detectar uma diferença padronizada de ganho de `0.4`.
+
+Escolhas no wizard:
+
+- caminho: `Pré-teste/pós-teste com grupo de controle`
+- tipo de execução: `Planejar amostra necessária`
+- desfecho: `Contínuo`
+- tamanho de efeito: `0.4`
+- correlação pré/pós: `0.60`
+- alpha: `0.05`
+- power: `0.80`
+- completion rate: `0.85`
+
+Por que esse wizard:
+As mesmas crianças são medidas duas vezes, mas ainda existe grupo de controle.
+
+### Exemplo 3. Uno com apenas um grupo
+
+Cenário:
+Um pesquisador ainda não consegue recrutar um grupo de comparação e quer um piloto. As mesmas crianças fazem um pré-teste, participam de uma sessão guiada de Uno e depois fazem um pós-teste. A adesão final é definida como completar os dois testes. O pesquisador quer detectar uma mudança média padronizada de `0.5`.
+
+Escolhas no wizard:
+
+- caminho: `Pré-teste/pós-teste com um grupo`
+- tipo de execução: `Planejar amostra necessária`
+- desfecho: `Contínuo`
+- tamanho de efeito: `0.5`
+- alpha: `0.05`
+- power: `0.80`
+- completion rate: `0.85`
+
+Por que esse wizard:
+Não existe grupo de controle e o desfecho é a mudança nas mesmas pessoas.
+
+## 8. O problema inverso
+
+O app também pode fazer o cálculo inverso.
 
 Exemplo:
+Um piloto com Uno e um grupo único coletou `28` crianças que completaram os dois testes e produziu uma mudança padronizada observada de `0.35`.
 
-- alfa = 0,05, bilateral;
-- poder = 0,80;
-- d = 0,5.
+Escolhas no wizard:
 
-Resultado aproximado:
+- caminho: `Pré-teste/pós-teste com um grupo`
+- tipo de execução: `Avaliar resultado alcançado`
+- alpha: `0.05`
+- n total observado: `28`
+- efeito observado: `0.35`
 
-```text
-63 participantes por grupo
-126 participantes no total
-```
+O app então estima:
 
-Interpretação: o estudo foi planejado para detectar uma diferença média padronizada de 0,5 entre intervenção e controle.
+- estatística z aproximada
+- valor-p aproximado
+- poder aproximado alcançado para o efeito observado
 
-## Comparando Duas Proporções
+Isso é útil quando o efeito desejado não foi encontrado. Um resultado não significativo pode significar:
 
-Use quando o desfecho principal é uma taxa:
+- a intervenção realmente teve pouco ou nenhum efeito
+- o estudo teve pouca precisão
+- o efeito observado foi menor do que o planejado
 
-- concluiu ou não concluiu;
-- teve sucesso ou falhou;
-- retornou ou não retornou;
-- abandonou ou permaneceu;
-- escolheu ou não escolheu uma opção.
+## 9. O que fazer quando o efeito desejado não aparece
 
-Entradas principais:
+A ausência do efeito desejado não significa que não houve efeito algum.
 
-```text
-proporção_controle
-proporção_intervenção
-alfa
-poder
-razão_de_alocação
-```
+No fim do estudo, costuma ser útil calcular e relatar:
 
-Exemplo:
+- o efeito realmente observado
+- a incerteza aproximada ao redor dele
+- se a amostra coletada tinha precisão suficiente para o efeito que importava
 
-- 45% concluem no grupo controle;
-- 60% concluem no grupo intervenção;
-- alfa = 0,05, bilateral;
-- poder = 0,80.
+Na prática:
 
-Resultado aproximado:
+- o planejamento pergunta: `Que efeito eu quero ser capaz de detectar?`
+- a avaliação pergunta: `Que efeito eu observei de fato, e o que esse estudo conseguiu mostrar sobre ele?`
 
-```text
-173 participantes por grupo
-346 participantes no total
-```
+## 10. Aba Sugestões
 
-Interpretação: comparar proporções frequentemente exige amostras maiores do que pesquisadores esperam, especialmente quando a diferença esperada é moderada.
+A aba `Sugestões` é o lugar em que o software passa a julgar de forma útil.
 
-## Grupos Desiguais
+Ela destaca coisas como:
 
-Se os grupos têm tamanhos desiguais, defina a razão:
+- taxa de resposta baixa
+- taxa de conclusão baixa
+- taxa de dados utilizáveis baixa
+- inflação por cluster
+- limitações de desenho sem grupo de controle
+- valores aceitos fora das faixas recomendadas
 
-```text
-k = n_intervenção / n_controle
-```
-
-Exemplo:
-
-```text
-k = 2
-```
-
-significa que o grupo intervenção foi planejado para ter o dobro do tamanho do grupo controle.
-
-Grupos desiguais podem ser necessários por acesso ou logística, mas normalmente aumentam o total necessário para a mesma força estatística.
-
-## Amostra Inicial, Amostra Válida e Convites
-
-O número produzido pela fórmula principal geralmente é o número de casos válidos analisáveis, não o número de convites.
-
-Separe estas etapas:
-
-| Etapa | Significado |
-| --- | --- |
-| Alvo inicial válido | Casos analisáveis necessários se todos fornecerem dados utilizáveis |
-| Alvo válido corrigido | Casos válidos após correção de população finita, cluster ou múltiplas comparações |
-| Participantes a iniciar | Pessoas que devem começar após considerar desistência e dados inválidos |
-| Pessoas a convidar/contatar | Pessoas que devem ser contatadas após considerar a taxa de resposta/início |
-
-Correção simples por perda:
-
-```text
-n_recrutado = n_necessário / (1 - taxa_de_perda)
-```
-
-Exemplo:
-
-```text
-63 / 0,85 = 74,12
-```
-
-Arredonde para cima:
-
-```text
-75 participantes por grupo
-```
-
-## Taxa de Resposta e Dados Inválidos
-
-Quando nem todas as pessoas convidadas participam:
-
-```text
-convites = n_válido / taxa_de_resposta
-```
-
-Quando parte dos dados completos é inválida:
-
-```text
-taxa_efetiva = taxa_resposta * taxa_conclusão * taxa_dados_utilizáveis
-```
-
-Então:
-
-```text
-convites = n_válido / taxa_efetiva
-```
-
-Exemplo:
-
-- 292 respostas válidas necessárias;
-- taxa de resposta = 40%;
-- perda por resposta inválida ou incompleta = 10%.
-
-Taxa efetiva:
-
-```text
-0,40 * 0,90 = 0,36
-```
-
-Convites:
-
-```text
-292 / 0,36 = 812 convites
-```
-
-## População Finita
-
-Use correção para população finita apenas quando a conclusão estiver restrita a uma população pequena e conhecida.
-
-Exemplos:
-
-- todos os estudantes de uma disciplina;
-- todos os participantes de uma oficina;
-- todos os jogadores de um teste fechado.
-
-Fórmula:
-
-```text
-n = (N * n0) / (N + n0 - 1)
-```
-
-Onde:
-
-- `N` é o tamanho da população finita;
-- `n0` é a amostra sem correção;
-- `n` é a amostra corrigida.
-
-Não use essa correção quando a conclusão pretendida for sobre uma população ampla.
-
-## Turmas, Grupos e Clusters
-
-Quando participantes estão agrupados, eles não são totalmente independentes.
-
-Exemplos:
-
-- estudantes dentro da mesma turma;
-- jogadores dentro da mesma equipe;
-- participantes dentro da mesma oficina;
-- pacientes dentro do mesmo serviço.
-
-Correção por efeito de desenho:
-
-```text
-DEFF = 1 + (m - 1) * ICC
-```
-
-Onde:
-
-- `m` é o tamanho médio do cluster;
-- `ICC` é a correlação intraclasse.
-
-Amostra ajustada:
-
-```text
-n_ajustado = n_independente * DEFF
-```
-
-Exemplo:
-
-- amostra independente = 126;
-- tamanho médio da turma = 25;
-- ICC = 0,05.
-
-```text
-DEFF = 1 + 24 * 0,05 = 2,2
-126 * 2,2 = 278
-```
-
-Resultado:
-
-```text
-278 estudantes
-```
-
-## Múltiplas Comparações
-
-Se o estudo testa vários desfechos primários, o risco de falso positivo aumenta.
-
-Uma correção simples é Bonferroni:
-
-```text
-alfa_ajustado = alfa / número_de_comparações
-```
-
-Exemplo:
-
-```text
-0,05 / 5 = 0,01
-```
-
-Isso reduz falsos positivos, mas aumenta a amostra necessária. Defina antes quais comparações são primárias e quais são exploratórias.
-
-## Estudos Pequenos
-
-Uma amostra pequena não é automaticamente uma amostra ruim.
-
-Ela pode ser adequada quando o objetivo é:
-
-- teste piloto;
-- teste de instrumento;
-- avaliação formativa;
-- diagnóstico de problemas;
-- refinamento de protótipo;
-- entrevista em profundidade;
-- estudo de caso;
-- geração de hipóteses.
-
-Ela é insuficiente quando o texto promete:
-
-- eficácia geral;
-- superioridade definitiva;
-- impacto populacional;
-- validação conclusiva;
-- ausência de problemas raros;
-- generalização ampla sem desenho compatível.
-
-## Se a Amostra Disponível For Pequena
-
-Reformule a pergunta para que ela corresponda à evidência que você realmente pode coletar.
-
-Evite:
-
-```text
-A intervenção melhora a aprendizagem dos estudantes.
-```
-
-Prefira, quando o desenho for pequeno ou exploratório:
-
-```text
-Neste contexto observado, a intervenção produziu indícios preliminares de melhora e identificou condições para uma avaliação futura com maior poder estatístico.
-```
-
-Isso não enfraquece o estudo. Torna a conclusão proporcional à evidência.
-
-## Checklist de Planejamento
-
-Antes da coleta:
-
-- Defini a população ou o contexto?
-- Defini a unidade de análise?
-- Defini a unidade de observação?
-- Escolhi o desfecho principal?
-- Decidi se o desfecho é média ou proporção?
-- Justifiquei o tamanho de efeito relevante?
-- Escolhi alfa e poder?
-- Decidi se o teste é bilateral ou unilateral?
-- Defini a razão de alocação intervenção/controle?
-- Considerei perdas, desistência e dados inválidos?
-- Considerei taxa de resposta?
-- Considerei população finita, se aplicável?
-- Considerei clusters, se aplicável?
-- Considerei múltiplas comparações?
-- Escrevi o limite real da conclusão?
-
-## Como Escrever a Justificativa da Amostra
-
-Modelo para duas médias:
-
-```text
-O experimento comparou dois grupos independentes: intervenção e controle. O tamanho amostral foi planejado para detectar uma diferença média padronizada de d = [valor] no desfecho principal, com alfa = [valor], teste [bilateral/unilateral] e poder de [valor]. A razão de alocação planejada foi [razão]. O cálculo indicou [n] participantes válidos por grupo. Considerando [taxa] de perdas, desistência ou dados inválidos, o estudo deve iniciar aproximadamente [n_corrigido] participantes por grupo. As conclusões serão limitadas à população, ao contexto e à medida definidos no desenho.
-```
-
-Modelo para duas proporções:
-
-```text
-O experimento comparou a proporção de [evento] entre o grupo intervenção e o grupo controle. O planejamento assumiu proporção esperada de [p_controle] no controle e [p_intervenção] na intervenção, com alfa = [valor], teste [bilateral/unilateral] e poder de [valor]. O cálculo indicou [n] participantes válidos por grupo. Após correções para resposta, conclusão e dados utilizáveis, o estudo deve convidar aproximadamente [convites] pessoas. Os resultados serão interpretados de forma proporcional ao desenho e às perdas observadas.
-```
-
-Modelo para estudo pequeno ou formativo:
-
-```text
-Dadas as restrições de tempo, acesso e maturidade da intervenção, este estudo foi planejado como avaliação exploratória e formativa. O objetivo não é estimar um efeito populacional definitivo, mas identificar indícios, problemas de uso, compreensão, aceitabilidade e condições para uma avaliação posterior. Os resultados quantitativos serão tratados de forma descritiva, e os dados qualitativos serão usados para interpretar os padrões observados.
-```
-
-## Regra Final
-
-Toda pesquisa deve coletar evidência suficiente para responder à pergunta que faz.
-
-E toda pesquisa deve formular uma pergunta que possa ser respondida pela evidência que consegue coletar.
+O objetivo não é bloquear o estudo, mas tornar explícitos os trade-offs.
