@@ -1,4 +1,8 @@
 % File version: 2.0; date: 2026-05-11
+% !TeX TS-program = lualatex
+% !TeX encoding = UTF-8
+% !TeX spellcheck = en_US
+% !BIB TS-program = biber
 \documentclass[11pt,a4paper,oneside]{report}
 
 \usepackage{iftex}
@@ -47,7 +51,7 @@
   citecolor=ispgreen,
   urlcolor=ispblue,
   pdftitle={Educational Manual for ISP v2.0},
-  pdfauthor={Xexeo}
+  pdfauthor={Geraldo Xexéo}
 }
 \urlstyle{same}
 
@@ -64,7 +68,11 @@
 \setlist[itemize]{leftmargin=1.2cm}
 \setlist[enumerate]{leftmargin=1.2cm}
 \renewcommand{\arraystretch}{1.22}
-\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\usepackage{array}
+\usepackage{ragged2e}
+
+\newcolumntype{L}[1]{>{\RaggedRight\hspace{0pt}\arraybackslash}p{#1}}
+
 
 \newtcolorbox{conceptbox}[1]{
   enhanced,
@@ -143,7 +151,7 @@
   This manual assumes studies of interventions in human processes: learning, training, usability, work procedures, decision support, classroom activities, and similar situations. The examples use an educational game, but the same logic applies to many non-clinical interventions. This is not a clinical-trial manual for medication, surgery, safety endpoints, or regulatory decisions.
   \end{conceptbox}
   \vfill
-  {\large Author: Xexeo\par}
+  {\large Author: Geraldo Xexéo\par}
 \end{titlepage}
 
 \clearpage
@@ -189,7 +197,7 @@ When the app is used in \term{evaluation mode}, it asks for the achieved sample 
 
 The first wizard question asks for the research path. That decision controls which assumptions are meaningful.
 
-\begin{longtable}{L{0.25\textwidth}L{0.32\textwidth}L{0.33\textwidth}}
+\begin{longtable}{L{0.32\textwidth}L{0.25\textwidth}L{0.33\textwidth}}
 \toprule
 \textbf{Research path} & \textbf{Basic structure} & \textbf{Best use}\\
 \midrule
@@ -378,7 +386,7 @@ Which research path should the study follow?
 
 \textbf{Why the wizard asks:} the calculation changes depending on whether the comparison is between different people, between two groups over time, or within the same people over time.
 
-\begin{longtable}{L{0.27\textwidth}L{0.31\textwidth}L{0.32\textwidth}}
+\begin{longtable}{L{0.29\textwidth}L{0.29\textwidth}L{0.32\textwidth}}
 \toprule
 \textbf{Choose} & \textbf{Use when} & \textbf{Avoid when}\\
 \midrule
@@ -764,7 +772,7 @@ It cannot replace the final model fitted to the real data. The final analysis sh
 The Data / Configuration tab exposes all stored inputs. This tab is useful when the researcher wants to edit the model directly, save a JSON configuration, or inspect variables not shown in the current wizard path. The \code{?} button beside each field explains the field using the external JSON explanation file.
 
 {\small
-\begin{longtable}{L{0.21\textwidth}L{0.20\textwidth}L{0.26\textwidth}L{0.23\textwidth}}
+\begin{longtable}{L{0.26\textwidth}L{0.18\textwidth}L{0.23\textwidth}L{0.23\textwidth}}
 \toprule
 \textbf{Variable} & \textbf{Where used} & \textbf{Meaning} & \textbf{Typical or recommended values}\\
 \midrule
@@ -831,7 +839,7 @@ Recommended ranges are not laws. A researcher may have a legitimate reason to us
 \end{conceptbox}
 
 {\small
-\begin{longtable}{L{0.20\textwidth}L{0.17\textwidth}L{0.18\textwidth}L{0.35\textwidth}}
+\begin{longtable}{L{0.27\textwidth}L{0.1\textwidth}L{0.18\textwidth}L{0.35\textwidth}}
 \toprule
 \textbf{Variable} & \textbf{Range} & \textbf{Typical values} & \textbf{Reason for the range}\\
 \midrule
@@ -1065,7 +1073,7 @@ The researcher expects the intervention group to improve about 4 points more tha
 
 \subsection*{Wizard choices}
 
-\begin{longtable}{L{0.28\textwidth}L{0.25\textwidth}L{0.37\textwidth}}
+\begin{longtable}{L{0.28\textwidth}L{0.29\textwidth}L{0.33\textwidth}}
 \toprule
 \textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
 \midrule
