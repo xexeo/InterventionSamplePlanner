@@ -138,7 +138,6 @@ FIELD_TYPES = {
     "notes": "multiline",
 }
 
-
 class PlannerApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
@@ -419,23 +418,58 @@ class PlannerApp(tk.Tk):
         var = tk.StringVar()
         self.vars[field] = var
         if kind == "language":
-            return ttk.Combobox(parent, textvariable=var, values=["en", "pt"], state="readonly")
+            widget = ttk.Combobox(parent, textvariable=var, values=["en", "pt"], state="readonly")
+            widget.bind("<<ComboboxSelected>>", lambda _event, field=field: self._on_config_driver_change(field))
+            return widget
         if kind == "workflow":
-            return ttk.Combobox(parent, textvariable=var, values=self._workflow_values(), state="readonly")
+            widget = ttk.Combobox(parent, textvariable=var, values=self._workflow_values(), state="readonly")
+            widget.bind("<<ComboboxSelected>>", lambda _event, field=field: self._on_config_driver_change(field))
+            return widget
         if kind == "design":
-            return ttk.Combobox(
+            widget = ttk.Combobox(
                 parent,
                 textvariable=var,
                 values=self._design_values(),
                 state="readonly",
             )
+            widget.bind("<<ComboboxSelected>>", lambda _event, field=field: self._on_config_driver_change(field))
+            return widget
         if kind == "mode":
             return ttk.Combobox(parent, textvariable=var, values=self._mode_values(), state="readonly")
         if kind == "outcome":
-            return ttk.Combobox(parent, textvariable=var, values=self._outcome_values(), state="readonly")
+            widget = ttk.Combobox(parent, textvariable=var, values=self._outcome_values(), state="readonly")
+            widget.bind("<<ComboboxSelected>>", lambda _event, field=field: self._on_config_driver_change(field))
+            return widget
         if kind == "alternative":
             return ttk.Combobox(parent, textvariable=var, values=self._alternative_values(), state="readonly")
         return ttk.Entry(parent, textvariable=var)
+
+    def _on_config_driver_change(self, field: str) -> None:
+        try:
+            selected_index = self.notebook.index(self.notebook.select())
+        except tk.TclError:
+            selected_index = 1
+        try:
+            self._sync_config_from_vars()
+        except PlanningError:
+            self._sync_driver_field_only(field)
+        self._build_ui()
+        self.notebook.select(min(selected_index, self.notebook.index("end") - 1))
+
+    def _sync_driver_field_only(self, field: str) -> None:
+        data = config_to_dict(self.config_model)
+        if field == "workflow_path":
+            data["workflow_path"] = self._current_workflow_path()
+            data["analysis_mode"] = "plan" if data["workflow_path"] == "plan_study" else "evaluate"
+            data["had_planned_sample"] = data["workflow_path"] == "evaluate_against_plan"
+        elif field == "study_design":
+            data["study_design"] = self._current_study_design()
+        elif field == "outcome_type":
+            data["outcome_type"] = self._current_outcome_type()
+        elif field == "language":
+            var = self.vars.get("language")
+            data["language"] = str(var.get()) if var else self.config_model.language
+        self.config_model = StudyConfig(**data)
 
     def _show_help(self, field: str) -> None:
         content = get_field_content(self.language, field)

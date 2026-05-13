@@ -1,7 +1,7 @@
 // File version: 2.1; date: 2026-05-12
 
 const FIELD_GROUPS = [
-  ["Research path", ["workflow_path", "study_name", "study_design", "outcome_type", "alternative"]],
+  ["Research path", ["workflow_path", "study_name", "language", "study_design", "analysis_unit", "observation_unit", "outcome_type", "alternative"]],
   ["Statistical target", ["alpha", "power", "primary_comparisons", "allocation_ratio", "effect_size_d", "mean_control", "mean_intervention", "sd_pooled", "pre_post_correlation", "proportion_control", "proportion_intervention"]],
   ["Corrections", ["apply_fpc", "finite_population", "cluster_average_size", "intraclass_correlation", "response_rate", "completion_rate", "usable_data_rate", "extra_buffer_rate"]],
   ["Achieved result", ["planned_control_n", "planned_intervention_n", "planned_total_n", "planned_effect_size", "planned_alpha", "planned_power", "observed_control_n", "observed_intervention_n", "observed_total_n", "observed_control_events", "observed_intervention_events", "observed_pre_success_post_failure", "observed_pre_failure_post_success", "observed_effect_size"]],
@@ -10,6 +10,7 @@ const FIELD_GROUPS = [
 
 const FIELD_TYPES = {
   workflow_path: "workflow",
+  language: "language",
   study_design: "design",
   outcome_type: "outcome",
   alternative: "alternative",
@@ -231,8 +232,12 @@ function renderConfig() {
       label.innerHTML = `<span>${labelFor(field)}</span><button type="button" title="Help">?</button>`;
       label.querySelector("button").addEventListener("click", () => toast(helpFor(field) || field, 5000));
       const input = inputFor(field);
-      input.addEventListener("change", () => {
+      input.addEventListener("change", async () => {
         writeFieldFromInput(field, input);
+        if (field === "language") {
+          $("languageSelect").value = config.language;
+          await loadLanguage(config.language, false);
+        }
         normalizeWorkflow();
         renderAll();
       });
@@ -258,7 +263,7 @@ function renderConfig() {
 function inputFor(field) {
   const type = FIELD_TYPES[field] || "text";
   let input;
-  if (type === "workflow" || type === "design" || type === "outcome" || type === "alternative") {
+  if (type === "workflow" || type === "language" || type === "design" || type === "outcome" || type === "alternative") {
     input = document.createElement("select");
     optionsFor(type).forEach(([value, label]) => {
       const option = document.createElement("option");
@@ -295,6 +300,12 @@ function writeFieldFromInput(field, input) {
 }
 
 function optionsFor(type) {
+  if (type === "language") {
+    return [
+      ["en", "English"],
+      ["pt", "Portuguese (pt)"]
+    ];
+  }
   if (type === "workflow") {
     return [
       ["plan_study", uiText.workflow_plan_study || "Plan a study"],
