@@ -191,6 +191,14 @@ function normalizeWorkflow() {
     config.analysis_mode = "evaluate";
     config.had_planned_sample = true;
   }
+  const outcomes = validOutcomeValues();
+  if (!outcomes.includes(config.outcome_type)) config.outcome_type = outcomes[0];
+}
+
+function validOutcomeValues() {
+  if (config.study_design === "pretest_posttest_control") return ["continuous"];
+  if (config.study_design === "one_group_pre_post" && config.analysis_mode === "plan") return ["continuous"];
+  return ["continuous", "binary"];
 }
 
 function renderWizard() {
@@ -321,12 +329,11 @@ function optionsFor(type) {
     ];
   }
   if (type === "outcome") {
-    const values = [["continuous", uiText.outcome_continuous || "Continuous"]];
-    if (!(config.study_design === "pretest_posttest_control") && !(config.study_design === "one_group_pre_post" && config.analysis_mode === "plan")) {
-      values.push(["binary", uiText.outcome_binary || "Binary"]);
-    }
-    if (!values.some(([value]) => value === config.outcome_type)) config.outcome_type = "continuous";
-    return values;
+    const labels = {
+      continuous: uiText.outcome_continuous || "Continuous",
+      binary: uiText.outcome_binary || "Binary"
+    };
+    return validOutcomeValues().map((value) => [value, labels[value]]);
   }
   return [
     ["two_sided", uiText.alternative_two_sided || "Two-sided"],

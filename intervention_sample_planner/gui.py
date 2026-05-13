@@ -138,6 +138,127 @@ FIELD_TYPES = {
     "notes": "multiline",
 }
 
+
+def analysis_mode_for_workflow(workflow_path: str) -> str:
+    return "plan" if workflow_path == "plan_study" else "evaluate"
+
+
+def valid_outcome_types(study_design: str, workflow_path: str) -> list[str]:
+    mode = analysis_mode_for_workflow(workflow_path)
+    if study_design == "pretest_posttest_control":
+        return ["continuous"]
+    if study_design == "one_group_pre_post" and mode == "plan":
+        return ["continuous"]
+    return ["continuous", "binary"]
+
+
+def normalize_outcome_type(study_design: str, workflow_path: str, outcome_type: str) -> str:
+    valid = valid_outcome_types(study_design, workflow_path)
+    return outcome_type if outcome_type in valid else valid[0]
+
+
+def is_config_field_visible(field: str, workflow_path: str, study_design: str, outcome_type: str) -> bool:
+    mode = analysis_mode_for_workflow(workflow_path)
+    outcome = normalize_outcome_type(study_design, workflow_path, outcome_type)
+    has_plan = workflow_path == "evaluate_against_plan"
+    if field == "allocation_ratio":
+        return study_design != "one_group_pre_post"
+    if field == "pre_post_correlation":
+        return study_design == "pretest_posttest_control"
+    if field in {"mean_control", "mean_intervention", "sd_pooled"}:
+        return mode == "plan" and outcome == "continuous" and study_design != "one_group_pre_post"
+    if field == "effect_size_d":
+        return mode == "plan" and outcome == "continuous"
+    if field in {"proportion_control", "proportion_intervention"}:
+        return mode == "plan" and study_design == "parallel_two_group" and outcome == "binary"
+    if field in {"observed_control_n", "observed_intervention_n"}:
+        return mode == "evaluate" and study_design != "one_group_pre_post"
+    if field == "observed_total_n":
+        return mode == "evaluate" and study_design == "one_group_pre_post"
+    if field in {"observed_control_events", "observed_intervention_events"}:
+        return mode == "evaluate" and study_design == "parallel_two_group" and outcome == "binary"
+    if field in {"observed_pre_success_post_failure", "observed_pre_failure_post_success"}:
+        return mode == "evaluate" and study_design == "one_group_pre_post" and outcome == "binary"
+    if field == "observed_effect_size":
+        return mode == "evaluate" and outcome == "continuous"
+    if field in {"planned_control_n", "planned_intervention_n"}:
+        return has_plan and study_design != "one_group_pre_post"
+    if field == "planned_total_n":
+        return has_plan and study_design == "one_group_pre_post"
+    if field in {"planned_effect_size", "planned_alpha", "planned_power"}:
+        return has_plan
+    if field == "control_label":
+        return study_design != "one_group_pre_post"
+    return True
+
+
+def visible_config_fields_for_path(workflow_path: str, study_design: str, outcome_type: str) -> list[str]:
+    return [
+        field
+        for _group, fields in FIELD_GROUPS
+        for field in fields
+        if is_config_field_visible(field, workflow_path, study_design, outcome_type)
+    ]
+
+
+def wizard_fields_for_path(workflow_path: str, study_design: str, outcome_type: str) -> list[str]:
+    fields = [
+        "workflow_path",
+        "study_name",
+        "study_design",
+        "outcome_type",
+        "alpha",
+        "power",
+    ]
+    mode = analysis_mode_for_workflow(workflow_path)
+    outcome = normalize_outcome_type(study_design, workflow_path, outcome_type)
+    has_plan = workflow_path == "evaluate_against_plan"
+    if mode == "plan":
+        if study_design != "one_group_pre_post":
+            fields.append("allocation_ratio")
+        if study_design == "parallel_two_group" and outcome == "binary":
+            fields.extend(["proportion_control", "proportion_intervention"])
+        else:
+            fields.append("effect_size_d")
+        if study_design == "pretest_posttest_control":
+            fields.append("pre_post_correlation")
+        fields.extend(
+            [
+                "response_rate",
+                "completion_rate",
+                "usable_data_rate",
+                "extra_buffer_rate",
+                "primary_comparisons",
+                "cluster_average_size",
+                "intraclass_correlation",
+            ]
+        )
+    else:
+        if has_plan:
+            if study_design == "one_group_pre_post":
+                fields.append("planned_total_n")
+            else:
+                fields.extend(["planned_control_n", "planned_intervention_n"])
+            fields.extend(["planned_effect_size", "planned_alpha", "planned_power"])
+        if study_design == "one_group_pre_post":
+            fields.append("observed_total_n")
+            if outcome == "binary":
+                fields.extend(["observed_pre_success_post_failure", "observed_pre_failure_post_success"])
+            else:
+                fields.append("observed_effect_size")
+        else:
+            if study_design == "parallel_two_group":
+                fields.append("allocation_ratio")
+            if study_design == "pretest_posttest_control":
+                fields.append("pre_post_correlation")
+            fields.extend(["observed_control_n", "observed_intervention_n"])
+            if study_design == "parallel_two_group" and outcome == "binary":
+                fields.extend(["observed_control_events", "observed_intervention_events"])
+            else:
+                fields.append("observed_effect_size")
+    return fields
+
+
 class PlannerApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
@@ -460,8 +581,6 @@ class PlannerApp(tk.Tk):
         data = config_to_dict(self.config_model)
         if field == "workflow_path":
             data["workflow_path"] = self._current_workflow_path()
-            data["analysis_mode"] = "plan" if data["workflow_path"] == "plan_study" else "evaluate"
-            data["had_planned_sample"] = data["workflow_path"] == "evaluate_against_plan"
         elif field == "study_design":
             data["study_design"] = self._current_study_design()
         elif field == "outcome_type":
@@ -469,6 +588,13 @@ class PlannerApp(tk.Tk):
         elif field == "language":
             var = self.vars.get("language")
             data["language"] = str(var.get()) if var else self.config_model.language
+        data["analysis_mode"] = analysis_mode_for_workflow(data.get("workflow_path", "plan_study"))
+        data["had_planned_sample"] = data.get("workflow_path") == "evaluate_against_plan"
+        data["outcome_type"] = normalize_outcome_type(
+            data.get("study_design", "parallel_two_group"),
+            data.get("workflow_path", "plan_study"),
+            data.get("outcome_type", "continuous"),
+        )
         self.config_model = StudyConfig(**data)
 
     def _show_help(self, field: str) -> None:
@@ -496,11 +622,12 @@ class PlannerApp(tk.Tk):
         return [t(self.language, "mode_plan"), t(self.language, "mode_evaluate")]
 
     def _outcome_values(self) -> list[str]:
-        if self._current_study_design() == "pretest_posttest_control":
-            return [t(self.language, "outcome_continuous")]
-        if self._current_study_design() == "one_group_pre_post" and self._current_analysis_mode() == "plan":
-            return [t(self.language, "outcome_continuous")]
-        return [t(self.language, "outcome_continuous"), t(self.language, "outcome_binary")]
+        values = valid_outcome_types(self._current_study_design(), self._current_workflow_path())
+        labels = {
+            "continuous": t(self.language, "outcome_continuous"),
+            "binary": t(self.language, "outcome_binary"),
+        }
+        return [labels[value] for value in values]
 
     def _alternative_values(self) -> list[str]:
         return [
@@ -510,99 +637,19 @@ class PlannerApp(tk.Tk):
         ]
 
     def _show_field(self, field: str) -> bool:
-        design = self._current_study_design()
-        workflow = self._current_workflow_path()
-        mode = self._current_analysis_mode()
-        outcome = self._current_outcome_type()
-        has_plan = workflow == "evaluate_against_plan"
-        if field == "allocation_ratio":
-            return design != "one_group_pre_post"
-        if field == "pre_post_correlation":
-            return design == "pretest_posttest_control"
-        if field in {"mean_control", "mean_intervention", "sd_pooled"}:
-            return mode == "plan" and outcome == "continuous" and design != "one_group_pre_post"
-        if field == "effect_size_d":
-            return mode == "plan" and not (design == "parallel_two_group" and outcome == "binary")
-        if field in {"proportion_control", "proportion_intervention"}:
-            return mode == "plan" and design == "parallel_two_group" and outcome == "binary"
-        if field in {"observed_control_n", "observed_intervention_n"}:
-            return mode == "evaluate" and design != "one_group_pre_post"
-        if field == "observed_total_n":
-            return mode == "evaluate" and design == "one_group_pre_post"
-        if field in {"observed_control_events", "observed_intervention_events"}:
-            return mode == "evaluate" and design == "parallel_two_group" and outcome == "binary"
-        if field in {"observed_pre_success_post_failure", "observed_pre_failure_post_success"}:
-            return mode == "evaluate" and design == "one_group_pre_post" and outcome == "binary"
-        if field == "observed_effect_size":
-            return mode == "evaluate" and outcome == "continuous"
-        if field in {"planned_control_n", "planned_intervention_n"}:
-            return has_plan and design != "one_group_pre_post"
-        if field == "planned_total_n":
-            return has_plan and design == "one_group_pre_post"
-        if field in {"planned_effect_size", "planned_alpha", "planned_power"}:
-            return has_plan
-        if field == "control_label":
-            return design != "one_group_pre_post"
-        return True
+        return is_config_field_visible(
+            field,
+            self._current_workflow_path(),
+            self._current_study_design(),
+            self._current_outcome_type(),
+        )
 
     def _visible_wizard_fields(self) -> list[str]:
-        fields = [
-            "workflow_path",
-            "study_name",
-            "study_design",
-            "outcome_type",
-            "alpha",
-            "power",
-        ]
-        design = self._current_study_design()
-        mode = self._current_analysis_mode()
-        outcome = self._current_outcome_type()
-        has_plan = self._current_workflow_path() == "evaluate_against_plan"
-        if mode == "plan":
-            if design == "parallel_two_group":
-                fields.append("allocation_ratio")
-                if outcome == "binary":
-                    fields.extend(["proportion_control", "proportion_intervention"])
-                else:
-                    fields.append("effect_size_d")
-            elif design == "pretest_posttest_control":
-                fields.extend(["allocation_ratio", "effect_size_d", "pre_post_correlation"])
-            else:
-                fields.append("effect_size_d")
-            fields.extend(
-                [
-                    "response_rate",
-                    "completion_rate",
-                    "usable_data_rate",
-                    "primary_comparisons",
-                    "cluster_average_size",
-                    "intraclass_correlation",
-                ]
-            )
-        else:
-            if has_plan:
-                if design == "one_group_pre_post":
-                    fields.append("planned_total_n")
-                else:
-                    fields.extend(["planned_control_n", "planned_intervention_n"])
-                fields.extend(["planned_effect_size", "planned_alpha", "planned_power"])
-            if design == "one_group_pre_post":
-                fields.append("observed_total_n")
-                if outcome == "binary":
-                    fields.extend(["observed_pre_success_post_failure", "observed_pre_failure_post_success"])
-                else:
-                    fields.append("observed_effect_size")
-            else:
-                if design == "parallel_two_group":
-                    fields.append("allocation_ratio")
-                if design == "pretest_posttest_control":
-                    fields.append("pre_post_correlation")
-                fields.extend(["observed_control_n", "observed_intervention_n"])
-                if design == "parallel_two_group" and outcome == "binary":
-                    fields.extend(["observed_control_events", "observed_intervention_events"])
-                else:
-                    fields.append("observed_effect_size")
-        return fields
+        return wizard_fields_for_path(
+            self._current_workflow_path(),
+            self._current_study_design(),
+            self._current_outcome_type(),
+        )
 
     def _current_study_design(self) -> str:
         var = self.vars.get("study_design")
@@ -636,10 +683,8 @@ class PlannerApp(tk.Tk):
 
     def _current_analysis_mode(self) -> str:
         workflow = self._current_workflow_path()
-        if workflow == "plan_study":
-            return "plan"
-        if workflow in {"evaluate_done", "evaluate_against_plan"}:
-            return "evaluate"
+        if workflow in {"plan_study", "evaluate_done", "evaluate_against_plan"}:
+            return analysis_mode_for_workflow(workflow)
         var = self.vars.get("analysis_mode")
         if not var:
             return self.config_model.analysis_mode
@@ -833,8 +878,13 @@ class PlannerApp(tk.Tk):
             else:
                 data[field] = str(raw)
         workflow = data.get("workflow_path", "plan_study")
-        data["analysis_mode"] = "plan" if workflow == "plan_study" else "evaluate"
+        data["analysis_mode"] = analysis_mode_for_workflow(workflow)
         data["had_planned_sample"] = workflow == "evaluate_against_plan"
+        data["outcome_type"] = normalize_outcome_type(
+            data.get("study_design", "parallel_two_group"),
+            workflow,
+            data.get("outcome_type", "continuous"),
+        )
         data["range_override_fields"] = [field for field, var in self.range_override_vars.items() if bool(var.get())]
         candidate = StudyConfig(**data)
         self.range_issues = self._validate_recommended_ranges(candidate)

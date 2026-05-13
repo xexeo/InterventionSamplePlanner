@@ -1354,6 +1354,8 @@ def _render_en(plan: SamplePlan) -> str:
         f"Research path: {_design_label(c)}",
         f"Run type: {'Plan required sample' if c.analysis_mode == 'plan' else 'Evaluate achieved result'}",
         f"Method: {plan.method}",
+        f"Analysis unit: {c.analysis_unit}",
+        f"Observation unit: {c.observation_unit}",
     ]
     if c.analysis_mode == "plan":
         lines.extend(
@@ -1413,6 +1415,8 @@ def _render_en(plan: SamplePlan) -> str:
     if plan.formulas:
         lines.extend(["", "Formulas"])
         lines.extend(f"- {item}" for item in plan.formulas)
+    if c.notes.strip():
+        lines.extend(["", "Notes", c.notes.strip()])
     return "\n".join(lines)
 
 
@@ -1432,6 +1436,8 @@ def _render_pt(plan: SamplePlan) -> str:
         f"Caminho de pesquisa: {path_map[c.study_design]}",
         f"Tipo de execução: {mode_map[c.analysis_mode]}",
         f"Método: {plan.method}",
+        f"Unidade de analise: {c.analysis_unit}",
+        f"Unidade de observacao: {c.observation_unit}",
     ]
     if c.analysis_mode == "plan":
         lines.extend(
@@ -1491,4 +1497,6 @@ def _render_pt(plan: SamplePlan) -> str:
     if plan.formulas:
         lines.extend(["", "Fórmulas"])
         lines.extend(f"- {item}" for item in plan.formulas)
+    if c.notes.strip():
+        lines.extend(["", "Notas", c.notes.strip()])
     return "\n".join(lines)
