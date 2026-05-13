@@ -1,4 +1,4 @@
-# File version: 2.0; date: 2026-05-11
+# File version: 2.1; date: 2026-05-12
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -6,15 +6,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "intervention-sample-planner"
-version = "2.0.0"
-description = "Local API and Tkinter app for planning or evaluating several intervention-study designs."
+version = "2.1.0"
+description = "Local API, Tkinter app, and Flask web interface for planning or evaluating several intervention-study designs."
 readme = "README.md"
 requires-python = ">=3.10"
+dependencies = ["Flask>=3.0"]
 license = { text = "MIT" }
 authors = [
   { name = "Intervention Sample Planner contributors" }
 ]
-keywords = ["sample-size", "power-analysis", "intervention", "tkinter", "research-methods"]
+keywords = ["sample-size", "power-analysis", "intervention", "tkinter", "flask", "research-methods"]
 classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
@@ -24,9 +25,10 @@ classifiers = [
 
 [project.scripts]
 intervention-sample-planner = "intervention_sample_planner.gui:main"
+intervention-sample-planner-web = "intervention_sample_planner.web_app:main"
 
 [tool.setuptools.packages.find]
 include = ["intervention_sample_planner*"]
 
 [tool.setuptools.package-data]
-intervention_sample_planner = ["*.json"]
+intervention_sample_planner = ["*.json", "web_static/*"]

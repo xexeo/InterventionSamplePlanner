@@ -1,6 +1,22 @@
-<!-- File version: 2.0; date: 2026-05-11 -->
+<!-- File version: 2.1; date: 2026-05-12 -->
 
 # Histórico de Versões
+
+## 2.1
+
+- adiciona uma tabela própria `Plano / Benchmarks` para comparação com plano anterior e limiares comuns
+- adiciona exportação direta de relatório pelo aplicativo desktop em HTML e PDF, além do relatório de texto
+- adiciona avaliação exata de McNemar para resultados binários pareados em um grupo
+- adiciona valores-p exatos de Fisher para resultados binários de dois grupos com amostras pequenas ou células esparsas
+- esclarece a interpretação em estilo ANCOVA para pré-teste/pós-teste com grupo de controle
+- amplia orientações sobre estudos com clusters e ajuste dos benchmarks quando suposições de cluster são informadas
+- atualiza `explanations.json`, o schema JSON, testes, capturas de tela, READMEs e documentação de build/desenvolvimento
+- adiciona capturas de tela de release em `docs/screenshots`
+- adiciona suporte a checksum SHA256 para o executável Windows gerado para release
+- adiciona interface web Flask e API REST como segunda interface sobre o mesmo motor de cálculo
+- adiciona configuração de deploy no Render e workflow do GitHub Actions que publica commits taggeados
+- adiciona documentação detalhada de deploy no Render
+- adiciona salvamento/carregamento local de JSON no navegador e verificação de liberação de faixas recomendadas no cliente web
 
 ## 2.0
 

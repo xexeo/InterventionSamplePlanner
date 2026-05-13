@@ -1,4 +1,4 @@
-# File version: 2.0; date: 2026-05-11
+# File version: 2.1; date: 2026-05-12
 
 import json
 from pathlib import Path
@@ -11,6 +11,8 @@ from intervention_sample_planner import (
     calculate_plan,
     config_from_dict,
     config_to_dict,
+    save_report_html,
+    save_report_pdf,
 )
 
 
@@ -22,8 +24,8 @@ SCHEMA_PATH = REPO_ROOT / "schemas" / "study_config.schema.json"
 
 class CalculatorTests(unittest.TestCase):
     def test_application_version_metadata(self):
-        self.assertEqual(APP_VERSION, "2.0")
-        self.assertIn("ISP v2.0", APP_WINDOW_TITLE)
+        self.assertEqual(APP_VERSION, "2.1")
+        self.assertIn("ISP v2.1", APP_WINDOW_TITLE)
 
     def test_parallel_continuous_balanced_example(self):
         config = StudyConfig(effect_size_d=0.5, alpha=0.05, power=0.80)
@@ -118,6 +120,60 @@ class CalculatorTests(unittest.TestCase):
         self.assertGreater(plan.observed_analysis.p_value, 0)
         self.assertEqual(len(plan.observed_analysis.benchmark_targets), 4)
         self.assertTrue(any(target.additional_total > 0 for target in plan.observed_analysis.benchmark_targets))
+
+    def test_small_binary_event_counts_use_fisher_exact_result(self):
+        plan = calculate_plan(
+            StudyConfig(
+                workflow_path="evaluate_done",
+                outcome_type="binary",
+                observed_control_n=10,
+                observed_intervention_n=10,
+                observed_control_events=1,
+                observed_intervention_events=6,
+            )
+        )
+        self.assertIsNotNone(plan.observed_analysis)
+        assert plan.observed_analysis is not None
+        self.assertIsNotNone(plan.observed_analysis.exact_p_value)
+        self.assertEqual(plan.observed_analysis.p_value, plan.observed_analysis.exact_p_value)
+        self.assertIn("Fisher", plan.observed_analysis.method)
+
+    def test_one_group_paired_binary_uses_exact_mcnemar(self):
+        plan = calculate_plan(
+            StudyConfig(
+                study_design="one_group_pre_post",
+                workflow_path="evaluate_done",
+                outcome_type="binary",
+                observed_total_n=40,
+                observed_pre_success_post_failure=3,
+                observed_pre_failure_post_success=12,
+            )
+        )
+        self.assertIsNotNone(plan.observed_analysis)
+        assert plan.observed_analysis is not None
+        self.assertIn("McNemar", plan.observed_analysis.method)
+        self.assertEqual(plan.observed_analysis.p_value, plan.observed_analysis.exact_p_value)
+        self.assertAlmostEqual(plan.observed_analysis.observed_effect_size, 9 / 40)
+        self.assertTrue(plan.observed_analysis.benchmark_targets)
+
+    def test_report_exports_html_and_pdf(self):
+        plan = calculate_plan(StudyConfig(effect_size_d=0.5, alpha=0.05, power=0.80))
+        out_dir = REPO_ROOT / "test_output"
+        out_dir.mkdir(exist_ok=True)
+        html_path = out_dir / "report.html"
+        pdf_path = out_dir / "report.pdf"
+        try:
+            save_report_html(plan, html_path)
+            save_report_pdf(plan, pdf_path)
+            self.assertIn("<!doctype html>", html_path.read_text(encoding="utf-8"))
+            self.assertTrue(pdf_path.read_bytes().startswith(b"%PDF-1.4"))
+        finally:
+            html_path.unlink(missing_ok=True)
+            pdf_path.unlink(missing_ok=True)
+            try:
+                out_dir.rmdir()
+            except OSError:
+                pass
 
     def test_evaluate_against_previous_plan_reports_sample_gap(self):
         plan = calculate_plan(

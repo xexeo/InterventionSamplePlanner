@@ -1,10 +1,10 @@
-<!-- File version: 2.0; date: 2026-05-11 -->
+<!-- File version: 2.1; date: 2026-05-12 -->
 
 # Intervention Sample Planner
 
-Intervention Sample Planner, or `ISP`, is a local Python API and Tkinter desktop app for planning or evaluating intervention studies in human processes such as learning, training, usability, and workflow improvement.
+Intervention Sample Planner, or `ISP`, is a local Python API with two interfaces: a Tkinter desktop app and a Flask web app for planning or evaluating intervention studies in human processes such as learning, training, usability, and workflow improvement.
 
-Version `2.0` expands the app beyond the original two-group design. It now supports:
+Version `2.1` supports:
 
 - `Two independent groups`
 - `Pre-test/post-test with control group`
@@ -16,6 +16,19 @@ Version `2.0` expands the app beyond the original two-group design. It now suppo
 - recommended ranges with explicit override
 - explanations loaded from a separate JSON file
 - a suggestions tab with design advice and caution flags
+- a dedicated `Plan / Benchmarks` results table for completed-study checks
+- direct report export as text, HTML, or PDF from the app
+- exact McNemar evaluation for one-group paired binary outcomes
+- Fisher exact p-values for small or sparse two-group binary achieved results
+- clearer ANCOVA-style notes for pre-test/post-test with control and clearer cluster-design cautions
+- REST endpoints for calculation and report export
+- a browser interface designed for deployment on Render without a database or Node build step
+
+## Screenshots
+
+![Wizard start](docs/screenshots/wizard.png)
+
+![Plan and benchmarks table](docs/screenshots/plan_benchmarks.png)
 
 ## What it does
 
@@ -26,7 +39,7 @@ The app helps answer questions such as:
 - How many people should be invited if some will not start or will not finish?
 - If a study already ran, what approximate p-value and achieved power correspond to the observed result?
 
-The current implementation is strongest for continuous outcomes. Binary outcomes are currently supported for the `Two independent groups` path.
+The current implementation is strongest for transparent planning and educational interpretation. Binary planning is supported for `Two independent groups`; achieved-result binary evaluation is supported for `Two independent groups` and paired one-group pre/post cases.
 
 ## Typical research paths
 
@@ -57,7 +70,7 @@ If a previous plan exists, use `Compare completed study with plan`. You can type
 
 ## Effect size in plain language
 
-Effect size is the hardest input for many users, so `ISP v2.0` treats it more explicitly.
+Effect size is the hardest input for many users, so `ISP v2.1` treats it explicitly.
 
 - In `Two independent groups`, the continuous effect size is the standardized difference between groups.
 - In `Pre-test/post-test with control group`, it is the standardized difference in gain, or the post-test effect after baseline is accounted for.
@@ -81,6 +94,15 @@ python -m unittest discover -s tests
 python run_app.py
 ```
 
+## Run the web interface locally
+
+```powershell
+python -m pip install -r requirements.txt
+python -m flask --app intervention_sample_planner.web_app run
+```
+
+Then open `http://127.0.0.1:5000`.
+
 ## Build the executable
 
 See:
@@ -88,6 +110,9 @@ See:
 - [build.md](build.md)
 - [developers.md](developers.md)
 - [versions.md](versions.md)
+- [docs/render_deploy.md](docs/render_deploy.md)
+
+The release executable SHA256 checksum is stored in `release/checksums.sha256`.
 
 ## Main documentation
 

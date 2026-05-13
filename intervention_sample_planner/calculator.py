@@ -1,10 +1,11 @@
 """Calculation API for intervention-study planning and result evaluation."""
 
-# File version: 2.0; date: 2026-05-11
+# File version: 2.1; date: 2026-05-12
 
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import html
 import json
 import math
 from pathlib import Path
@@ -67,6 +68,8 @@ class StudyConfig:
     observed_total_n: int | None = None
     observed_control_events: int | None = None
     observed_intervention_events: int | None = None
+    observed_pre_success_post_failure: int | None = None
+    observed_pre_failure_post_success: int | None = None
     observed_effect_size: float | None = None
 
     had_planned_sample: bool = False
@@ -126,6 +129,8 @@ class ObservedAnalysis:
     p_value: float
     achieved_power: float
     method: str
+    exact_p_value: float | None = None
+    method_notes: list[str] = field(default_factory=list)
     benchmark_targets: list[EvaluationTarget] = field(default_factory=list)
     planned_targets: list[EvaluationTarget] = field(default_factory=list)
 
@@ -173,8 +178,8 @@ def config_from_dict(data: dict[str, Any]) -> StudyConfig:
 def save_config(config: StudyConfig, path: str | Path) -> None:
     target = Path(path)
     payload = config_to_dict(config)
-    payload.setdefault("_file_version", "2.0")
-    payload.setdefault("_file_date", "2026-05-11")
+    payload.setdefault("_file_version", "2.1")
+    payload.setdefault("_file_date", "2026-05-12")
     target.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
@@ -247,6 +252,104 @@ def render_report(plan: SamplePlan, language: str | None = None) -> str:
     return _render_pt(plan) if lang == "pt" else _render_en(plan)
 
 
+def render_report_html(plan: SamplePlan, language: str | None = None) -> str:
+    title = html.escape(plan.config.study_name)
+    body = html.escape(render_report(plan, language))
+    return (
+        "<!doctype html>\n"
+        "<html lang=\"en\">\n"
+        "<head>\n"
+        "  <meta charset=\"utf-8\">\n"
+        f"  <title>{title}</title>\n"
+        "  <style>\n"
+        "    body { font-family: Segoe UI, Arial, sans-serif; margin: 2rem; line-height: 1.45; }\n"
+        "    pre { white-space: pre-wrap; font-family: Consolas, monospace; background: #f7f7f7; padding: 1rem; }\n"
+        "  </style>\n"
+        "</head>\n"
+        "<body>\n"
+        f"<h1>{title}</h1>\n"
+        f"<pre>{body}</pre>\n"
+        "</body>\n"
+        "</html>\n"
+    )
+
+
+def save_report_html(plan: SamplePlan, path: str | Path, language: str | None = None) -> None:
+    Path(path).write_text(render_report_html(plan, language), encoding="utf-8")
+
+
+def save_report_pdf(plan: SamplePlan, path: str | Path, language: str | None = None) -> None:
+    lines = _wrap_report_lines(render_report(plan, language), width=92)
+    pages = [lines[index : index + 48] for index in range(0, len(lines), 48)] or [[""]]
+    objects: list[bytes] = []
+    objects.append(b"<< /Type /Catalog /Pages 2 0 R >>")
+    kids = " ".join(f"{3 + i * 2} 0 R" for i in range(len(pages)))
+    objects.append(f"<< /Type /Pages /Kids [{kids}] /Count {len(pages)} >>".encode("ascii"))
+    for index, page_lines in enumerate(pages):
+        page_object_number = 3 + index * 2
+        content_object_number = page_object_number + 1
+        objects.append(
+            (
+                f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+                f"/Resources << /Font << /F1 {3 + len(pages) * 2} 0 R >> >> "
+                f"/Contents {content_object_number} 0 R >>"
+            ).encode("ascii")
+        )
+        stream = _pdf_text_stream(page_lines)
+        objects.append(b"<< /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n" + stream + b"\nendstream")
+    objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
+    _write_pdf(Path(path), objects)
+
+
+def _wrap_report_lines(report: str, width: int) -> list[str]:
+    wrapped: list[str] = []
+    for line in report.splitlines():
+        if not line:
+            wrapped.append("")
+            continue
+        current = line
+        while len(current) > width:
+            breakpoint = current.rfind(" ", 0, width)
+            if breakpoint <= 0:
+                breakpoint = width
+            wrapped.append(current[:breakpoint])
+            current = current[breakpoint:].lstrip()
+        wrapped.append(current)
+    return wrapped
+
+
+def _pdf_text_stream(lines: list[str]) -> bytes:
+    commands = ["BT", "/F1 10 Tf", "50 750 Td", "14 TL"]
+    for line in lines:
+        commands.append(f"({_pdf_escape(line)}) Tj")
+        commands.append("T*")
+    commands.append("ET")
+    return "\n".join(commands).encode("latin-1", errors="replace")
+
+
+def _pdf_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+
+
+def _write_pdf(path: Path, objects: list[bytes]) -> None:
+    chunks = [b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n"]
+    offsets: list[int] = []
+    position = len(chunks[0])
+    for number, payload in enumerate(objects, start=1):
+        offsets.append(position)
+        chunk = f"{number} 0 obj\n".encode("ascii") + payload + b"\nendobj\n"
+        chunks.append(chunk)
+        position += len(chunk)
+    xref_start = position
+    xref = [f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n".encode("ascii")]
+    xref.extend(f"{offset:010d} 00000 n \n".encode("ascii") for offset in offsets)
+    trailer = (
+        f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
+        f"startxref\n{xref_start}\n%%EOF\n"
+    ).encode("ascii")
+    path.write_bytes(b"".join(chunks + xref + [trailer]))
+
+
 def _workflow_from_legacy_fields(data: dict[str, Any]) -> str:
     if data.get("analysis_mode") == "evaluate":
         return "evaluate_against_plan" if data.get("had_planned_sample") else "evaluate_done"
@@ -304,9 +407,13 @@ def _validate_config(config: StudyConfig) -> None:
     if config.apply_fpc and (not config.finite_population or config.finite_population <= 0):
         raise PlanningError("finite_population must be positive when apply_fpc is true.")
 
-    if config.study_design != "parallel_two_group" and config.outcome_type == "binary":
+    if (
+        config.outcome_type == "binary"
+        and config.study_design != "parallel_two_group"
+        and not (config.study_design == "one_group_pre_post" and config.analysis_mode == "evaluate")
+    ):
         raise PlanningError(
-            "Binary outcomes are currently supported only for the two independent groups path."
+            "Binary outcomes are supported for two independent groups and one-group paired evaluation."
         )
 
     if config.analysis_mode == "plan":
@@ -326,6 +433,24 @@ def _validate_observed_inputs(config: StudyConfig) -> None:
     if config.study_design == "one_group_pre_post":
         if not config.observed_total_n or config.observed_total_n <= 1:
             raise PlanningError("observed_total_n must be at least 2 in achieved-result mode.")
+        if config.outcome_type == "binary":
+            if (
+                config.observed_pre_success_post_failure is None
+                or config.observed_pre_failure_post_success is None
+            ):
+                raise PlanningError(
+                    "For one-group binary evaluation, provide the two discordant paired counts."
+                )
+            if config.observed_pre_success_post_failure < 0 or config.observed_pre_failure_post_success < 0:
+                raise PlanningError("McNemar discordant counts must be zero or positive.")
+            discordant = (
+                config.observed_pre_success_post_failure
+                + config.observed_pre_failure_post_success
+            )
+            if discordant <= 0:
+                raise PlanningError("At least one discordant paired binary case is required.")
+            if discordant > config.observed_total_n:
+                raise PlanningError("Discordant paired counts cannot exceed observed_total_n.")
     else:
         if not config.observed_control_n or not config.observed_intervention_n:
             raise PlanningError(
@@ -359,6 +484,8 @@ def _validate_observed_inputs(config: StudyConfig) -> None:
             raise PlanningError(
                 "For binary achieved-result mode, observed_effect_size must be a proportion difference."
             )
+    elif config.study_design == "one_group_pre_post" and config.outcome_type == "binary":
+        pass
     elif config.observed_effect_size is None:
         raise PlanningError("observed_effect_size is required in achieved-result mode.")
     elif config.observed_effect_size == 0:
@@ -593,6 +720,35 @@ def _observed_analysis(config: StudyConfig, z_alpha: float) -> ObservedAnalysis 
     if config.analysis_mode != "evaluate":
         return None
     if config.study_design == "one_group_pre_post":
+        if config.outcome_type == "binary":
+            n_total = int(config.observed_total_n or 0)
+            improved = int(config.observed_pre_failure_post_success or 0)
+            worsened = int(config.observed_pre_success_post_failure or 0)
+            discordant = improved + worsened
+            effect = abs(improved - worsened) / n_total
+            z_stat = abs(improved - worsened) / math.sqrt(discordant)
+            exact_p = _binomial_two_sided_p(min(improved, worsened), discordant, 0.5)
+            achieved_power = _clamp(NORMAL.cdf(effect * math.sqrt(n_total) - z_alpha), 0.0, 1.0)
+            groups = GroupSizes(0, n_total)
+            return ObservedAnalysis(
+                observed_control=0,
+                observed_intervention=n_total,
+                observed_total=n_total,
+                observed_effect_size=effect,
+                observed_control_rate=worsened / n_total,
+                observed_intervention_rate=improved / n_total,
+                z_statistic=z_stat,
+                p_value=exact_p,
+                achieved_power=achieved_power,
+                method="Exact McNemar paired-binary evaluation",
+                exact_p_value=exact_p,
+                method_notes=[
+                    "McNemar uses only discordant paired cases: pre success/post failure and pre failure/post success.",
+                    "The p-value is exact binomial; achieved power and benchmark gaps remain approximate."
+                ],
+                benchmark_targets=_evaluation_targets(config, max(effect, 1e-9), groups, z_alpha),
+                planned_targets=_planned_targets(config, groups),
+            )
         effect = abs(config.observed_effect_size or 0.0)
         n_total = int(config.observed_total_n or 0)
         groups = GroupSizes(0, n_total)
@@ -609,6 +765,9 @@ def _observed_analysis(config: StudyConfig, z_alpha: float) -> ObservedAnalysis 
             p_value=_p_value(z_stat, config.alternative),
             achieved_power=achieved_power,
             method="Approximate paired standardized-mean-change evaluation",
+            method_notes=[
+                "For continuous one-group pre/post studies, the app treats the observed effect as a standardized mean change."
+            ],
             benchmark_targets=_evaluation_targets(config, effect, groups, z_alpha),
             planned_targets=_planned_targets(config, groups),
         )
@@ -625,19 +784,32 @@ def _observed_analysis(config: StudyConfig, z_alpha: float) -> ObservedAnalysis 
         efficiency_gain = 1 / math.sqrt(max(0.05, 1 - config.pre_post_correlation**2))
         z_stat = effect * base * efficiency_gain
         achieved_power = _clamp(NORMAL.cdf(z_stat - z_alpha), 0.0, 1.0)
-        method = "Approximate pre-test/post-test with control evaluation"
+        method = "Approximate ANCOVA-style pre-test/post-test with control evaluation"
+        method_notes = [
+            "The pre/post control path uses an ANCOVA-style precision gain from the pre/post correlation.",
+            "Fit the final study with the actual post-test outcome and baseline covariate when possible.",
+        ]
     elif config.outcome_type == "continuous":
         effect = abs(config.observed_effect_size or 0.0)
         z_stat = effect * math.sqrt(control / (1 + 1 / k))
         achieved_power = _clamp(NORMAL.cdf(z_stat - z_alpha), 0.0, 1.0)
         method = "Approximate two-group continuous evaluation"
+        method_notes = []
     else:
+        exact_p: float | None = None
         if config.observed_control_events is not None and config.observed_intervention_events is not None:
             p0 = config.observed_control_events / control
             p1 = config.observed_intervention_events / intervention
             control_rate = p0
             intervention_rate = p1
             effect = abs(p1 - p0)
+            exact_p = _fisher_exact_p(
+                config.observed_control_events,
+                control - config.observed_control_events,
+                config.observed_intervention_events,
+                intervention - config.observed_intervention_events,
+                config.alternative,
+            )
         else:
             effect = abs(config.observed_effect_size or 0.0)
             p0 = config.proportion_control
@@ -650,7 +822,48 @@ def _observed_analysis(config: StudyConfig, z_alpha: float) -> ObservedAnalysis 
         z_stat = math.sqrt(control) * effect / math.sqrt(pooled)
         z_beta = (math.sqrt(control) * effect - z_alpha * math.sqrt(pooled)) / math.sqrt(unpooled)
         achieved_power = _clamp(NORMAL.cdf(z_beta), 0.0, 1.0)
-        method = "Approximate two-group proportion-difference evaluation"
+        small_sample = total < 80
+        if exact_p is not None:
+            cells = [
+                int(config.observed_control_events or 0),
+                control - int(config.observed_control_events or 0),
+                int(config.observed_intervention_events or 0),
+                intervention - int(config.observed_intervention_events or 0),
+            ]
+            small_sample = min(cells) < 5 or total < 80
+        if exact_p is not None and small_sample:
+            p_value = exact_p
+            method = "Fisher exact two-group binary evaluation"
+        else:
+            p_value = _p_value(z_stat, config.alternative)
+            method = "Approximate two-group proportion-difference evaluation"
+        method_notes = [
+            "Fisher's exact p-value is calculated when event counts are available.",
+            "For small samples or sparse cells, the exact p-value is used as the reported p-value.",
+        ]
+        return ObservedAnalysis(
+            observed_control=control,
+            observed_intervention=intervention,
+            observed_total=total,
+            observed_effect_size=effect,
+            observed_control_rate=control_rate,
+            observed_intervention_rate=intervention_rate,
+            z_statistic=z_stat,
+            p_value=p_value,
+            achieved_power=achieved_power,
+            method=method,
+            exact_p_value=exact_p,
+            method_notes=method_notes,
+            benchmark_targets=_evaluation_targets(
+                config,
+                effect,
+                groups,
+                z_alpha,
+                control_rate=control_rate,
+                intervention_rate=intervention_rate,
+            ),
+            planned_targets=_planned_targets(config, groups),
+        )
     return ObservedAnalysis(
         observed_control=control,
         observed_intervention=intervention,
@@ -662,6 +875,7 @@ def _observed_analysis(config: StudyConfig, z_alpha: float) -> ObservedAnalysis 
         p_value=_p_value(z_stat, config.alternative),
         achieved_power=achieved_power,
         method=method,
+        method_notes=method_notes,
         benchmark_targets=_evaluation_targets(
             config,
             effect,
@@ -693,6 +907,7 @@ def _evaluation_targets(
             control_rate,
             intervention_rate,
         )
+        required = _cluster_adjusted_target(required, config)
         targets.append(_target_gap(f"p < {alpha:.2f}", required, observed_groups))
     for desired_power in (0.80, 0.90):
         required = _required_groups_for_power(
@@ -704,8 +919,16 @@ def _evaluation_targets(
             control_rate,
             intervention_rate,
         )
+        required = _cluster_adjusted_target(required, config)
         targets.append(_target_gap(f"power >= {desired_power:.0%}", required, observed_groups))
     return targets
+
+
+def _cluster_adjusted_target(groups: GroupSizes, config: StudyConfig) -> GroupSizes:
+    design_effect = _design_effect(config)
+    if design_effect <= 1:
+        return groups
+    return _inflate_groups(groups, design_effect)
 
 
 def _required_groups_for_z(
@@ -809,6 +1032,54 @@ def _p_value(z_stat: float, alternative: str) -> float:
     return 1 - NORMAL.cdf(abs(z_stat))
 
 
+def _binomial_two_sided_p(successes: int, trials: int, probability: float) -> float:
+    observed = _binomial_pmf(successes, trials, probability)
+    total = 0.0
+    for value in range(trials + 1):
+        current = _binomial_pmf(value, trials, probability)
+        if current <= observed + 1e-15:
+            total += current
+    return _clamp(total, 0.0, 1.0)
+
+
+def _binomial_pmf(successes: int, trials: int, probability: float) -> float:
+    return math.comb(trials, successes) * probability**successes * (1 - probability) ** (trials - successes)
+
+
+def _fisher_exact_p(
+    control_events: int,
+    control_non_events: int,
+    intervention_events: int,
+    intervention_non_events: int,
+    alternative: str,
+) -> float:
+    total_events = control_events + intervention_events
+    intervention_total = intervention_events + intervention_non_events
+    grand_total = control_events + control_non_events + intervention_events + intervention_non_events
+    lower = max(0, intervention_total - (grand_total - total_events))
+    upper = min(intervention_total, total_events)
+    observed = intervention_events
+    observed_probability = _hypergeom_pmf(observed, total_events, grand_total - total_events, intervention_total)
+    probability = 0.0
+    for value in range(lower, upper + 1):
+        current = _hypergeom_pmf(value, total_events, grand_total - total_events, intervention_total)
+        if alternative == "greater" and value >= observed:
+            probability += current
+        elif alternative == "less" and value <= observed:
+            probability += current
+        elif alternative == "two_sided" and current <= observed_probability + 1e-15:
+            probability += current
+    return _clamp(probability, 0.0, 1.0)
+
+
+def _hypergeom_pmf(successes: int, successes_population: int, failures_population: int, draws: int) -> float:
+    return (
+        math.comb(successes_population, successes)
+        * math.comb(failures_population, draws - successes)
+        / math.comb(successes_population + failures_population, draws)
+    )
+
+
 def _base_warnings(config: StudyConfig, alpha_adjusted: float, effect_size: float) -> list[str]:
     warnings: list[str] = []
     if config.primary_comparisons > 1:
@@ -852,6 +1123,9 @@ def _build_suggestions(
         suggestions.append(
             "Define completion as finishing both tests, not only attending the intervention session."
         )
+        suggestions.append(
+            "For the final analysis, prefer an ANCOVA-style model that predicts post-test from group assignment while adjusting for baseline pre-test."
+        )
     else:
         suggestions.append(
             "Without a control group, interpret improvement cautiously: learning gains may reflect practice, maturation, or ordinary instruction."
@@ -859,9 +1133,16 @@ def _build_suggestions(
         suggestions.append(
             "If possible, add a control group in a later study or replicate the result in a second cohort."
         )
+        if config.outcome_type == "binary" and config.analysis_mode == "evaluate":
+            suggestions.append(
+                "For paired before/after binary outcomes, the app uses McNemar's exact test from the two discordant cells; unchanged pairs describe the sample but do not drive the test."
+            )
     if config.cluster_average_size > 1 and config.intraclass_correlation > 0:
         suggestions.append(
             "Because participants are clustered, adding more clusters may help more than adding more people inside the same cluster."
+        )
+        suggestions.append(
+            "For a full cluster-randomized study, also plan the number of clusters per arm and keep analysis aligned with the randomization unit."
         )
     if config.response_rate < 0.5:
         suggestions.append(
@@ -901,6 +1182,14 @@ def _build_suggestions(
         else:
             suggestions.append(
                 "The achieved sample appears underpowered for the observed effect size. A larger replication may be more informative than a binary significant/non-significant interpretation."
+            )
+        if observed_analysis.exact_p_value is not None:
+            suggestions.append(
+                "An exact p-value is available for this result. Use it preferentially when samples are small or binary outcome cells are sparse."
+            )
+        if any(item.additional_total > 0 for item in observed_analysis.benchmark_targets):
+            suggestions.append(
+                "The plan/benchmark table separates what was achieved from how many additional valid observations would be needed for common thresholds."
             )
         for target in observed_analysis.benchmark_targets:
             if target.achieved:
@@ -1092,6 +1381,10 @@ def _render_en(plan: SamplePlan) -> str:
                 f"- Approximate achieved power for the observed effect: {obs.achieved_power:.1%}.",
             ]
         )
+        if obs.exact_p_value is not None:
+            lines.append(f"- Exact p-value: {obs.exact_p_value:.6f}.")
+        if obs.method_notes:
+            lines.extend(f"- Method note: {item}" for item in obs.method_notes)
         if obs.observed_control_rate is not None and obs.observed_intervention_rate is not None:
             lines.extend(
                 [
@@ -1166,6 +1459,10 @@ def _render_pt(plan: SamplePlan) -> str:
                 f"- Poder aproximado alcançado para o efeito observado: {obs.achieved_power:.1%}.",
             ]
         )
+        if obs.exact_p_value is not None:
+            lines.append(f"- Valor-p exato: {obs.exact_p_value:.6f}.")
+        if obs.method_notes:
+            lines.extend(f"- Nota de metodo: {item}" for item in obs.method_notes)
         if obs.observed_control_rate is not None and obs.observed_intervention_rate is not None:
             lines.extend(
                 [

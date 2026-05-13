@@ -1,4 +1,4 @@
-% File version: 2.0; date: 2026-05-11
+% File version: 2.1; date: 2026-05-12
 % !TeX TS-program = lualatex
 % !TeX encoding = UTF-8
 % !TeX spellcheck = en_US
@@ -50,7 +50,7 @@
   linkcolor=ispblue,
   citecolor=ispgreen,
   urlcolor=ispblue,
-  pdftitle={Educational Manual for ISP v2.0},
+  pdftitle={Educational Manual for ISP v2.1},
   pdfauthor={Geraldo Xexéo}
 }
 \urlstyle{same}
@@ -130,7 +130,7 @@
 }
 
 \newcommand{\code}[1]{\texttt{\detokenize{#1}}}
-\newcommand{\app}{\textsf{ISP v2.0}\index{ISP v2.0}}
+\newcommand{\app}{\textsf{ISP v2.1}\index{ISP v2.1}}
 \newcommand{\field}[1]{\code{#1}\index{configuration variables!#1@\code{#1}}}
 \newcommand{\term}[1]{\textbf{#1}\index{#1}}
 \newcommand{\wizard}[1]{\textbf{#1}\index{wizard!#1}}
@@ -145,7 +145,7 @@
   \vspace{0.45cm}
   {\Large Planning and evaluating intervention studies in human processes\par}
   \vspace{1cm}
-  {\large Manual version 2.0 \quad Date: 2026-05-11\par}
+  {\large Manual version 2.1 \quad Date: 2026-05-12\par}
   \vfill
   \begin{conceptbox}{Default problem family}
   This manual assumes studies of interventions in human processes: learning, training, usability, work procedures, decision support, classroom activities, and similar situations. The examples use an educational game, but the same logic applies to many non-clinical interventions. This is not a clinical-trial manual for medication, surgery, safety endpoints, or regulatory decisions.
@@ -170,6 +170,21 @@
 \end{quote}
 
 The software is designed for interventions in human processes. A class receives a new learning activity; a team receives a new workflow; users receive a new interface; students play an educational game; a workshop changes how people solve a task. The app converts these decisions into a consistent set of sample-size assumptions.
+
+\section{The two interfaces}
+
+The same calculation engine is available through two interfaces:
+
+\begin{itemize}
+  \item the local Tkinter desktop app, intended for researchers who want a guided wizard and local report export;
+  \item the Flask web app, intended for browser use, REST access, and deployment on services such as Render.
+\end{itemize}
+
+Both interfaces use the same Python calculation API. The web interface does not use a database and does not keep study files on the server. Saving and loading study plans is done with JSON files selected or downloaded by the user.
+
+\begin{conceptbox}{Why two interfaces matter}
+The desktop interface is convenient for local planning and teaching. The web interface is useful when a class, laboratory, or project group needs the same tool through a browser. Because both call the same calculation engine, a result should not depend on which interface was used.
+\end{conceptbox}
 
 \section{The main outputs}
 
@@ -950,6 +965,12 @@ where \(k\) is \field{allocation_ratio}. The intervention size is \(k n_{\text{c
 
 For a binary two-group comparison, the app uses a normal approximation for two proportions, based on expected control and intervention rates. This is conceptually similar to standard rate and proportion methods \parencite{fleiss2003rates}.
 
+\section{Achieved binary results}
+
+For achieved two-group binary results, the app can use event counts. With ordinary sample sizes it reports the normal approximation; when samples are small or cells are sparse, it reports Fisher's exact p-value \parencite{fisher1922interpretation}. This protects the user from relying too heavily on a large-sample approximation in a small completed study.
+
+For one-group paired binary before/after results, the app uses the discordant pairs: people who changed from success to failure and people who changed from failure to success. The exact McNemar/binomial calculation is appropriate for this simple paired success/failure question \parencite{mcnemar1947note}. It does not replace richer repeated binary models when there are several waves, covariates, clusters, or missing-data mechanisms.
+
 \section{Pre-test/post-test with control}
 
 The app starts from the continuous two-group approximation and applies the factor:
@@ -1010,6 +1031,17 @@ Warnings describe methodological limits or technical assumptions. They are not n
 
 The Sensitivity tab shows how results change under nearby assumptions. This is important because sample-size planning is rarely exact. If a small change in \field{effect_size_d} or \field{power} doubles the sample, the study is sensitive and should be planned carefully.
 
+\section{Plan / Benchmarks tab}
+
+The Plan / Benchmarks tab appears most clearly in completed-study workflows. It separates two questions:
+
+\begin{itemize}
+  \item whether the achieved valid sample reached the sample promised by a previous plan;
+  \item how many additional valid observations would be needed, under the observed effect, to reach common benchmarks such as \(p<0.05\), \(p<0.10\), 80\% power, and 90\% power.
+\end{itemize}
+
+This table is not a promise that adding exactly that number of participants would reproduce the same effect. It is a diagnostic table: it shows what the current achieved result implies if the observed effect size is treated as the working estimate.
+
 \section{JSON tab}
 
 The JSON tab shows the saved machine-readable configuration. This is useful for reproducibility, later editing, and developer work. A JSON Schema is provided in the project so saved configurations can be validated.
@@ -1025,6 +1057,12 @@ The Suggestions tab turns methodological concerns into practical advice. It can 
   \item out-of-range values accepted with overrides;
   \item achieved results that remain underpowered.
 \end{itemize}
+
+\section{Report export and REST output}
+
+The desktop and web interfaces can export the same result as plain text, HTML, or PDF. The HTML and PDF reports are operational reports; the educational manual remains the more detailed theoretical explanation.
+
+The Flask interface also exposes REST endpoints. For example, a teaching notebook or another local tool can send a JSON configuration to \code{/api/calculate} and receive the same summary, sensitivity rows, benchmark rows, warnings, and suggestions used by the interfaces.
 
 \chapter{Worked Examples}
 
@@ -1235,9 +1273,10 @@ The app reports the approximate p-value and achieved power for the observed resu
 \endhead
 Many repeated waves over time & A single pre/post model does not represent growth curves or time trends. & Longitudinal mixed-model power analysis.\\
 Students nested in many classrooms or schools with cluster assignment & A simple design-effect correction may be too rough. & Cluster-randomized trial planning \parencite{donner2000cluster}.\\
-Binary paired pre/post change & The current app does not model paired binary change directly. & McNemar-based or paired binary methods.\\
+Binary paired pre/post change with covariates, clusters, or several waves & The app supports the simple exact McNemar case, but not richer repeated binary models. & McNemar for simple paired data; GEE, mixed logistic models, or simulation for richer designs.\\
 Ordinal outcomes with strong floor or ceiling effects & Treating the score as continuous may be misleading. & Ordinal models or simulation.\\
 Very small samples & Normal approximations may be inaccurate. & Exact methods, simulation, or Bayesian planning.\\
+Public web deployment with sensitive individual data & The web interface is stateless, but public deployment can still expose submitted values to server logs or institutional policies. & Use local desktop execution, a private deployment, or de-identified aggregate inputs.\\
 Clinical medication, surgery, or safety endpoint & Ethical, regulatory, and adverse-event issues dominate planning. & Clinical-trial design \parencite{julious2010sample}.\\
 Interview-centered qualitative research & Power formulas do not define qualitative adequacy. & Information power or saturation logic \parencite{malterud2016information}.\\
 Strong causal claim without control group & Threats such as maturation and practice remain unresolved. & Add a control group or use a stronger quasi-experimental design \parencite{shadish2002experimental}.\\
@@ -1287,8 +1326,10 @@ This study is planned to detect [effect] on [outcome] using [research path], wit
   \item[Planning mode] App mode that estimates the required sample before collection.
   \item[Power] Probability of detecting the planned effect if it exists, stored as \field{power}.
   \item[Pre-test/post-test] Design in which the same people are measured before and after.
+  \item[REST API] HTTP interface used by the web app and external tools to call the calculation engine.
   \item[Response rate] Share of invited people expected to start, stored as \field{response_rate}.
   \item[Usable data rate] Share of completed cases expected to remain analyzable, stored as \field{usable_data_rate}.
+  \item[Web interface] Browser interface served by Flask and backed by the same Python calculation API as the desktop app.
   \item[Workflow path] First wizard choice, stored as \field{workflow_path}; it selects planning, completed-study analysis, or comparison with a previous plan.
 \end{description}
 

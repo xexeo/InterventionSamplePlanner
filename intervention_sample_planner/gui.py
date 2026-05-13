@@ -1,6 +1,6 @@
 """Tkinter interface for Intervention Sample Planner."""
 
-# File version: 2.0; date: 2026-05-11
+# File version: 2.1; date: 2026-05-12
 
 from __future__ import annotations
 
@@ -20,6 +20,8 @@ from .calculator import (
     load_config,
     render_report,
     save_config,
+    save_report_html,
+    save_report_pdf,
 )
 from .content import get_design_content, get_field_content, get_general_content
 from .i18n import t
@@ -80,6 +82,8 @@ FIELD_GROUPS = [
             "observed_total_n",
             "observed_control_events",
             "observed_intervention_events",
+            "observed_pre_success_post_failure",
+            "observed_pre_failure_post_success",
             "observed_effect_size",
         ],
     ),
@@ -120,6 +124,8 @@ FIELD_TYPES = {
     "observed_total_n": "optional_int",
     "observed_control_events": "optional_int",
     "observed_intervention_events": "optional_int",
+    "observed_pre_success_post_failure": "optional_int",
+    "observed_pre_failure_post_success": "optional_int",
     "observed_effect_size": "optional_float",
     "planned_control_n": "optional_int",
     "planned_intervention_n": "optional_int",
@@ -281,22 +287,27 @@ class PlannerApp(tk.Tk):
         top.pack(fill=tk.X, pady=(0, 8))
         ttk.Button(top, text=t(self.language, "calculate"), command=self.calculate).pack(side=tk.RIGHT)
         ttk.Button(top, text=t(self.language, "save_report"), command=self.save_report).pack(side=tk.RIGHT, padx=(0, 8))
+        ttk.Button(top, text=t(self.language, "save_pdf"), command=self.save_report_as_pdf).pack(side=tk.RIGHT, padx=(0, 8))
+        ttk.Button(top, text=t(self.language, "save_html"), command=self.save_report_as_html).pack(side=tk.RIGHT, padx=(0, 8))
 
         self.results_notebook = ttk.Notebook(self.results_tab)
         self.results_notebook.pack(fill=tk.BOTH, expand=True)
 
         summary_frame = ttk.Frame(self.results_notebook, padding=6)
         sensitivity_frame = ttk.Frame(self.results_notebook, padding=6)
+        evaluation_frame = ttk.Frame(self.results_notebook, padding=6)
         suggestions_frame = ttk.Frame(self.results_notebook, padding=6)
         json_frame = ttk.Frame(self.results_notebook, padding=6)
         self.results_notebook.add(summary_frame, text=t(self.language, "summary_tab"))
         self.results_notebook.add(sensitivity_frame, text=t(self.language, "sensitivity_tab"))
+        self.results_notebook.add(evaluation_frame, text=t(self.language, "evaluation_tab"))
         self.results_notebook.add(suggestions_frame, text=t(self.language, "suggestions_tab"))
         self.results_notebook.add(json_frame, text=t(self.language, "json_tab"))
 
         self.summary_text = self._make_text(summary_frame)
         self.summary_text.insert("1.0", t(self.language, "no_results"))
         self.sensitivity_table = self._make_sensitivity_table(sensitivity_frame)
+        self.evaluation_table = self._make_evaluation_table(evaluation_frame)
         self.suggestions_text = self._make_text(suggestions_frame)
         self.json_text = self._make_text(json_frame)
 
@@ -332,6 +343,42 @@ class PlannerApp(tk.Tk):
         for column in columns:
             tree.heading(column, text=headings[column])
             tree.column(column, width=widths[column], minwidth=90, anchor=tk.W if column == "scenario" else tk.E)
+        yscroll = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=tree.yview)
+        xscroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
+        tree.configure(yscrollcommand=yscroll.set, xscrollcommand=xscroll.set)
+        tree.grid(row=0, column=0, sticky="nsew")
+        yscroll.grid(row=0, column=1, sticky="ns")
+        xscroll.grid(row=1, column=0, sticky="ew")
+        frame.columnconfigure(0, weight=1)
+        frame.rowconfigure(0, weight=1)
+        return tree
+
+    def _make_evaluation_table(self, parent: ttk.Frame) -> ttk.Treeview:
+        columns = ("category", "target", "required_control", "required_intervention", "required_total", "additional", "status")
+        frame = ttk.Frame(parent)
+        frame.pack(fill=tk.BOTH, expand=True)
+        tree = ttk.Treeview(frame, columns=columns, show="headings", height=12)
+        headings = {
+            "category": t(self.language, "eval_col_category"),
+            "target": t(self.language, "eval_col_target"),
+            "required_control": t(self.language, "eval_col_required_control"),
+            "required_intervention": t(self.language, "eval_col_required_intervention"),
+            "required_total": t(self.language, "eval_col_required_total"),
+            "additional": t(self.language, "eval_col_additional"),
+            "status": t(self.language, "eval_col_status"),
+        }
+        widths = {
+            "category": 160,
+            "target": 170,
+            "required_control": 130,
+            "required_intervention": 150,
+            "required_total": 120,
+            "additional": 120,
+            "status": 120,
+        }
+        for column in columns:
+            tree.heading(column, text=headings[column])
+            tree.column(column, width=widths[column], minwidth=90, anchor=tk.W if column in {"category", "target", "status"} else tk.E)
         yscroll = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=tree.yview)
         xscroll = ttk.Scrollbar(frame, orient=tk.HORIZONTAL, command=tree.xview)
         tree.configure(yscrollcommand=yscroll.set, xscrollcommand=xscroll.set)
@@ -415,7 +462,9 @@ class PlannerApp(tk.Tk):
         return [t(self.language, "mode_plan"), t(self.language, "mode_evaluate")]
 
     def _outcome_values(self) -> list[str]:
-        if self._current_study_design() != "parallel_two_group":
+        if self._current_study_design() == "pretest_posttest_control":
+            return [t(self.language, "outcome_continuous")]
+        if self._current_study_design() == "one_group_pre_post" and self._current_analysis_mode() == "plan":
             return [t(self.language, "outcome_continuous")]
         return [t(self.language, "outcome_continuous"), t(self.language, "outcome_binary")]
 
@@ -448,8 +497,10 @@ class PlannerApp(tk.Tk):
             return mode == "evaluate" and design == "one_group_pre_post"
         if field in {"observed_control_events", "observed_intervention_events"}:
             return mode == "evaluate" and design == "parallel_two_group" and outcome == "binary"
+        if field in {"observed_pre_success_post_failure", "observed_pre_failure_post_success"}:
+            return mode == "evaluate" and design == "one_group_pre_post" and outcome == "binary"
         if field == "observed_effect_size":
-            return mode == "evaluate" and not (design == "parallel_two_group" and outcome == "binary")
+            return mode == "evaluate" and outcome == "continuous"
         if field in {"planned_control_n", "planned_intervention_n"}:
             return has_plan and design != "one_group_pre_post"
         if field == "planned_total_n":
@@ -502,7 +553,11 @@ class PlannerApp(tk.Tk):
                     fields.extend(["planned_control_n", "planned_intervention_n"])
                 fields.extend(["planned_effect_size", "planned_alpha", "planned_power"])
             if design == "one_group_pre_post":
-                fields.extend(["observed_total_n", "observed_effect_size"])
+                fields.append("observed_total_n")
+                if outcome == "binary":
+                    fields.extend(["observed_pre_success_post_failure", "observed_pre_failure_post_success"])
+                else:
+                    fields.append("observed_effect_size")
             else:
                 if design == "parallel_two_group":
                     fields.append("allocation_ratio")
@@ -852,6 +907,28 @@ class PlannerApp(tk.Tk):
                 tk.END,
                 values=(row.label, row.control, row.intervention, row.total, row.invited_total),
             )
+        for item in self.evaluation_table.get_children():
+            self.evaluation_table.delete(item)
+        if self.current_plan.observed_analysis:
+            obs = self.current_plan.observed_analysis
+            for category, targets in (
+                (t(self.language, "eval_category_plan"), obs.planned_targets),
+                (t(self.language, "eval_category_benchmark"), obs.benchmark_targets),
+            ):
+                for target in targets:
+                    self.evaluation_table.insert(
+                        "",
+                        tk.END,
+                        values=(
+                            category,
+                            target.label,
+                            target.required_control,
+                            target.required_intervention,
+                            target.required_total,
+                            target.additional_total,
+                            t(self.language, "eval_status_reached") if target.achieved else t(self.language, "eval_status_missing"),
+                        ),
+                    )
         suggestion_lines = list(self.current_plan.suggestions)
         if self.range_issues:
             suggestion_lines.append("")
@@ -973,6 +1050,38 @@ class PlannerApp(tk.Tk):
         if not filename:
             return
         Path(filename).write_text(render_report(self.current_plan, self.language), encoding="utf-8")
+        messagebox.showinfo(t(self.language, "ready"), t(self.language, "report_saved"), parent=self)
+
+    def save_report_as_html(self) -> None:
+        if not self.current_plan:
+            self.calculate()
+        if not self.current_plan:
+            return
+        filename = filedialog.asksaveasfilename(
+            parent=self,
+            title=t(self.language, "choose_html_report"),
+            defaultextension=".html",
+            filetypes=[("HTML", "*.html"), ("All files", "*.*")],
+        )
+        if not filename:
+            return
+        save_report_html(self.current_plan, filename, self.language)
+        messagebox.showinfo(t(self.language, "ready"), t(self.language, "report_saved"), parent=self)
+
+    def save_report_as_pdf(self) -> None:
+        if not self.current_plan:
+            self.calculate()
+        if not self.current_plan:
+            return
+        filename = filedialog.asksaveasfilename(
+            parent=self,
+            title=t(self.language, "choose_pdf_report"),
+            defaultextension=".pdf",
+            filetypes=[("PDF", "*.pdf"), ("All files", "*.*")],
+        )
+        if not filename:
+            return
+        save_report_pdf(self.current_plan, filename, self.language)
         messagebox.showinfo(t(self.language, "ready"), t(self.language, "report_saved"), parent=self)
 
 

@@ -1,4 +1,4 @@
-# File version: 2.0; date: 2026-05-11
+# File version: 2.1; date: 2026-05-12
 
 from .gui import main
 

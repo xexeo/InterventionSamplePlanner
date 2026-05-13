@@ -1,0 +1,124 @@
+<!doctype html>
+<!-- File version: 2.1; date: 2026-05-12 -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ISP v2.1 - Intervention Sample Planner</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">ISP v2.1</p>
+      <h1>Intervention Sample Planner</h1>
+    </div>
+    <div class="header-actions">
+      <label class="select-label">
+        <span data-i18n="language">Language</span>
+        <select id="languageSelect">
+          <option value="en">English</option>
+          <option value="pt">Português</option>
+        </select>
+      </label>
+      <button id="runTop" class="primary" data-i18n="run">Run</button>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <nav class="main-tabs" aria-label="Main views">
+      <button class="tab active" data-tab="wizard" data-i18n="wizard">Wizard</button>
+      <button class="tab" data-tab="config" data-i18n="configuration">Configuration</button>
+      <button class="tab" data-tab="results" data-i18n="results">Results</button>
+      <button class="tab" data-tab="api">REST API</button>
+    </nav>
+
+    <section id="wizard" class="panel active">
+      <div class="panel-head">
+        <div>
+          <h2 id="wizardTitle" data-i18n="wizard">Wizard</h2>
+          <p id="wizardProgress" class="muted"></p>
+        </div>
+        <div class="button-row">
+          <button id="loadPlanWizard" data-i18n="loadPlan">Load plan</button>
+          <button id="resetWizard" data-i18n="reset">Reset</button>
+        </div>
+      </div>
+      <div class="wizard-card">
+        <div>
+          <h3 id="wizardQuestion"></h3>
+          <p id="wizardWhy" class="why"></p>
+        </div>
+        <div id="wizardInput" class="wizard-input"></div>
+        <div class="button-row end">
+          <button id="prevWizard" data-i18n="back">Back</button>
+          <button id="nextWizard" class="primary" data-i18n="next">Next</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="config" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 data-i18n="configuration">Configuration</h2>
+          <p class="muted" data-i18n="configHelp">All inputs used by the API.</p>
+        </div>
+        <div class="button-row">
+          <button id="loadJson" data-i18n="loadJson">Load JSON</button>
+          <button id="saveJson" data-i18n="saveJson">Save JSON</button>
+          <button id="runConfig" class="primary" data-i18n="run">Run</button>
+        </div>
+      </div>
+      <div id="configGrid" class="config-grid"></div>
+    </section>
+
+    <section id="results" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 data-i18n="results">Results</h2>
+          <p id="resultState" class="muted" data-i18n="noCalculation">No calculation yet.</p>
+        </div>
+        <div class="button-row">
+          <button id="downloadText">Text</button>
+          <button id="downloadHtml">HTML</button>
+          <button id="downloadPdf">PDF</button>
+        </div>
+      </div>
+      <nav class="result-tabs" aria-label="Result views">
+        <button class="result-tab active" data-result="summary" data-i18n="summary">Summary</button>
+        <button class="result-tab" data-result="sensitivity" data-i18n="sensitivity">Sensitivity</button>
+        <button class="result-tab" data-result="benchmarks" data-i18n="benchmarks">Plan / Benchmarks</button>
+        <button class="result-tab" data-result="suggestions" data-i18n="suggestions">Suggestions</button>
+        <button class="result-tab" data-result="json">JSON</button>
+      </nav>
+      <div id="summaryResult" class="result-panel active"></div>
+      <div id="sensitivityResult" class="result-panel"></div>
+      <div id="benchmarksResult" class="result-panel"></div>
+      <div id="suggestionsResult" class="result-panel"></div>
+      <pre id="jsonResult" class="result-panel code-panel"></pre>
+    </section>
+
+    <section id="api" class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>REST API</h2>
+          <p class="muted" data-i18n="apiHelp">Same calculation engine, HTTP interface.</p>
+        </div>
+      </div>
+      <div class="api-grid">
+        <code>GET /api/default-config</code>
+        <code>POST /api/calculate</code>
+        <code>POST /api/report/text</code>
+        <code>POST /api/report/html</code>
+        <code>POST /api/report/pdf</code>
+        <code>GET /api/explanations</code>
+      </div>
+      <pre id="apiExample" class="code-panel"></pre>
+    </section>
+  </main>
+
+  <input id="fileInput" type="file" accept="application/json,.json" hidden>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

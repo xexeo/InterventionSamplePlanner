@@ -1,12 +1,12 @@
 {
-  "_file_version": "2.0",
-  "_file_date": "2026-05-11",
+  "_file_version": "2.1",
+  "_file_date": "2026-05-12",
   "en": {
     "general": {
       "range_ok": "Inside the typical or recommended range.",
       "range_override": "Allow value outside the recommended range",
       "suggestions_title": "Suggestions and design notes",
-      "inverse_mode_hint": "Inverse mode estimates what the achieved sample and observed effect imply for approximate power and p-value."
+      "inverse_mode_hint": "Inverse mode estimates what the achieved sample and observed effect imply for approximate power, p-value, comparison with plan, and common benchmarks."
     },
     "designs": {
       "parallel_two_group": {
@@ -17,11 +17,11 @@
       },
       "pretest_posttest_control": {
         "label": "Pre-test/post-test with control group",
-        "description": "Use this when both groups are measured before and after, for example a learning game plus lesson compared with lesson only."
+        "description": "Use this when both groups are measured before and after, for example a learning game plus lesson compared with lesson only. The planning approximation represents the efficiency gain expected from analyzing the post-test with baseline pre-test adjustment, similar in spirit to ANCOVA."
       },
       "one_group_pre_post": {
         "label": "One-group pre-test/post-test",
-        "description": "Use this when the same people are measured before and after the intervention and there is no control group."
+        "description": "Use this when the same people are measured before and after the intervention and there is no control group. Continuous achieved results use standardized mean change; paired binary achieved results use McNemar's exact test from the discordant before/after cells."
       },
       "plan": {
         "label": "Plan required sample",
@@ -178,7 +178,7 @@
         }
       },
       "observed_control_events": {
-        "help": "For binary achieved-result analysis, enter how many control participants had the event, success, or desired outcome. Example: if 36 of 80 control students passed the post-test criterion, enter 36.",
+        "help": "For binary achieved-result analysis, enter how many control participants had the event, success, or desired outcome. Example: if 36 of 80 control students passed the post-test criterion, enter 36. When event counts are available, the app also calculates Fisher's exact p-value and uses it for small samples or sparse cells.",
         "recommended": {
           "min": 0,
           "max": 1000000,
@@ -187,12 +187,30 @@
         }
       },
       "observed_intervention_events": {
-        "help": "For binary achieved-result analysis, enter how many intervention participants had the event, success, or desired outcome. Example: if 48 of 80 students in the game condition passed the post-test criterion, enter 48.",
+        "help": "For binary achieved-result analysis, enter how many intervention participants had the event, success, or desired outcome. Example: if 48 of 80 students in the game condition passed the post-test criterion, enter 48. Together with the control event count, this supports Fisher's exact test for small samples and sparse cells.",
         "recommended": {
           "min": 0,
           "max": 1000000,
           "typical": ["count between 0 and observed intervention n"],
           "justification": "The value must be a count, not a percent. The calculator divides it by observed intervention n to obtain the observed intervention rate."
+        }
+      },
+      "observed_pre_success_post_failure": {
+        "help": "For a one-group paired binary achieved-result analysis, count participants who had the desired outcome before the intervention but did not have it after. Example: a child answered the pre-test item correctly but answered the paired post-test item incorrectly. McNemar's test uses this count together with the opposite discordant count.",
+        "recommended": {
+          "min": 0,
+          "max": 1000000,
+          "typical": ["count between 0 and observed total n"],
+          "justification": "This must be a count of paired participants, not a percent. It is one of the two discordant cells that define the paired binary change."
+        }
+      },
+      "observed_pre_failure_post_success": {
+        "help": "For a one-group paired binary achieved-result analysis, count participants who did not have the desired outcome before the intervention but did have it after. Example: a child missed the pre-test criterion but achieved it after the learning-game activity. This is usually the improvement cell in McNemar's test.",
+        "recommended": {
+          "min": 0,
+          "max": 1000000,
+          "typical": ["count between 0 and observed total n"],
+          "justification": "This must be a count of paired participants, not a percent. McNemar's exact p-value compares this discordant count with the opposite discordant count."
         }
       },
       "planned_control_n": {
@@ -425,7 +443,13 @@
         "help": "Na analise de resultado binario, informe quantos participantes do controle tiveram o evento, sucesso ou resultado desejado. Exemplo: se 36 de 80 estudantes do controle atingiram o criterio no pos-teste, digite 36."
       },
       "observed_intervention_events": {
-        "help": "Na analise de resultado binario, informe quantos participantes da intervencao tiveram o evento, sucesso ou resultado desejado. Exemplo: se 48 de 80 estudantes com o jogo atingiram o criterio no pos-teste, digite 48."
+        "help": "Na analise de resultado binario, informe quantos participantes da intervencao tiveram o evento, sucesso ou resultado desejado. Exemplo: se 48 de 80 estudantes com o jogo atingiram o criterio no pos-teste, digite 48. Com os eventos do controle, isso permite calcular o teste exato de Fisher em amostras pequenas ou celulas esparsas."
+      },
+      "observed_pre_success_post_failure": {
+        "help": "Em uma analise binaria pareada com um grupo, conte participantes que tinham o resultado desejado antes da intervencao, mas nao tinham depois. Exemplo: a crianca acertou o criterio no pre-teste, mas errou no pos-teste pareado. O teste de McNemar usa esse valor junto com a celula discordante oposta."
+      },
+      "observed_pre_failure_post_success": {
+        "help": "Em uma analise binaria pareada com um grupo, conte participantes que nao tinham o resultado desejado antes da intervencao, mas tinham depois. Exemplo: a crianca nao atingiu o criterio no pre-teste, mas atingiu apos a atividade com o jogo. Essa costuma ser a celula de melhora no teste de McNemar."
       },
       "planned_control_n": {
         "help": "Ao comparar com um plano anterior, informe o numero planejado de participantes validos no controle."

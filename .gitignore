@@ -1,4 +1,4 @@
-# File version: 2.0; date: 2026-05-11
+# File version: 2.1; date: 2026-05-12
 
 __pycache__/
 *.py[cod]
@@ -8,6 +8,7 @@ __pycache__/
 .ruff_cache/
 .coverage
 htmlcov/
+test_output/
 .venv/
 venv/
 env/

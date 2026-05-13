@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.local/intervention-sample-planner/schemas/study_config.schema.json",
   "title": "Intervention Sample Planner Study Configuration",
-  "description": "JSON Schema for Intervention Sample Planner v2.0. File version 2.0; date 2026-05-11.",
+  "description": "JSON Schema for Intervention Sample Planner v2.1. File version 2.1; date 2026-05-12.",
   "type": "object",
   "additionalProperties": true,
   "properties": {
@@ -11,12 +11,12 @@
     },
     "_file_version": {
       "type": "string",
-      "default": "2.0"
+      "default": "2.1"
     },
     "_file_date": {
       "type": "string",
       "format": "date",
-      "default": "2026-05-11"
+      "default": "2026-05-12"
     },
     "study_name": {
       "type": "string",
@@ -186,6 +186,18 @@
       "type": ["integer", "null"],
       "minimum": 0,
       "default": null
+    },
+    "observed_pre_success_post_failure": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "default": null,
+      "description": "Paired binary one-group count: pre-test success followed by post-test failure."
+    },
+    "observed_pre_failure_post_success": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "default": null,
+      "description": "Paired binary one-group count: pre-test failure followed by post-test success."
     },
     "observed_effect_size": {
       "type": ["number", "null"],

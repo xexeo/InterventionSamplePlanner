@@ -1,6 +1,22 @@
-<!-- File version: 2.0; date: 2026-05-11 -->
+<!-- File version: 2.1; date: 2026-05-12 -->
 
 # Version History
+
+## 2.1
+
+- added a dedicated `Plan / Benchmarks` results table for previous-plan comparison and common thresholds
+- added direct report export from the desktop app as HTML and PDF, alongside the existing text report
+- added exact McNemar evaluation for one-group paired binary achieved results
+- added Fisher exact p-values for two-group binary achieved results with small samples or sparse cells
+- clarified the ANCOVA-style interpretation for pre-test/post-test with control
+- expanded cluster-randomized guidance and benchmark adjustment when cluster assumptions are entered
+- updated `explanations.json`, the JSON schema, tests, screenshots, README files, and build/developer documentation
+- added release screenshots under `docs/screenshots`
+- added SHA256 checksum support for the generated Windows executable release artifact
+- added Flask web interface and REST API as a second interface over the same calculation engine
+- added Render deployment configuration and a GitHub Actions workflow that deploys tagged commits
+- added detailed Render deployment documentation
+- added browser-side local JSON save/load and recommended-range override checks to the web client
 
 ## 2.0
 

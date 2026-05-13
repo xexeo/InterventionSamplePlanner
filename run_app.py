@@ -1,6 +1,6 @@
 """Convenience launcher for the Tkinter app."""
 
-# File version: 2.0; date: 2026-05-11
+# File version: 2.1; date: 2026-05-12
 
 from intervention_sample_planner.gui import main
 

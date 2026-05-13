@@ -1,6 +1,6 @@
 """Short UI translations for the local Tkinter app."""
 
-# File version: 2.0; date: 2026-05-11
+# File version: 2.1; date: 2026-05-12
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ TEXT = {
         "results_tab": "Results",
         "summary_tab": "Summary",
         "sensitivity_tab": "Sensitivity",
+        "evaluation_tab": "Plan / Benchmarks",
         "suggestions_tab": "Suggestions",
         "json_tab": "JSON",
         "language": "Language",
@@ -21,6 +22,8 @@ TEXT = {
         "load_config": "Load config",
         "load_previous_plan": "Load previous plan",
         "save_report": "Save report",
+        "save_html": "Save HTML",
+        "save_pdf": "Save PDF",
         "previous": "Previous",
         "next": "Next",
         "finish": "Run",
@@ -41,12 +44,25 @@ TEXT = {
         "sens_col_valid_intervention": "Valid intervention",
         "sens_col_valid_total": "Valid total",
         "sens_col_invited_total": "Invited total",
+        "eval_col_category": "Category",
+        "eval_col_target": "Target",
+        "eval_col_required_control": "Required control",
+        "eval_col_required_intervention": "Required intervention",
+        "eval_col_required_total": "Required total",
+        "eval_col_additional": "Additional needed",
+        "eval_col_status": "Status",
+        "eval_category_plan": "Previous plan",
+        "eval_category_benchmark": "Benchmark",
+        "eval_status_reached": "Reached",
+        "eval_status_missing": "Needs more",
         "config_saved": "Configuration saved.",
         "config_loaded": "Configuration loaded.",
         "report_saved": "Report saved.",
         "choose_json": "Choose JSON file",
         "choose_plan_json": "Choose previous plan JSON",
         "choose_report": "Choose report file",
+        "choose_html_report": "Choose HTML report file",
+        "choose_pdf_report": "Choose PDF report file",
         "previous_plan_loaded": "Previous plan loaded into the achieved-result comparison.",
         "field_study_name": "Study name",
         "field_language": "Language",
@@ -87,6 +103,8 @@ TEXT = {
         "field_observed_total_n": "Observed total n",
         "field_observed_control_events": "Observed control successes/events",
         "field_observed_intervention_events": "Observed intervention successes/events",
+        "field_observed_pre_success_post_failure": "Pre success, post failure",
+        "field_observed_pre_failure_post_success": "Pre failure, post success",
         "field_observed_effect_size": "Observed effect",
         "field_intervention_label": "Intervention label",
         "field_control_label": "Control label",
@@ -132,6 +150,8 @@ TEXT = {
         "wizard_question_observed_control_events": "How many control participants had the outcome event or success?",
         "wizard_question_observed_intervention_events": "How many intervention participants had the outcome event or success?",
         "wizard_question_observed_total_n": "How many participants completed the one-group pre/post study?",
+        "wizard_question_observed_pre_success_post_failure": "How many paired participants succeeded before but failed after?",
+        "wizard_question_observed_pre_failure_post_success": "How many paired participants failed before but succeeded after?",
         "wizard_why_default": "This answer changes the assumptions used by the calculation and the interpretation of the results.",
         "range_label": "Recommended or typical range:",
         "range_override": "Allow outside range"
@@ -265,7 +285,27 @@ TEXT = {
         "wizard_question_planned_alpha": "Qual alfa foi usado no plano original?",
         "wizard_question_planned_power": "Qual poder foi buscado no plano original?",
         "wizard_question_observed_control_events": "Quantos participantes do controle tiveram o evento ou sucesso?",
-        "wizard_question_observed_intervention_events": "Quantos participantes da intervencao tiveram o evento ou sucesso?"
+        "wizard_question_observed_intervention_events": "Quantos participantes da intervencao tiveram o evento ou sucesso?",
+        "evaluation_tab": "Plano / Benchmarks",
+        "save_html": "Salvar HTML",
+        "save_pdf": "Salvar PDF",
+        "eval_col_category": "Categoria",
+        "eval_col_target": "Meta",
+        "eval_col_required_control": "Controle necessario",
+        "eval_col_required_intervention": "Intervencao necessaria",
+        "eval_col_required_total": "Total necessario",
+        "eval_col_additional": "Adicional necessario",
+        "eval_col_status": "Status",
+        "eval_category_plan": "Plano anterior",
+        "eval_category_benchmark": "Benchmark",
+        "eval_status_reached": "Alcancado",
+        "eval_status_missing": "Falta amostra",
+        "choose_html_report": "Escolha o arquivo HTML",
+        "choose_pdf_report": "Escolha o arquivo PDF",
+        "field_observed_pre_success_post_failure": "Sucesso no pre, falha no pos",
+        "field_observed_pre_failure_post_success": "Falha no pre, sucesso no pos",
+        "wizard_question_observed_pre_success_post_failure": "Quantos participantes pareados tiveram sucesso antes, mas falharam depois?",
+        "wizard_question_observed_pre_failure_post_success": "Quantos participantes pareados falharam antes, mas tiveram sucesso depois?"
     }
 }
 
