@@ -1,6 +1,6 @@
 """Load explanation and recommendation content for the application."""
 
-# File version: 2.1; date: 2026-05-12
+# File version: 2.2; date: 2026-05-17
 
 from __future__ import annotations
 

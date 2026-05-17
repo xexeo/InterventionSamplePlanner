@@ -1,6 +1,15 @@
-<!-- File version: 2.1; date: 2026-05-12 -->
+<!-- File version: 2.2; date: 2026-05-17 -->
 
 # Histórico de Versões
+
+## 2.2
+
+- adiciona análise reversa apenas com tamanho da amostra para fluxos de estudo realizado
+- adiciona tabelas de capacidade que relatam efeitos mínimos detectáveis para padrões comuns de valor-p e poder
+- adiciona linhas reversas para poder sob tamanhos de efeito comuns e limiares aproximados de alpha sob alvos comuns de efeito/poder
+- adiciona tabelas de cenários de alocação quando um estudo realizado de dois grupos informa apenas a amostra total
+- atualiza as tabelas de resultado Tkinter e web para mostrar linhas de capacidade da amostra em `Plano / Benchmarks`
+- recompila o executável Windows com explicações JSON e arquivos estáticos web empacotados
 
 ## 2.1
 

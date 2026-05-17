@@ -1,4 +1,4 @@
-# File version: 2.1; date: 2026-05-12
+# File version: 2.2; date: 2026-05-17
 
 import json
 from pathlib import Path
@@ -24,8 +24,8 @@ SCHEMA_PATH = REPO_ROOT / "schemas" / "study_config.schema.json"
 
 class CalculatorTests(unittest.TestCase):
     def test_application_version_metadata(self):
-        self.assertEqual(APP_VERSION, "2.1")
-        self.assertIn("ISP v2.1", APP_WINDOW_TITLE)
+        self.assertEqual(APP_VERSION, "2.2")
+        self.assertIn("ISP v2.2", APP_WINDOW_TITLE)
 
     def test_parallel_continuous_balanced_example(self):
         config = StudyConfig(effect_size_d=0.5, alpha=0.05, power=0.80)
@@ -155,6 +155,35 @@ class CalculatorTests(unittest.TestCase):
         self.assertEqual(plan.observed_analysis.p_value, plan.observed_analysis.exact_p_value)
         self.assertAlmostEqual(plan.observed_analysis.observed_effect_size, 9 / 40)
         self.assertTrue(plan.observed_analysis.benchmark_targets)
+
+    def test_evaluate_one_group_sample_size_only_returns_capacity_rows(self):
+        plan = calculate_plan(
+            StudyConfig(
+                study_design="one_group_pre_post",
+                workflow_path="evaluate_done",
+                observed_total_n=40,
+            )
+        )
+        self.assertIsNotNone(plan.observed_analysis)
+        assert plan.observed_analysis is not None
+        self.assertIsNone(plan.observed_analysis.observed_effect_size)
+        self.assertIsNone(plan.observed_analysis.p_value)
+        self.assertIsNone(plan.observed_analysis.achieved_power)
+        self.assertTrue(plan.observed_analysis.capacity_rows)
+        self.assertTrue(any("p < 0.05" in row.label and "power 80%" in row.label for row in plan.observed_analysis.capacity_rows))
+
+    def test_evaluate_two_group_total_only_returns_allocation_capacity_scenarios(self):
+        plan = calculate_plan(
+            StudyConfig(
+                workflow_path="evaluate_done",
+                observed_total_n=100,
+            )
+        )
+        self.assertIsNotNone(plan.observed_analysis)
+        assert plan.observed_analysis is not None
+        allocations = {(row.control, row.intervention) for row in plan.observed_analysis.capacity_rows}
+        self.assertGreaterEqual(len(allocations), 3)
+        self.assertTrue(any(row.effect_label.startswith("d >=") for row in plan.observed_analysis.capacity_rows))
 
     def test_report_exports_html_and_pdf(self):
         plan = calculate_plan(StudyConfig(effect_size_d=0.5, alpha=0.05, power=0.80))

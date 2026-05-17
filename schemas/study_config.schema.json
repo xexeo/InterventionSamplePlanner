@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.local/intervention-sample-planner/schemas/study_config.schema.json",
   "title": "Intervention Sample Planner Study Configuration",
-  "description": "JSON Schema for Intervention Sample Planner v2.1. File version 2.1; date 2026-05-12.",
+  "description": "JSON Schema for Intervention Sample Planner v2.2. File version 2.2; date 2026-05-17.",
   "type": "object",
   "additionalProperties": true,
   "properties": {
@@ -11,12 +11,12 @@
     },
     "_file_version": {
       "type": "string",
-      "default": "2.1"
+      "default": "2.2"
     },
     "_file_date": {
       "type": "string",
       "format": "date",
-      "default": "2026-05-12"
+      "default": "2026-05-17"
     },
     "study_name": {
       "type": "string",

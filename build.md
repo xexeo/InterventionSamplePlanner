@@ -1,4 +1,4 @@
-<!-- File version: 2.1; date: 2026-05-12 -->
+<!-- File version: 2.2; date: 2026-05-17 -->
 
 # Build Guide
 
@@ -12,7 +12,7 @@ python run_app.py
 
 ## Windows executable
 
-The executable is built with PyInstaller. Because `ISP v2.1` depends on `intervention_sample_planner/explanations.json`, the build command must include that file.
+The executable is built with PyInstaller. Because `ISP v2.2` depends on `intervention_sample_planner/explanations.json`, the build command must include that file.
 
 Example:
 

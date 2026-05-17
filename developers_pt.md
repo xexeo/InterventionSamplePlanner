@@ -1,4 +1,4 @@
-<!-- File version: 2.1; date: 2026-05-12 -->
+<!-- File version: 2.2; date: 2026-05-17 -->
 
 # Notas para Desenvolvedores
 
@@ -45,14 +45,15 @@ O fluxo inverso é representado por:
 - campos `planned_*` para o plano anterior
 - campos `observed_*` para os dados alcançados
 
-A interface pode carregar um JSON de planejamento salvo. O objeto de resultado inclui `observed_analysis` com `z`, `p_value`, `achieved_power`, taxas binárias observadas quando disponíveis, `exact_p_value` opcional, metas de benchmark e metas do plano anterior.
+A interface pode carregar um JSON de planejamento salvo. O objeto de resultado inclui `observed_analysis` com `z`, `p_value`, `achieved_power`, taxas binárias observadas quando disponíveis, `exact_p_value` opcional, metas de benchmark, metas do plano anterior e linhas de capacidade da amostra quando apenas o tamanho da amostra alcançada é informado.
 
-## Métodos estatísticos da v2.1
+## Métodos estatísticos da v2.2
 
 - A avaliação binária de dois grupos usa valor-p exato de Fisher quando as contagens são pequenas ou esparsas.
 - A avaliação binária pareada com um grupo usa o teste exato de McNemar/binomial a partir das células discordantes antes/depois.
 - O desenho pré-teste/pós-teste com controle continua sendo uma aproximação de planejamento e avaliação no espírito de ANCOVA, não um modelo ANCOVA ajustado.
 - O suporte a clusters continua sendo uma aproximação por efeito de desenho. Trabalho futuro pode adicionar número explícito de clusters, alocação por cluster e rotinas de poder para modelos mistos.
+- Fluxos de estudo realizado podem rodar sem efeito observado. Nesse caso apenas com tamanho da amostra, `capacity_rows` relata efeitos mínimos detectáveis para combinações comuns de alpha/poder, poder para efeitos comuns, limiares aproximados de alpha e cenários de alocação quando só se conhece a amostra total de dois grupos.
 
 ## Exportação de relatórios
 

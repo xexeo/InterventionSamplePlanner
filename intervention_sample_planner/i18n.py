@@ -1,6 +1,6 @@
 """Short UI translations for the local Tkinter app."""
 
-# File version: 2.1; date: 2026-05-12
+# File version: 2.2; date: 2026-05-17
 
 from __future__ import annotations
 
@@ -53,6 +53,7 @@ TEXT = {
         "eval_col_status": "Status",
         "eval_category_plan": "Previous plan",
         "eval_category_benchmark": "Benchmark",
+        "eval_category_capacity": "Sample capacity",
         "eval_status_reached": "Reached",
         "eval_status_missing": "Needs more",
         "config_saved": "Configuration saved.",
@@ -298,6 +299,7 @@ TEXT = {
         "eval_col_status": "Status",
         "eval_category_plan": "Plano anterior",
         "eval_category_benchmark": "Benchmark",
+        "eval_category_capacity": "Capacidade da amostra",
         "eval_status_reached": "Alcancado",
         "eval_status_missing": "Falta amostra",
         "choose_html_report": "Escolha o arquivo HTML",

@@ -1,21 +1,23 @@
-<!-- File version: 2.0; date: 2026-05-11 -->
+<!-- File version: 2.2; date: 2026-05-17 -->
 
-# Operational Theory Summary for ISP v2.0
+# Operational Theory Summary for ISP v2.2
 
-This operational manual explains how to use `ISP v2.0` in a practical way. It is shorter than the educational LaTeX manual, but it is written to support real decisions in the app.
+This operational manual explains how to use `ISP v2.2` in a practical way. It is shorter than the educational LaTeX manual, but it is written to support real decisions in the app.
 
-## 1. What changed in v2.0
+## 1. Current capabilities in v2.2
 
-`ISP v1.0` focused on one design: two independent groups. `ISP v2.0` adds:
+`ISP v2.2` supports the original two-group planning workflow and the newer completed-study workflows:
 
 - `Two independent groups`
 - `Pre-test/post-test with control group`
 - `One-group pre-test/post-test`
 - `Plan required sample`
 - `Evaluate achieved result`
+- `Compare completed study with plan`
 - recommended ranges with explicit override
 - explanations in `intervention_sample_planner/explanations.json`
 - a dedicated `Suggestions` tab
+- sample-capacity reverse analysis when only the achieved sample size is available
 
 ## 2. Start by choosing the research path
 
@@ -241,6 +243,8 @@ The app then estimates:
 - approximate z statistic
 - approximate p-value
 - approximate achieved power for the observed effect
+
+If the pilot has only the achieved sample size and no defensible observed effect yet, the app now gives a capacity table instead of pretending there is one unique answer. For example, with `28` complete one-group pre/post pairs it can report the minimum detectable effect for `p < 0.05` with `80%` power, the power for common effects such as `d = 0.20`, `0.50`, and `0.80`, and the approximate alpha threshold needed for common effect/power targets. For two-group studies with only a total `n`, it also compares common allocations such as `1:1`, `2:1`, and `1:2`.
 
 This is useful when the desired effect was not found. A non-significant result may mean:
 

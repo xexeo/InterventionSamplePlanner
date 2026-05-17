@@ -1,4 +1,4 @@
-% File version: 2.1; date: 2026-05-12
+% File version: 2.2; date: 2026-05-17
 % !TeX TS-program = lualatex
 % !TeX encoding = UTF-8
 % !TeX spellcheck = en_US
@@ -50,7 +50,7 @@
   linkcolor=ispblue,
   citecolor=ispgreen,
   urlcolor=ispblue,
-  pdftitle={Educational Manual for ISP v2.1},
+  pdftitle={Educational Manual for ISP v2.2},
   pdfauthor={Geraldo Xexéo}
 }
 \urlstyle{same}
@@ -130,7 +130,7 @@
 }
 
 \newcommand{\code}[1]{\texttt{\detokenize{#1}}}
-\newcommand{\app}{\textsf{ISP v2.1}\index{ISP v2.1}}
+\newcommand{\app}{\textsf{ISP v2.2}\index{ISP v2.2}}
 \newcommand{\field}[1]{\code{#1}\index{configuration variables!#1@\code{#1}}}
 \newcommand{\term}[1]{\textbf{#1}\index{#1}}
 \newcommand{\wizard}[1]{\textbf{#1}\index{wizard!#1}}
@@ -720,12 +720,14 @@ Before data collection, the researcher planned for 63 valid children in the less
 
 \section{Observed group sizes}
 
-For two-group designs, the wizard asks for:
+For two-group designs, the wizard can ask for the group sizes:
 
 \begin{itemize}
   \item \field{observed_control_n};
   \item \field{observed_intervention_n}.
 \end{itemize}
+
+If the researcher knows only the total achieved sample, the user may instead enter \field{observed_total_n}. In that case the answer is not unique because the allocation between control and intervention is unknown. The app therefore reports capacity rows for common allocations such as 1:1, 2:1, and 1:2.
 
 For the one-group pre-test/post-test design, it asks for:
 
@@ -733,7 +735,7 @@ For the one-group pre-test/post-test design, it asks for:
   \item \field{observed_total_n}.
 \end{itemize}
 
-\textbf{Why the wizard asks:} achieved power and approximate p-value depend on the information actually collected. In repeated-measure designs, the observed total should count only people with the required complete data.
+\textbf{Why the wizard asks:} achieved power and approximate p-value depend on the information actually collected. In repeated-measure designs, the observed total should count only people with the required complete data. If no effect is entered, the app uses the sample size in the reverse direction: it estimates what effect sizes the achieved sample could detect under common \(p\)-value and power standards.
 
 \begin{examplebox}{One-group Uno pilot}
 If 35 children start, 30 complete the pre-test, and 28 complete both pre-test and post-test, the observed total for one-group evaluation is 28.
@@ -764,6 +766,8 @@ What effect was actually observed?
 
 For continuous designs, enter the standardized observed effect. For a binary two-group design, prefer entering event counts. If event counts are unavailable, enter the observed difference in proportions as \field{observed_effect_size}.
 
+This field may be left empty when the researcher wants a sample-capacity analysis rather than an achieved-effect analysis. With only the sample size, the app cannot produce one unique \(p\)-value or achieved power. Instead, it reports a table of reverse calculations: minimum detectable effect for common alpha and power targets, approximate power for common effects, and approximate alpha thresholds for common effect/power targets.
+
 \begin{examplebox}{Observed effect after a pilot}
 In a one-group Uno pilot, the average score increases by 3.5 points and the standard deviation of change is 10 points. The observed standardized change is \(3.5/10 = 0.35\). Enter \field{observed_effect_size}=0.35.
 \end{examplebox}
@@ -776,6 +780,8 @@ Evaluation mode can help answer:
   \item Was the achieved sample obviously too small for the observed effect?
   \item Is the observed result approximately compatible with statistical significance at the chosen alpha?
   \item Should a replication plan use a smaller, similar, or larger target effect?
+  \item If only sample size is known, what minimum detectable effect corresponds to common standards such as \(p<0.05\) with 80\% power?
+  \item If only total two-group sample size is known, how do common allocations change the capacity of the sample?
   \item If a plan existed, how many additional valid participants would have been needed to reach the planned sample?
   \item How many additional valid participants would be needed, under the same observed effect and allocation, to reach conventional benchmarks such as \(p<0.05\), \(p<0.10\), 80\% power, or 90\% power?
 \end{itemize}
@@ -824,12 +830,12 @@ The Data / Configuration tab exposes all stored inputs. This tab is useful when 
 \field{completion_rate} & Start correction & Starters expected to complete required measures. & 0.70 to 1.00.\\
 \field{usable_data_rate} & Data-quality correction & Completed cases expected to remain analyzable. & 0.80 to 1.00.\\
 \field{extra_buffer_rate} & Operational margin & Additional conservative loss margin. & 0.00 to 0.20.\\
-\field{observed_control_n} & Evaluation mode & Achieved control sample. & Integer at least 2 for two-group evaluation.\\
-\field{observed_intervention_n} & Evaluation mode & Achieved intervention sample. & Integer at least 2 for two-group evaluation.\\
-\field{observed_total_n} & One-group evaluation & Achieved complete pre/post pairs. & Integer at least 2.\\
+\field{observed_control_n} & Evaluation mode & Achieved control sample. & Integer at least 2 for two-group evaluation; optional when total-only capacity analysis is used.\\
+\field{observed_intervention_n} & Evaluation mode & Achieved intervention sample. & Integer at least 2 for two-group evaluation; optional when total-only capacity analysis is used.\\
+\field{observed_total_n} & Evaluation mode & Achieved complete pairs or total two-group sample. & Integer at least 2 for one-group studies; at least 4 for two-group total-only capacity scenarios.\\
 \field{observed_control_events} & Binary evaluation & Control participants with the event or success. & Count from 0 to \field{observed_control_n}.\\
 \field{observed_intervention_events} & Binary evaluation & Intervention participants with the event or success. & Count from 0 to \field{observed_intervention_n}.\\
-\field{observed_effect_size} & Evaluation mode & Effect actually observed. & Standardized effect or binary proportion difference.\\
+\field{observed_effect_size} & Evaluation mode & Effect actually observed. & Standardized effect or binary proportion difference; may be blank for sample-capacity analysis.\\
 \field{planned_control_n} & Plan comparison & Planned valid control sample. & Integer at least 2.\\
 \field{planned_intervention_n} & Plan comparison & Planned valid intervention sample. & Integer at least 2.\\
 \field{planned_total_n} & One-group plan comparison & Planned valid paired sample. & Integer at least 2.\\
@@ -1038,9 +1044,12 @@ The Plan / Benchmarks tab appears most clearly in completed-study workflows. It 
 \begin{itemize}
   \item whether the achieved valid sample reached the sample promised by a previous plan;
   \item how many additional valid observations would be needed, under the observed effect, to reach common benchmarks such as \(p<0.05\), \(p<0.10\), 80\% power, and 90\% power.
+  \item when no observed effect is entered, what the achieved sample size alone can support under common effect, alpha, power, and allocation assumptions.
 \end{itemize}
 
-This table is not a promise that adding exactly that number of participants would reproduce the same effect. It is a diagnostic table: it shows what the current achieved result implies if the observed effect size is treated as the working estimate.
+When an observed effect is available, this table is not a promise that adding exactly that number of participants would reproduce the same effect. It is a diagnostic table: it shows what the current achieved result implies if the observed effect size is treated as the working estimate.
+
+When only sample size is entered, the table becomes a sample-capacity table. For example, a one-group pre/post pilot with 40 complete pairs may show that \(p<0.05\) with 80\% power requires about \(d=0.44\), while \(d=0.50\) would have about 89\% power. This does not say that the study found \(d=0.44\); it says that effects smaller than that would be hard for that sample to detect under the selected assumptions.
 
 \section{JSON tab}
 

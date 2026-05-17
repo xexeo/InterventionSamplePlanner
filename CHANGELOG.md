@@ -1,6 +1,21 @@
-<!-- File version: 2.1; date: 2026-05-12 -->
+<!-- File version: 2.2; date: 2026-05-17 -->
 
 # Changelog
+
+## 2.2 - 2026-05-17
+
+### Added
+
+- Sample-size-only reverse analysis for completed-study workflows.
+- Capacity rows that report minimum detectable effects for common `p`/alpha and power combinations.
+- Reverse rows that report approximate power for common effect sizes and approximate alpha thresholds needed for common effect/power targets.
+- Allocation-scenario capacity tables when two-group completed studies provide only a total sample size.
+
+### Changed
+
+- Completed-study mode no longer requires an observed effect when the user only wants to evaluate what the achieved sample size can support.
+- Tkinter and web result tables now display sample-capacity rows in the `Plan / Benchmarks` tab.
+- Rebuilt the Windows executable with bundled `explanations.json` and `web_static` assets.
 
 ## 2.1 - 2026-05-12
 

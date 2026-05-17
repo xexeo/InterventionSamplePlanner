@@ -1,8 +1,9 @@
 """Intervention Sample Planner public API."""
 
-# File version: 2.1; date: 2026-05-12
+# File version: 2.2; date: 2026-05-17
 
 from .calculator import (
+    CapacityRow,
     GroupSizes,
     ObservedAnalysis,
     SamplePlan,
@@ -20,6 +21,7 @@ from .calculator import (
 from .version import APP_VERSION, APP_VERSION_DATE, APP_WINDOW_TITLE
 
 __all__ = [
+    "CapacityRow",
     "GroupSizes",
     "ObservedAnalysis",
     "SamplePlan",

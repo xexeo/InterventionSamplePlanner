@@ -1,10 +1,10 @@
-<!-- File version: 2.1; date: 2026-05-12 -->
+<!-- File version: 2.2; date: 2026-05-17 -->
 
 # Intervention Sample Planner
 
 Intervention Sample Planner, or `ISP`, is a local Python API with two interfaces: a Tkinter desktop app and a Flask web app for planning or evaluating intervention studies in human processes such as learning, training, usability, and workflow improvement.
 
-Version `2.1` supports:
+Version `2.2` supports:
 
 - `Two independent groups`
 - `Pre-test/post-test with control group`
@@ -17,6 +17,7 @@ Version `2.1` supports:
 - explanations loaded from a separate JSON file
 - a suggestions tab with design advice and caution flags
 - a dedicated `Plan / Benchmarks` results table for completed-study checks
+- sample-size-only reverse analysis for completed studies, with capacity tables when no observed effect is available
 - direct report export as text, HTML, or PDF from the app
 - exact McNemar evaluation for one-group paired binary outcomes
 - Fisher exact p-values for small or sparse two-group binary achieved results
@@ -38,6 +39,7 @@ The app helps answer questions such as:
 - How many people must complete both the pre-test and the post-test?
 - How many people should be invited if some will not start or will not finish?
 - If a study already ran, what approximate p-value and achieved power correspond to the observed result?
+- If only the achieved sample size is known, what effects could that sample detect under common p-value and power standards?
 
 The current implementation is strongest for transparent planning and educational interpretation. Binary planning is supported for `Two independent groups`; achieved-result binary evaluation is supported for `Two independent groups` and paired one-group pre/post cases.
 
@@ -57,7 +59,9 @@ Use this when the same participants are measured before and after and there is n
 
 ## Completed-study and inverse workflows
 
-`Analyze a completed study` and `Compare completed study with plan` are the inverse workflows. Instead of asking how many participants are needed, they ask what an achieved sample and observed effect imply. They report approximate quantities such as:
+`Analyze a completed study` and `Compare completed study with plan` are the inverse workflows. Instead of asking only how many participants are needed, they ask what the achieved sample, allocation, observed effect, and benchmark assumptions imply.
+
+When an observed effect or binary event counts are available, they report approximate quantities such as:
 
 - observed effect entered
 - observed binary event rates when event counts are entered
@@ -66,11 +70,13 @@ Use this when the same participants are measured before and after and there is n
 - approximate achieved power
 - gaps to conventional benchmarks such as `p < 0.05`, `p < 0.10`, `power >= 80%`, and `power >= 90%`
 
+When only the achieved sample size is available, the answer is not unique. `ISP` now returns a sample-capacity table instead. It shows minimum detectable effects for common combinations such as `p < 0.05` with `80%` power, power for common effect sizes such as `d = 0.20`, `0.50`, and `0.80`, and the approximate p-value threshold that would be needed for common effect and power targets. For two-group studies with only a total sample size, the table also evaluates common allocations such as `1:1`, `2:1`, and `1:2`.
+
 If a previous plan exists, use `Compare completed study with plan`. You can type the planned sample manually or click `Load previous plan` and choose a saved JSON from an earlier planning run. The report then says whether the achieved valid sample reached the plan and how many valid participants were missing.
 
 ## Effect size in plain language
 
-Effect size is the hardest input for many users, so `ISP v2.1` treats it explicitly.
+Effect size is the hardest input for many users, so `ISP v2.2` treats it explicitly.
 
 - In `Two independent groups`, the continuous effect size is the standardized difference between groups.
 - In `Pre-test/post-test with control group`, it is the standardized difference in gain, or the post-test effect after baseline is accounted for.
@@ -112,7 +118,11 @@ See:
 - [versions.md](versions.md)
 - [docs/render_deploy.md](docs/render_deploy.md)
 
-The release executable SHA256 checksum is stored in `release/checksums.sha256`.
+The release executable SHA256 checksum is stored in `release/checksums.sha256`. Current Windows executable:
+
+```text
+1AEF2A7C0ADE2065AC9A20CD12E51AA691901FD3047A79AA52B6BC1F2887A666  dist/InterventionSamplePlanner.exe
+```
 
 ## Main documentation
 

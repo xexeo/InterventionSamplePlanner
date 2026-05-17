@@ -1,6 +1,6 @@
 """Tkinter interface for Intervention Sample Planner."""
 
-# File version: 2.1; date: 2026-05-12
+# File version: 2.2; date: 2026-05-17
 
 from __future__ import annotations
 
@@ -174,7 +174,7 @@ def is_config_field_visible(field: str, workflow_path: str, study_design: str, o
     if field in {"observed_control_n", "observed_intervention_n"}:
         return mode == "evaluate" and study_design != "one_group_pre_post"
     if field == "observed_total_n":
-        return mode == "evaluate" and study_design == "one_group_pre_post"
+        return mode == "evaluate"
     if field in {"observed_control_events", "observed_intervention_events"}:
         return mode == "evaluate" and study_design == "parallel_two_group" and outcome == "binary"
     if field in {"observed_pre_success_post_failure", "observed_pre_failure_post_success"}:
@@ -251,6 +251,7 @@ def wizard_fields_for_path(workflow_path: str, study_design: str, outcome_type: 
                 fields.append("allocation_ratio")
             if study_design == "pretest_posttest_control":
                 fields.append("pre_post_correlation")
+            fields.append("observed_total_n")
             fields.extend(["observed_control_n", "observed_intervention_n"])
             if study_design == "parallel_two_group" and outcome == "binary":
                 fields.extend(["observed_control_events", "observed_intervention_events"])
@@ -1013,6 +1014,20 @@ class PlannerApp(tk.Tk):
                             t(self.language, "eval_status_reached") if target.achieved else t(self.language, "eval_status_missing"),
                         ),
                     )
+            for row in obs.capacity_rows:
+                self.evaluation_table.insert(
+                    "",
+                    tk.END,
+                    values=(
+                        t(self.language, "eval_category_capacity"),
+                        row.label,
+                        row.control,
+                        row.intervention,
+                        row.total,
+                        row.effect_label,
+                        row.note,
+                    ),
+                )
         suggestion_lines = list(self.current_plan.suggestions)
         if self.range_issues:
             suggestion_lines.append("")

@@ -1,4 +1,4 @@
-# File version: 2.1; date: 2026-05-12
+# File version: 2.2; date: 2026-05-17
 
 services:
   - type: web

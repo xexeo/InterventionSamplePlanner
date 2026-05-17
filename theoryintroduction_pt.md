@@ -1,31 +1,33 @@
-<!-- File version: 2.0; date: 2026-05-11 -->
+<!-- File version: 2.2; date: 2026-05-17 -->
 
-# Resumo Operacional da Teoria para o ISP v2.0
+# Resumo Operacional da Teoria para o ISP v2.2
 
 ## Fluxos atuais do wizard
 
 O primeiro passo do wizard agora pergunta a tarefa pratica:
 
 - `Planejar um estudo`: estima a amostra necessaria antes da coleta.
-- `Analisar um estudo realizado`: calcula valor-p aproximado, poder alcancado e lacunas de benchmark depois de um estudo ou piloto sem plano anterior.
+- `Analisar um estudo realizado`: calcula valor-p aproximado, poder alcancado e lacunas de benchmark quando há efeito observado, ou uma tabela de capacidade quando só há tamanho da amostra.
 - `Comparar estudo realizado com o plano`: faz a analise do resultado observado e compara a amostra valida alcancada com um plano anterior. O plano pode ser digitado manualmente ou carregado de um JSON salvo.
 
 Na comparacao com plano, o app usa os campos `planned_control_n`, `planned_intervention_n`, `planned_total_n`, `planned_effect_size`, `planned_alpha` e `planned_power`. Para desfechos binarios, pode usar `observed_control_events` e `observed_intervention_events` para calcular as taxas observadas.
 
-Este manual operacional explica como usar o `ISP v2.0` de forma prática. Ele é mais curto que o manual educacional em LaTeX, mas foi escrito para apoiar decisões reais dentro do aplicativo.
+Este manual operacional explica como usar o `ISP v2.2` de forma prática. Ele é mais curto que o manual educacional em LaTeX, mas foi escrito para apoiar decisões reais dentro do aplicativo.
 
-## 1. O que mudou na versão 2.0
+## 1. Capacidades atuais na versão 2.2
 
-O `ISP v1.0` focava em um desenho: dois grupos independentes. O `ISP v2.0` acrescenta:
+O `ISP v2.2` suporta o fluxo original de planejamento com dois grupos e os fluxos mais novos de estudo realizado:
 
 - `Dois grupos independentes`
 - `Pré-teste/pós-teste com grupo de controle`
 - `Pré-teste/pós-teste com um grupo`
 - `Planejar amostra necessária`
 - `Avaliar resultado alcançado`
+- `Comparar estudo realizado com o plano`
 - faixas recomendadas com liberação explícita
 - explicações em `intervention_sample_planner/explanations.json`
 - uma aba dedicada de `Sugestões`
+- análise reversa de capacidade quando apenas o tamanho da amostra alcançada está disponível
 
 ## 2. Comece escolhendo o caminho de pesquisa
 
@@ -231,6 +233,8 @@ O app então estima:
 - estatística z aproximada
 - valor-p aproximado
 - poder aproximado alcançado para o efeito observado
+
+Se o piloto tem apenas o tamanho da amostra alcançada e ainda não tem um efeito observado defensável, o app agora gera uma tabela de capacidade em vez de fingir que existe uma resposta única. Por exemplo, com `28` pares completos em um pré/pós de um grupo, ele pode relatar o efeito mínimo detectável para `p < 0.05` com `80%` de poder, o poder para efeitos comuns como `d = 0.20`, `0.50` e `0.80`, e o limiar aproximado de alpha necessário para alvos comuns de efeito/poder. Em estudos de dois grupos com apenas `n` total, ele também compara alocações comuns como `1:1`, `2:1` e `1:2`.
 
 Isso é útil quando o efeito desejado não foi encontrado. Um resultado não significativo pode significar:
 

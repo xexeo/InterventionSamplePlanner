@@ -1,6 +1,15 @@
-<!-- File version: 2.1; date: 2026-05-12 -->
+<!-- File version: 2.2; date: 2026-05-17 -->
 
 # Version History
+
+## 2.2
+
+- added sample-size-only reverse analysis for completed-study workflows
+- added capacity tables that report minimum detectable effects for common p-value and power standards
+- added reverse rows for power under common effect sizes and approximate alpha thresholds under common effect/power targets
+- added allocation-scenario capacity tables when a two-group completed study provides only total sample size
+- updated Tkinter and web result tables to show sample-capacity rows in `Plan / Benchmarks`
+- rebuilt the Windows executable with bundled JSON explanations and web static assets
 
 ## 2.1
 

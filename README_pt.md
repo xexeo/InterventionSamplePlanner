@@ -1,10 +1,10 @@
-<!-- File version: 2.1; date: 2026-05-12 -->
+<!-- File version: 2.2; date: 2026-05-17 -->
 
 # Intervention Sample Planner
 
 O Intervention Sample Planner, ou `ISP`, é uma API local em Python com duas interfaces: um aplicativo desktop em Tkinter e um aplicativo web em Flask para planejar ou avaliar estudos de intervenção em processos humanos, como aprendizagem, treinamento, usabilidade e melhoria de fluxos de trabalho.
 
-A versão `2.1` oferece:
+A versão `2.2` oferece:
 
 - `Dois grupos independentes`
 - `Pré-teste/pós-teste com grupo de controle`
@@ -17,6 +17,7 @@ A versão `2.1` oferece:
 - explicações carregadas de um arquivo JSON separado
 - uma aba de sugestões com orientações metodológicas e alertas
 - uma tabela própria `Plano / Benchmarks` para verificações de estudo realizado
+- análise reversa apenas com tamanho da amostra para estudos realizados, com tabelas de capacidade quando não há efeito observado
 - exportação direta de relatório em texto, HTML ou PDF pelo aplicativo
 - avaliação exata de McNemar para desfechos binários pareados em um grupo
 - valores-p exatos de Fisher para resultados binários de dois grupos com amostras pequenas ou células esparsas
@@ -38,6 +39,7 @@ O aplicativo ajuda a responder perguntas como:
 - Quantas pessoas precisam completar tanto o pré-teste quanto o pós-teste?
 - Quantas pessoas devem ser convidadas se parte delas não iniciar ou não terminar?
 - Se um estudo já foi executado, que valor-p aproximado e que poder alcançado correspondem ao resultado observado?
+- Se apenas o tamanho da amostra alcançada é conhecido, que efeitos essa amostra conseguiria detectar sob padrões comuns de valor-p e poder?
 
 A implementação atual é mais forte para planejamento transparente e interpretação educativa. O planejamento binário é suportado em `Dois grupos independentes`; a avaliação binária de estudo realizado é suportada em `Dois grupos independentes` e em casos pareados de pré/pós com um grupo.
 
@@ -57,7 +59,9 @@ Use quando os mesmos participantes são medidos antes e depois e não existe gru
 
 ## Fluxos de estudo realizado e problema inverso
 
-`Analisar um estudo realizado` e `Comparar estudo realizado com o plano` são os fluxos inversos. Em vez de perguntar quantos participantes são necessários, eles perguntam o que a amostra alcançada e o efeito observado implicam. Eles relatam quantidades aproximadas como:
+`Analisar um estudo realizado` e `Comparar estudo realizado com o plano` são os fluxos inversos. Em vez de perguntar apenas quantos participantes são necessários, eles perguntam o que a amostra alcançada, a alocação, o efeito observado e os benchmarks implicam.
+
+Quando há efeito observado ou contagens binárias de eventos, eles relatam quantidades aproximadas como:
 
 - efeito observado informado
 - taxas binárias observadas quando as contagens de eventos são informadas
@@ -66,11 +70,13 @@ Use quando os mesmos participantes são medidos antes e depois e não existe gru
 - poder alcançado aproximado
 - lacunas para benchmarks convencionais como `p < 0.05`, `p < 0.10`, `power >= 80%` e `power >= 90%`
 
+Quando apenas o tamanho da amostra alcançada está disponível, a resposta não é única. O `ISP` passa a retornar uma tabela de capacidade da amostra. Ela mostra efeitos mínimos detectáveis para combinações comuns, como `p < 0.05` com `80%` de poder, poder para tamanhos de efeito tradicionais como `d = 0.20`, `0.50` e `0.80`, e o limiar aproximado de valor-p que seria necessário para alvos comuns de efeito e poder. Em estudos de dois grupos com apenas amostra total, a tabela também avalia alocações comuns como `1:1`, `2:1` e `1:2`.
+
 Se existir um plano anterior, use `Comparar estudo realizado com o plano`. Você pode digitar a amostra planejada manualmente ou clicar em `Carregar plano anterior` e escolher um JSON salvo de uma execução de planejamento. O relatório então informa se a amostra válida alcançada atingiu o plano e quantos participantes válidos ficaram faltando.
 
 ## Tamanho de efeito em linguagem simples
 
-Tamanho de efeito é a entrada mais difícil para muitos usuários, então o `ISP v2.1` trata esse ponto explicitamente.
+Tamanho de efeito é a entrada mais difícil para muitos usuários, então o `ISP v2.2` trata esse ponto explicitamente.
 
 - Em `Dois grupos independentes`, o tamanho de efeito contínuo é a diferença padronizada entre grupos.
 - Em `Pré-teste/pós-teste com grupo de controle`, ele é a diferença padronizada de ganho, ou o efeito no pós-teste depois de considerar a linha de base.
@@ -112,7 +118,11 @@ Veja:
 - [versions_pt.md](versions_pt.md)
 - [docs/render_deploy_pt.md](docs/render_deploy_pt.md)
 
-O checksum SHA256 do executável de release fica em `release/checksums.sha256`.
+O checksum SHA256 do executável de release fica em `release/checksums.sha256`. Executável Windows atual:
+
+```text
+1AEF2A7C0ADE2065AC9A20CD12E51AA691901FD3047A79AA52B6BC1F2887A666  dist/InterventionSamplePlanner.exe
+```
 
 ## Documentação principal
 

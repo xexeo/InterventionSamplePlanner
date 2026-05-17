@@ -1,6 +1,21 @@
-<!-- File version: 2.1; date: 2026-05-12 -->
+<!-- File version: 2.2; date: 2026-05-17 -->
 
 # Changelog
+
+## 2.2 - 2026-05-17
+
+### Adicionado
+
+- Análise reversa apenas com tamanho da amostra para fluxos de estudo realizado.
+- Linhas de capacidade que relatam efeitos mínimos detectáveis para combinações comuns de `p`/alpha e poder.
+- Linhas reversas que relatam poder aproximado para tamanhos de efeito comuns e limiares aproximados de alpha necessários para alvos comuns de efeito/poder.
+- Tabelas de cenários de alocação quando estudos realizados de dois grupos informam apenas a amostra total.
+
+### Alterado
+
+- O modo de estudo realizado não exige mais efeito observado quando o usuário quer avaliar apenas o que o tamanho da amostra alcançada consegue sustentar.
+- As tabelas de resultado Tkinter e web agora exibem linhas de capacidade da amostra na aba `Plano / Benchmarks`.
+- O executável Windows foi regerado com `explanations.json` e `web_static` empacotados.
 
 ## 2.1 - 2026-05-12
 

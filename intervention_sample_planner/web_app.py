@@ -1,6 +1,6 @@
 """Flask web interface and REST API for Intervention Sample Planner."""
 
-# File version: 2.1; date: 2026-05-12
+# File version: 2.2; date: 2026-05-17
 
 from __future__ import annotations
 

@@ -1,6 +1,6 @@
 """Calculation API for intervention-study planning and result evaluation."""
 
-# File version: 2.1; date: 2026-05-12
+# File version: 2.2; date: 2026-05-17
 
 from __future__ import annotations
 
@@ -118,21 +118,35 @@ class EvaluationTarget:
 
 
 @dataclass(slots=True)
+class CapacityRow:
+    label: str
+    alpha: float
+    power: float
+    effect_size: float | None
+    effect_label: str
+    control: int
+    intervention: int
+    total: int
+    note: str
+
+
+@dataclass(slots=True)
 class ObservedAnalysis:
     observed_control: int
     observed_intervention: int
     observed_total: int
-    observed_effect_size: float
+    observed_effect_size: float | None
     observed_control_rate: float | None
     observed_intervention_rate: float | None
-    z_statistic: float
-    p_value: float
-    achieved_power: float
+    z_statistic: float | None
+    p_value: float | None
+    achieved_power: float | None
     method: str
     exact_p_value: float | None = None
     method_notes: list[str] = field(default_factory=list)
     benchmark_targets: list[EvaluationTarget] = field(default_factory=list)
     planned_targets: list[EvaluationTarget] = field(default_factory=list)
+    capacity_rows: list[CapacityRow] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -178,8 +192,8 @@ def config_from_dict(data: dict[str, Any]) -> StudyConfig:
 def save_config(config: StudyConfig, path: str | Path) -> None:
     target = Path(path)
     payload = config_to_dict(config)
-    payload.setdefault("_file_version", "2.1")
-    payload.setdefault("_file_date", "2026-05-12")
+    payload.setdefault("_file_version", "2.2")
+    payload.setdefault("_file_date", "2026-05-17")
     target.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
@@ -434,38 +448,56 @@ def _validate_observed_inputs(config: StudyConfig) -> None:
         if not config.observed_total_n or config.observed_total_n <= 1:
             raise PlanningError("observed_total_n must be at least 2 in achieved-result mode.")
         if config.outcome_type == "binary":
-            if (
-                config.observed_pre_success_post_failure is None
-                or config.observed_pre_failure_post_success is None
-            ):
+            has_worsened = config.observed_pre_success_post_failure is not None
+            has_improved = config.observed_pre_failure_post_success is not None
+            if has_worsened != has_improved:
                 raise PlanningError(
-                    "For one-group binary evaluation, provide the two discordant paired counts."
+                    "For one-group binary evaluation, provide both discordant paired counts, or leave both empty for a sample-size capacity table."
                 )
-            if config.observed_pre_success_post_failure < 0 or config.observed_pre_failure_post_success < 0:
-                raise PlanningError("McNemar discordant counts must be zero or positive.")
-            discordant = (
-                config.observed_pre_success_post_failure
-                + config.observed_pre_failure_post_success
-            )
-            if discordant <= 0:
-                raise PlanningError("At least one discordant paired binary case is required.")
-            if discordant > config.observed_total_n:
-                raise PlanningError("Discordant paired counts cannot exceed observed_total_n.")
+            if not has_worsened and not has_improved:
+                pass
+            else:
+                assert config.observed_pre_success_post_failure is not None
+                assert config.observed_pre_failure_post_success is not None
+                if config.observed_pre_success_post_failure < 0 or config.observed_pre_failure_post_success < 0:
+                    raise PlanningError("McNemar discordant counts must be zero or positive.")
+                discordant = (
+                    config.observed_pre_success_post_failure
+                    + config.observed_pre_failure_post_success
+                )
+                if discordant <= 0:
+                    raise PlanningError("At least one discordant paired binary case is required.")
+                if discordant > config.observed_total_n:
+                    raise PlanningError("Discordant paired counts cannot exceed observed_total_n.")
     else:
-        if not config.observed_control_n or not config.observed_intervention_n:
+        has_control = config.observed_control_n is not None
+        has_intervention = config.observed_intervention_n is not None
+        has_group_sizes = has_control and has_intervention
+        has_total = config.observed_total_n is not None
+        if has_control != has_intervention:
             raise PlanningError(
-                "observed_control_n and observed_intervention_n are required in achieved-result mode."
+                "Provide both observed_control_n and observed_intervention_n, or leave both empty and provide observed_total_n for allocation scenarios."
             )
-        if config.observed_control_n <= 1 or config.observed_intervention_n <= 1:
+        if not has_group_sizes and not has_total:
+            raise PlanningError(
+                "Provide observed group sizes or observed_total_n in achieved-result mode."
+            )
+        if has_group_sizes and (config.observed_control_n <= 1 or config.observed_intervention_n <= 1):
             raise PlanningError("Observed group sizes must be at least 2.")
+        if not has_group_sizes and (config.observed_total_n is None or config.observed_total_n <= 3):
+            raise PlanningError("observed_total_n must be at least 4 for two-group allocation scenarios.")
     if config.study_design == "parallel_two_group" and config.outcome_type == "binary":
         has_events = (
             config.observed_control_events is not None
             and config.observed_intervention_events is not None
         )
+        has_one_event_count = (
+            config.observed_control_events is not None
+            or config.observed_intervention_events is not None
+        )
         if has_events:
-            assert config.observed_control_n is not None
-            assert config.observed_intervention_n is not None
+            if config.observed_control_n is None or config.observed_intervention_n is None:
+                raise PlanningError("Binary event counts require observed_control_n and observed_intervention_n.")
             if not 0 <= config.observed_control_events <= config.observed_control_n:
                 raise PlanningError("observed_control_events must be between 0 and observed_control_n.")
             if not 0 <= config.observed_intervention_events <= config.observed_intervention_n:
@@ -476,10 +508,12 @@ def _validate_observed_inputs(config: StudyConfig) -> None:
             intervention_rate = config.observed_intervention_events / config.observed_intervention_n
             if control_rate == intervention_rate:
                 raise PlanningError("Observed event rates are equal; no binary effect was observed.")
-        elif config.observed_effect_size is None:
+        elif has_one_event_count:
             raise PlanningError(
-                "For binary achieved-result mode, provide observed event counts or an observed proportion difference."
+                "For binary achieved-result mode, provide both event counts, or leave both empty for a sample-size capacity table."
             )
+        elif config.observed_effect_size is None:
+            pass
         elif not 0 < abs(config.observed_effect_size) < 1:
             raise PlanningError(
                 "For binary achieved-result mode, observed_effect_size must be a proportion difference."
@@ -487,7 +521,7 @@ def _validate_observed_inputs(config: StudyConfig) -> None:
     elif config.study_design == "one_group_pre_post" and config.outcome_type == "binary":
         pass
     elif config.observed_effect_size is None:
-        raise PlanningError("observed_effect_size is required in achieved-result mode.")
+        pass
     elif config.observed_effect_size == 0:
         raise PlanningError("observed_effect_size cannot be zero in achieved-result mode.")
 
@@ -716,9 +750,41 @@ def _achieved_power(
     return _clamp(NORMAL.cdf(z_beta), 0.0, 1.0)
 
 
+def _observed_groups(config: StudyConfig) -> GroupSizes:
+    if config.study_design == "one_group_pre_post":
+        return GroupSizes(0, int(config.observed_total_n or 0))
+    if config.observed_control_n is not None and config.observed_intervention_n is not None:
+        return GroupSizes(int(config.observed_control_n), int(config.observed_intervention_n))
+    total = int(config.observed_total_n or 0)
+    k = max(config.allocation_ratio, 1e-9)
+    control = max(2, math.floor(total / (1 + k)))
+    intervention = max(2, total - control)
+    return GroupSizes(control, intervention)
+
+
+def _has_observed_effect_information(config: StudyConfig) -> bool:
+    if config.study_design == "one_group_pre_post" and config.outcome_type == "binary":
+        return (
+            config.observed_pre_success_post_failure is not None
+            and config.observed_pre_failure_post_success is not None
+        )
+    if config.study_design == "parallel_two_group" and config.outcome_type == "binary":
+        return (
+            config.observed_effect_size is not None
+            or (
+                config.observed_control_events is not None
+                and config.observed_intervention_events is not None
+            )
+        )
+    return config.observed_effect_size is not None
+
+
 def _observed_analysis(config: StudyConfig, z_alpha: float) -> ObservedAnalysis | None:
     if config.analysis_mode != "evaluate":
         return None
+    groups = _observed_groups(config)
+    if not _has_observed_effect_information(config):
+        return _sample_capacity_analysis(config, groups)
     if config.study_design == "one_group_pre_post":
         if config.outcome_type == "binary":
             n_total = int(config.observed_total_n or 0)
@@ -886,6 +952,270 @@ def _observed_analysis(config: StudyConfig, z_alpha: float) -> ObservedAnalysis 
         ),
         planned_targets=_planned_targets(config, groups),
     )
+
+
+def _sample_capacity_analysis(config: StudyConfig, groups: GroupSizes) -> ObservedAnalysis:
+    capacity_groups = _capacity_group_options(config, groups)
+    return ObservedAnalysis(
+        observed_control=groups.control,
+        observed_intervention=groups.intervention,
+        observed_total=groups.total,
+        observed_effect_size=None,
+        observed_control_rate=None,
+        observed_intervention_rate=None,
+        z_statistic=None,
+        p_value=None,
+        achieved_power=None,
+        method="Sample-size capacity analysis",
+        method_notes=[
+            "Only sample size was entered, so there is no unique p-value or achieved power.",
+            "The capacity table shows the minimum effect that this sample could detect for common alpha and power combinations.",
+        ],
+        planned_targets=_planned_targets(config, groups),
+        capacity_rows=[
+            row
+            for option in capacity_groups
+            for row in _capacity_rows(config, option)
+        ],
+    )
+
+
+def _capacity_group_options(config: StudyConfig, groups: GroupSizes) -> list[GroupSizes]:
+    if config.study_design == "one_group_pre_post":
+        return [groups]
+    if config.observed_control_n is not None and config.observed_intervention_n is not None:
+        return [groups]
+    total = int(config.observed_total_n or groups.total)
+    ratios = [config.allocation_ratio, 1.0, 2.0, 0.5]
+    options: list[GroupSizes] = []
+    seen: set[tuple[int, int]] = set()
+    for ratio in ratios:
+        k = max(ratio, 1e-9)
+        control = max(2, math.floor(total / (1 + k)))
+        intervention = max(2, total - control)
+        key = (control, intervention)
+        if key not in seen and control + intervention == total:
+            options.append(GroupSizes(control, intervention))
+            seen.add(key)
+    return options
+
+
+def _capacity_rows(config: StudyConfig, groups: GroupSizes) -> list[CapacityRow]:
+    rows: list[CapacityRow] = []
+    for alpha, desired_power in ((0.10, 0.80), (0.05, 0.80), (0.05, 0.90), (0.01, 0.80), (0.01, 0.90)):
+        effect = _minimum_detectable_effect(config, groups, alpha, desired_power)
+        rows.append(
+            CapacityRow(
+                label=f"p < {alpha:.2f}, power {desired_power:.0%}",
+                alpha=alpha,
+                power=desired_power,
+                effect_size=effect,
+                effect_label=_effect_requirement_label(config, effect),
+                control=groups.control,
+                intervention=groups.intervention,
+                total=groups.total,
+                note=_capacity_note(config, groups),
+            )
+        )
+    for effect in _common_effect_values(config):
+        for alpha in (0.05, 0.10):
+            achieved = _power_for_effect(config, groups, alpha, effect)
+            rows.append(
+                CapacityRow(
+                    label=f"Power if {_effect_short_label(config, effect)}, p < {alpha:.2f}",
+                    alpha=alpha,
+                    power=achieved,
+                    effect_size=effect,
+                    effect_label=f"power ~= {achieved:.1%}",
+                    control=groups.control,
+                    intervention=groups.intervention,
+                    total=groups.total,
+                    note=_capacity_note(config, groups),
+                )
+            )
+    for effect in _common_effect_values(config):
+        for desired_power in (0.80, 0.90):
+            alpha_needed = _alpha_for_effect_and_power(config, groups, effect, desired_power)
+            rows.append(
+                CapacityRow(
+                    label=f"Alpha needed for {_effect_short_label(config, effect)}, power {desired_power:.0%}",
+                    alpha=alpha_needed if alpha_needed is not None else 0.0,
+                    power=desired_power,
+                    effect_size=effect,
+                    effect_label=_alpha_requirement_label(alpha_needed),
+                    control=groups.control,
+                    intervention=groups.intervention,
+                    total=groups.total,
+                    note=_capacity_note(config, groups),
+                )
+            )
+    return rows
+
+
+def _common_effect_values(config: StudyConfig) -> list[float]:
+    if config.outcome_type == "binary":
+        values = [0.05, 0.10, 0.15, 0.20]
+        if config.study_design == "parallel_two_group":
+            upper = _capacity_effect_upper(config)
+            return [value for value in values if value < upper]
+        return values
+    return [0.20, 0.50, 0.80]
+
+
+def _power_for_effect(config: StudyConfig, groups: GroupSizes, alpha: float, effect: float) -> float:
+    z_alpha = _z_alpha(alpha / config.primary_comparisons, config.alternative)
+    effective_groups = _effective_groups_for_capacity(groups, config)
+    if config.study_design == "one_group_pre_post":
+        z_beta = math.sqrt(max(effective_groups.total, 1)) * effect - z_alpha
+        return _clamp(NORMAL.cdf(z_beta), 0.0, 1.0)
+    k = _observed_ratio(config, effective_groups)
+    if config.study_design == "pretest_posttest_control":
+        base = math.sqrt(effective_groups.control / (1 + 1 / k))
+        efficiency_gain = 1 / math.sqrt(max(0.05, 1 - config.pre_post_correlation**2))
+        z_beta = base * effect * efficiency_gain - z_alpha
+        return _clamp(NORMAL.cdf(z_beta), 0.0, 1.0)
+    if config.outcome_type == "continuous":
+        z_beta = math.sqrt(effective_groups.control / (1 + 1 / k)) * effect - z_alpha
+        return _clamp(NORMAL.cdf(z_beta), 0.0, 1.0)
+    p0 = _clamp(config.proportion_control, 0.001, 0.999)
+    p1 = _clamp(p0 + effect, 0.001, 0.999)
+    diff = abs(p1 - p0)
+    p_bar = (p0 + p1) / 2
+    pooled = max((1 + 1 / k) * p_bar * (1 - p_bar), 1e-12)
+    unpooled = max(p0 * (1 - p0) + p1 * (1 - p1) / k, 1e-12)
+    z_beta = (math.sqrt(effective_groups.control) * diff - z_alpha * math.sqrt(pooled)) / math.sqrt(unpooled)
+    return _clamp(NORMAL.cdf(z_beta), 0.0, 1.0)
+
+
+def _alpha_for_effect_and_power(
+    config: StudyConfig,
+    groups: GroupSizes,
+    effect: float,
+    desired_power: float,
+) -> float | None:
+    z_power = NORMAL.inv_cdf(desired_power)
+    effective_groups = _effective_groups_for_capacity(groups, config)
+    if config.study_design == "one_group_pre_post":
+        z_alpha = math.sqrt(max(effective_groups.total, 1)) * effect - z_power
+    else:
+        k = _observed_ratio(config, effective_groups)
+        if config.study_design == "pretest_posttest_control":
+            base = math.sqrt(effective_groups.control / (1 + 1 / k))
+            efficiency_gain = 1 / math.sqrt(max(0.05, 1 - config.pre_post_correlation**2))
+            z_alpha = base * effect * efficiency_gain - z_power
+        elif config.outcome_type == "continuous":
+            z_alpha = math.sqrt(effective_groups.control / (1 + 1 / k)) * effect - z_power
+        else:
+            p0 = _clamp(config.proportion_control, 0.001, 0.999)
+            p1 = _clamp(p0 + effect, 0.001, 0.999)
+            diff = abs(p1 - p0)
+            p_bar = (p0 + p1) / 2
+            pooled = max((1 + 1 / k) * p_bar * (1 - p_bar), 1e-12)
+            unpooled = max(p0 * (1 - p0) + p1 * (1 - p1) / k, 1e-12)
+            z_alpha = (math.sqrt(effective_groups.control) * diff - z_power * math.sqrt(unpooled)) / math.sqrt(pooled)
+    if z_alpha <= 0:
+        return None
+    tail = 1 - NORMAL.cdf(z_alpha)
+    alpha = (2 * tail) if config.alternative == "two_sided" else tail
+    if not 0 < alpha <= 1:
+        return None
+    return alpha
+
+
+def _effective_groups_for_capacity(groups: GroupSizes, config: StudyConfig) -> GroupSizes:
+    design_effect = _design_effect(config)
+    if design_effect <= 1:
+        return groups
+    if config.study_design == "one_group_pre_post":
+        return GroupSizes(0, max(2, math.floor(groups.intervention / design_effect)))
+    return GroupSizes(
+        max(2, math.floor(groups.control / design_effect)),
+        max(2, math.floor(groups.intervention / design_effect)),
+    )
+
+
+def _effect_short_label(config: StudyConfig, effect: float) -> str:
+    if config.outcome_type == "binary":
+        return f"effect={effect:.2f}"
+    return f"d={effect:.2f}"
+
+
+def _alpha_requirement_label(alpha: float | None) -> str:
+    if alpha is None:
+        return "not achievable with alpha <= 1.00"
+    return f"requires p threshold about {alpha:.3f}"
+
+
+def _minimum_detectable_effect(
+    config: StudyConfig,
+    groups: GroupSizes,
+    alpha: float,
+    desired_power: float,
+) -> float | None:
+    upper = _capacity_effect_upper(config)
+    z_alpha = _z_alpha(alpha / config.primary_comparisons, config.alternative)
+
+    def fits(effect: float) -> bool:
+        required = _required_groups_for_power(
+            config,
+            effect,
+            groups,
+            z_alpha,
+            desired_power,
+            None,
+            None,
+        )
+        required = _cluster_adjusted_target(required, config)
+        return required.control <= groups.control and required.intervention <= groups.intervention
+
+    if groups.total <= 1 or not fits(upper):
+        return None
+    low = 1e-6
+    high = upper
+    for _ in range(70):
+        midpoint = (low + high) / 2
+        if fits(midpoint):
+            high = midpoint
+        else:
+            low = midpoint
+    return high
+
+
+def _capacity_effect_upper(config: StudyConfig) -> float:
+    if config.study_design == "parallel_two_group" and config.outcome_type == "binary":
+        p0 = _clamp(config.proportion_control, 0.001, 0.999)
+        return max(p0, 1 - p0) - 1e-6
+    if config.study_design == "one_group_pre_post" and config.outcome_type == "binary":
+        return 0.999
+    return 3.0
+
+
+def _effect_requirement_label(config: StudyConfig, effect: float | None) -> str:
+    if effect is None:
+        return "outside feasible range"
+    if config.study_design == "parallel_two_group" and config.outcome_type == "binary":
+        p0 = _clamp(config.proportion_control, 0.001, 0.999)
+        p1 = _clamp(p0 + effect, 0.001, 0.999)
+        return f"proportion difference >= {effect:.3f} ({p0:.1%} to {p1:.1%})"
+    if config.study_design == "one_group_pre_post" and config.outcome_type == "binary":
+        return f"net paired change >= {effect:.3f}"
+    return f"d >= {effect:.3f}"
+
+
+def _capacity_note(config: StudyConfig, groups: GroupSizes) -> str:
+    if config.study_design == "one_group_pre_post":
+        return "same people measured before and after"
+    if config.study_design == "pretest_posttest_control":
+        return (
+            f"allocation {groups.intervention}:{groups.control}; "
+            f"uses pre/post correlation {config.pre_post_correlation:.2f}"
+        )
+    if config.outcome_type == "binary":
+        return (
+            f"allocation {groups.intervention}:{groups.control}; "
+            f"uses baseline rate {config.proportion_control:.1%}"
+        )
+    return f"allocation {groups.intervention}:{groups.control}; two independent groups"
 
 
 def _evaluation_targets(
@@ -1163,6 +1493,25 @@ def _build_suggestions(
                 "Design corrections increased the valid target substantially. Revisit clustering assumptions and consider operational alternatives."
             )
     if observed_analysis:
+        if observed_analysis.observed_effect_size is None:
+            suggestions.append(
+                "Only the achieved sample size was entered. The capacity table reports minimum detectable effects for common p-value and power standards instead of a single p-value."
+            )
+            if observed_analysis.capacity_rows:
+                reference = next(
+                    (
+                        row
+                        for row in observed_analysis.capacity_rows
+                        if abs(row.alpha - 0.05) < 1e-9 and abs(row.power - 0.80) < 1e-9
+                    ),
+                    observed_analysis.capacity_rows[0],
+                )
+                suggestions.append(
+                    f"For the common p < {reference.alpha:.2f} and power {reference.power:.0%} target, this sample can detect about {reference.effect_label}."
+                )
+            return suggestions
+        assert observed_analysis.p_value is not None
+        assert observed_analysis.achieved_power is not None
         if observed_analysis.p_value <= 0.05:
             suggestions.append(
                 "The achieved p-value is below the conventional 0.05 benchmark. Interpret it together with the observed effect size, design limits, and data quality."
@@ -1208,6 +1557,7 @@ def _build_suggestions(
                     f"{target.additional_total} valid participants."
                 )
         if config.had_planned_sample and config.planned_effect_size:
+            assert observed_analysis.observed_effect_size is not None
             if observed_analysis.observed_effect_size < config.planned_effect_size:
                 suggestions.append(
                     "The observed effect is smaller than the planned effect. Even a study with the planned sample can miss conventional thresholds when the real effect is smaller than expected."
@@ -1377,12 +1727,27 @@ def _render_en(plan: SamplePlan) -> str:
                 "",
                 "Achieved-result check",
                 f"- Observed sample: {obs.observed_total} total participants.",
-                f"- Observed effect entered: {obs.observed_effect_size:.4f}.",
-                f"- Approximate z statistic: {obs.z_statistic:.4f}.",
-                f"- Approximate p-value: {obs.p_value:.6f}.",
-                f"- Approximate achieved power for the observed effect: {obs.achieved_power:.1%}.",
             ]
         )
+        if obs.observed_effect_size is None:
+            lines.extend(
+                [
+                    "- No observed effect was entered; p-value and achieved power are not unique.",
+                    "- Use the sample-capacity table below to see minimum detectable effects for common standards.",
+                ]
+            )
+        else:
+            assert obs.z_statistic is not None
+            assert obs.p_value is not None
+            assert obs.achieved_power is not None
+            lines.extend(
+                [
+                    f"- Observed effect entered: {obs.observed_effect_size:.4f}.",
+                    f"- Approximate z statistic: {obs.z_statistic:.4f}.",
+                    f"- Approximate p-value: {obs.p_value:.6f}.",
+                    f"- Approximate achieved power for the observed effect: {obs.achieved_power:.1%}.",
+                ]
+            )
         if obs.exact_p_value is not None:
             lines.append(f"- Exact p-value: {obs.exact_p_value:.6f}.")
         if obs.method_notes:
@@ -1406,6 +1771,14 @@ def _render_en(plan: SamplePlan) -> str:
         if obs.benchmark_targets:
             lines.extend(["", "Conventional benchmark gaps"])
             lines.extend(_target_text_en(c, target) for target in obs.benchmark_targets)
+        if obs.capacity_rows:
+            lines.extend(["", "Sample-size capacity"])
+            lines.extend(
+                f"- {row.label}: {row.effect_label}; observed sample {row.total} valid participants."
+                if row.effect_size is not None
+                else f"- {row.label}: effect is outside the feasible range for this sample."
+                for row in obs.capacity_rows
+            )
     if plan.suggestions:
         lines.extend(["", "Suggestions"])
         lines.extend(f"- {item}" for item in plan.suggestions)
@@ -1459,12 +1832,27 @@ def _render_pt(plan: SamplePlan) -> str:
                 "",
                 "Verificação do resultado alcançado",
                 f"- Amostra observada: {obs.observed_total} participantes ao todo.",
-                f"- Efeito observado informado: {obs.observed_effect_size:.4f}.",
-                f"- Estatística z aproximada: {obs.z_statistic:.4f}.",
-                f"- Valor-p aproximado: {obs.p_value:.6f}.",
-                f"- Poder aproximado alcançado para o efeito observado: {obs.achieved_power:.1%}.",
             ]
         )
+        if obs.observed_effect_size is None:
+            lines.extend(
+                [
+                    "- Nenhum efeito observado foi informado; valor-p e poder alcançado não são únicos.",
+                    "- Use a tabela de capacidade da amostra abaixo para ver efeitos mínimos detectáveis para padrões comuns.",
+                ]
+            )
+        else:
+            assert obs.z_statistic is not None
+            assert obs.p_value is not None
+            assert obs.achieved_power is not None
+            lines.extend(
+                [
+                    f"- Efeito observado informado: {obs.observed_effect_size:.4f}.",
+                    f"- Estatística z aproximada: {obs.z_statistic:.4f}.",
+                    f"- Valor-p aproximado: {obs.p_value:.6f}.",
+                    f"- Poder aproximado alcançado para o efeito observado: {obs.achieved_power:.1%}.",
+                ]
+            )
         if obs.exact_p_value is not None:
             lines.append(f"- Valor-p exato: {obs.exact_p_value:.6f}.")
         if obs.method_notes:
@@ -1488,6 +1876,14 @@ def _render_pt(plan: SamplePlan) -> str:
         if obs.benchmark_targets:
             lines.extend(["", "Lacunas para benchmarks convencionais"])
             lines.extend(_target_text_pt(c, target) for target in obs.benchmark_targets)
+        if obs.capacity_rows:
+            lines.extend(["", "Capacidade da amostra"])
+            lines.extend(
+                f"- {row.label}: {row.effect_label}; amostra observada {row.total} participantes validos."
+                if row.effect_size is not None
+                else f"- {row.label}: efeito fora da faixa viavel para esta amostra."
+                for row in obs.capacity_rows
+            )
     if plan.suggestions:
         lines.extend(["", "Sugestões"])
         lines.extend(f"- {item}" for item in plan.suggestions)

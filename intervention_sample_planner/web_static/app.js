@@ -1,4 +1,4 @@
-// File version: 2.1; date: 2026-05-12
+// File version: 2.2; date: 2026-05-17
 
 const FIELD_GROUPS = [
   ["Research path", ["workflow_path", "study_name", "language", "study_design", "analysis_unit", "observation_unit", "outcome_type", "alternative"]],
@@ -370,6 +370,7 @@ function wizardFields() {
     } else {
       if (design === "parallel_two_group") fields.push("allocation_ratio");
       if (design === "pretest_posttest_control") fields.push("pre_post_correlation");
+      fields.push("observed_total_n");
       fields.push("observed_control_n", "observed_intervention_n");
       if (design === "parallel_two_group" && outcome === "binary") fields.push("observed_control_events", "observed_intervention_events");
       else fields.push("observed_effect_size");
@@ -389,7 +390,7 @@ function showField(field) {
   if (field === "effect_size_d") return mode === "plan" && outcome === "continuous";
   if (["proportion_control", "proportion_intervention"].includes(field)) return mode === "plan" && outcome === "binary" && design === "parallel_two_group";
   if (["observed_control_n", "observed_intervention_n"].includes(field)) return mode === "evaluate" && design !== "one_group_pre_post";
-  if (field === "observed_total_n") return mode === "evaluate" && design === "one_group_pre_post";
+  if (field === "observed_total_n") return mode === "evaluate";
   if (["observed_control_events", "observed_intervention_events"].includes(field)) return mode === "evaluate" && design === "parallel_two_group" && outcome === "binary";
   if (["observed_pre_success_post_failure", "observed_pre_failure_post_success"].includes(field)) return mode === "evaluate" && design === "one_group_pre_post" && outcome === "binary";
   if (field === "observed_effect_size") return mode === "evaluate" && outcome === "continuous";
@@ -532,11 +533,14 @@ function summaryHtml(plan) {
   const summary = plan.summary;
   if (plan.config.analysis_mode === "evaluate" && plan.observed_analysis) {
     const obs = plan.observed_analysis;
+    const effectMetric = obs.observed_effect_size === null ? "sample-size only" : fmt(obs.observed_effect_size, 4);
+    const pMetric = obs.p_value === null ? "not unique" : fmt(obs.p_value, 6);
+    const powerMetric = obs.achieved_power === null ? "see capacity table" : pct(obs.achieved_power);
     return `<div class="summary-grid">
       ${metric("Observed total", obs.observed_total)}
-      ${metric("Observed effect", fmt(obs.observed_effect_size, 4))}
-      ${metric("p-value", fmt(obs.p_value, 6))}
-      ${metric("Achieved power", pct(obs.achieved_power))}
+      ${metric("Observed effect", effectMetric)}
+      ${metric("p-value", pMetric)}
+      ${metric("Achieved power", powerMetric)}
     </div>
     <pre class="code-panel">${escapeHtml(plan.report)}</pre>`;
   }
@@ -563,8 +567,7 @@ function benchmarkHtml(observed) {
   const rows = [];
   (observed.planned_targets || []).forEach((target) => rows.push(["Previous plan", target]));
   (observed.benchmark_targets || []).forEach((target) => rows.push(["Benchmark", target]));
-  if (rows.length === 0) return `<p class="muted">${escapeHtml(webText("noPlanRows"))}</p>`;
-  return table(
+  const targetTable = rows.length === 0 ? "" : table(
     ["Category", "Target", "Required control", "Required intervention", "Required total", "Additional", "Status"],
     rows.map(([category, target]) => [
       category,
@@ -577,6 +580,21 @@ function benchmarkHtml(observed) {
     ]),
     true
   );
+  const capacityRows = observed.capacity_rows || [];
+  const capacityTable = capacityRows.length === 0 ? "" : table(
+    ["Category", "Target", "Control", "Intervention", "Total", "Reverse result", "Note"],
+    capacityRows.map((row) => [
+      "Sample capacity",
+      row.label,
+      row.control,
+      row.intervention,
+      row.total,
+      row.effect_label,
+      row.note
+    ])
+  );
+  if (!targetTable && !capacityTable) return `<p class="muted">${escapeHtml(webText("noPlanRows"))}</p>`;
+  return `${targetTable}${capacityTable}`;
 }
 
 function notesHtml(plan) {
@@ -691,10 +709,12 @@ function updateApiExample() {
 }
 
 function fmt(value, digits) {
+  if (value === null || value === undefined) return "";
   return Number(value || 0).toFixed(digits);
 }
 
 function pct(value) {
+  if (value === null || value === undefined) return "";
   return `${(Number(value || 0) * 100).toFixed(1)}%`;
 }
 

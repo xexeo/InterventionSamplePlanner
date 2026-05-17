@@ -1,4 +1,4 @@
-<!-- File version: 2.1; date: 2026-05-12 -->
+<!-- File version: 2.2; date: 2026-05-17 -->
 
 # Developer Notes
 
@@ -22,7 +22,7 @@
 `intervention_sample_planner/content.py`
 : loader helpers for `explanations.json`.
 
-## Study paths in v2.1
+## Study paths in v2.2
 
 - `parallel_two_group`
 - `pretest_posttest_control`
@@ -57,14 +57,15 @@ The inverse workflow is represented by:
 - `observed_pre_failure_post_success`
 - `observed_effect_size`
 
-The GUI can load a saved planning JSON through `load_previous_plan()`. The result object includes `observed_analysis` with approximate `z`, `p_value`, `achieved_power`, observed binary rates when available, optional `exact_p_value`, benchmark targets, and previous-plan targets.
+The GUI can load a saved planning JSON through `load_previous_plan()`. The result object includes `observed_analysis` with approximate `z`, `p_value`, `achieved_power`, observed binary rates when available, optional `exact_p_value`, benchmark targets, previous-plan targets, and sample-capacity rows when only achieved sample size is entered.
 
-## v2.1 statistical methods
+## v2.2 statistical methods
 
 - Two-group binary achieved-result evaluation computes Fisher's exact p-value when event counts are available and uses it as the reported p-value for small samples or sparse cells.
 - One-group paired binary achieved-result evaluation uses the exact McNemar/binomial test from `observed_pre_success_post_failure` and `observed_pre_failure_post_success`.
 - Pre-test/post-test with control remains an ANCOVA-style planning and evaluation approximation, not a fitted ANCOVA model.
 - Cluster support remains a design-effect approximation. Future work should add explicit cluster counts, arm-level cluster allocation, and mixed-model or cluster-randomized power routines.
+- Completed-study workflows can run without an observed effect. In that sample-size-only case, `capacity_rows` report minimum detectable effects for common alpha/power combinations, power for common effects, approximate alpha thresholds, and allocation scenarios when only total two-group sample size is known.
 
 ## Report export
 
