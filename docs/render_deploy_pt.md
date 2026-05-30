@@ -1,4 +1,4 @@
-<!-- File version: 2.2; date: 2026-05-17 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
 # Guia de Deploy no Render
 
@@ -80,7 +80,7 @@ O Render normalmente permite deploy automático a partir de uma branch conectada
 6. Cole a Deploy Hook URL do Render como valor.
 7. Mantenha `.github/workflows/deploy-render-on-tag.yml` no repositório.
 
-Quando uma tag como `v2.2` for enviada, o GitHub Actions:
+Quando uma tag como `v2.4` for enviada, o GitHub Actions:
 
 - faz checkout do commit taggeado
 - instala `requirements.txt`
@@ -108,14 +108,14 @@ python -m flask --app intervention_sample_planner.web_app run
 4. Crie a tag:
 
 ```powershell
-git tag -a v2.2 -m "version 2.2"
+git tag -a v2.4 -m "version 2.4"
 ```
 
 5. Envie a branch e a tag:
 
 ```powershell
 git push
-git push origin v2.2
+git push origin v2.4
 ```
 
 O push da tag inicia o GitHub Action, e o action inicia o deploy no Render.

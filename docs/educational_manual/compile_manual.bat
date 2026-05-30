@@ -1,5 +1,5 @@
 @echo off
-REM File version: 2.2; date: 2026-05-17
+REM File version: 2.4; date: 2026-05-30
 setlocal
 cd /d "%~dp0"
 

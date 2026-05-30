@@ -1,4 +1,4 @@
-% File version: 1.0; date: 2026-05-11
+% File version: 2.4; date: 2026-05-30
 
 This software and its documentation are provided for educational, informational, and research-planning support purposes only. They are not professional statistical, methodological, legal, medical, regulatory, ethical, or institutional advice.
 

@@ -1,6 +1,6 @@
 {
-  "_file_version": "2.2",
-  "_file_date": "2026-05-17",
+  "_file_version": "2.4",
+  "_file_date": "2026-05-30",
   "en": {
     "general": {
       "range_ok": "Inside the typical or recommended range.",
@@ -22,6 +22,14 @@
       "one_group_pre_post": {
         "label": "One-group pre-test/post-test",
         "description": "Use this when the same people are measured before and after the intervention and there is no control group. Continuous achieved results use standardized mean change; paired binary achieved results use McNemar's exact test from the discordant before/after cells."
+      },
+      "one_group_post_survey": {
+        "label": "One-group post-intervention survey",
+        "description": "Use this when participants only answer an opinion or experience survey after the intervention. It estimates how precisely respondents endorsed an item; it does not show causal change."
+      },
+      "stratified_post_survey": {
+        "label": "Stratified post-intervention survey",
+        "description": "Use this when a post-intervention opinion claim should represent known demographic classes such as age bands, region, school type, prior experience, or gender. The app plans valid responses per stratum and checks whether the achieved sample is balanced enough for the intended population claim."
       },
       "plan": {
         "label": "Plan required sample",
@@ -114,6 +122,141 @@
           "justification": "Extremely low or high rates are possible, but they should come from prior evidence because they strongly affect the sample."
         }
       },
+      "survey_analysis_goal": {
+        "help": "Choose whether the main survey claim is about the proportion of favorable responses or the average score. For Likert, stars, and MEEGA+-style items, the favorable proportion is often easier to explain because it keeps the response distribution visible.",
+        "recommended": {
+          "min": 0,
+          "max": 1,
+          "typical": ["favorable_proportion"],
+          "justification": "Favorable proportions support statements such as 'at least 70% of users agreed'. Mean scores are useful for numeric scales but can hide polarized distributions."
+        }
+      },
+      "survey_scale_min": {
+        "help": "Lowest numeric value on the survey scale. Examples: 1 for a 1-5 Likert item, 0 for a 0-5 star rating, or 0 for a 0-1 normalized grade.",
+        "recommended": {
+          "min": 0,
+          "max": 10,
+          "typical": ["0", "1"],
+          "justification": "Most post-intervention opinion scales use small bounded scales such as 1-5, 0-5, 1-10, or 0-1."
+        }
+      },
+      "survey_scale_max": {
+        "help": "Highest numeric value on the survey scale. Examples: 5 for a 1-5 Likert item or star rating, 10 for a 1-10 grade, or 1 for a normalized score.",
+        "recommended": {
+          "min": 1,
+          "max": 10,
+          "typical": ["5", "10", "1"],
+          "justification": "The maximum is used to check thresholds and, for mean-score planning, to choose a rough default SD if none is entered."
+        }
+      },
+      "survey_scale_points": {
+        "help": "Number of ordered response points, excluding NA. A 1-5 Likert item has 5 points. A 0-5 star item has 6 points.",
+        "recommended": {
+          "min": 3,
+          "max": 11,
+          "typical": ["5", "6", "10"],
+          "justification": "Most educational-game and usability surveys use between 3 and 10 ordered response options."
+        }
+      },
+      "survey_favorable_threshold": {
+        "help": "The first score that counts as favorable. On a 1-5 agreement scale, 4 often means agree and 5 means strongly agree, so threshold 4 counts both as favorable.",
+        "recommended": {
+          "min": 1,
+          "max": 10,
+          "typical": ["4 on a 1-5 scale", "4 on a 0-5 star scale", "7 on a 1-10 scale"],
+          "justification": "The threshold should match the verbal meaning of the scale, not just the numeric midpoint."
+        }
+      },
+      "survey_target_proportion": {
+        "help": "The minimum favorable share needed for the claim. Example: use 0.70 if you want to say that at least 70% of valid respondents agreed or gave a favorable answer.",
+        "recommended": {
+          "min": 0.50,
+          "max": 0.90,
+          "typical": ["0.60", "0.70", "0.80"],
+          "justification": "Targets below 50% are weak for positive opinion claims. Targets above 90% are possible but often unrealistic unless the claim is intentionally very strict."
+        }
+      },
+      "survey_expected_proportion": {
+        "help": "Expected favorable share for planning. Use prior studies, a pilot, or 0.50 when uncertain. The value 0.50 is conservative for margin-of-error planning because it gives the largest sample.",
+        "recommended": {
+          "min": 0.30,
+          "max": 0.90,
+          "typical": ["0.50", "0.70", "0.80"],
+          "justification": "Planning with 0.50 is conservative. Higher expected favorable rates reduce the required sample but should come from evidence."
+        }
+      },
+      "survey_margin_of_error": {
+        "help": "Acceptable half-width of the confidence interval for the favorable proportion. Use 0.05 for plus or minus 5 percentage points, or 0.10 for a rougher small study.",
+        "recommended": {
+          "min": 0.03,
+          "max": 0.15,
+          "typical": ["0.05", "0.10"],
+          "justification": "Opinion surveys often use 5 to 10 percentage points. Smaller margins can require many respondents."
+        }
+      },
+      "survey_expected_sd": {
+        "help": "Expected standard deviation of the numeric survey score. Use this for mean-score planning when pilot or previous survey data exist.",
+        "recommended": {
+          "min": 0.20,
+          "max": 3.00,
+          "typical": ["0.8 to 1.2 on a 1-5 scale"],
+          "justification": "Mean-score precision depends directly on the score SD. If blank, the app uses one quarter of the scale range as a rough planning value."
+        }
+      },
+      "survey_mean_margin_of_error": {
+        "help": "Acceptable half-width of the confidence interval for the mean score, in scale points. On a 1-5 scale, 0.20 means plus or minus 0.20 points.",
+        "recommended": {
+          "min": 0.05,
+          "max": 1.00,
+          "typical": ["0.20", "0.30", "0.50"],
+          "justification": "The margin should be small enough to matter on the scale but not so small that the required sample becomes impractical."
+        }
+      },
+      "survey_target_mean": {
+        "help": "Mean score that would support the descriptive claim. Example: on a 1-5 scale, a target of 4.0 means the lower confidence bound should still be at least 'agree'.",
+        "recommended": {
+          "min": 1,
+          "max": 10,
+          "typical": ["4.0 on a 1-5 agreement scale", "7.0 on a 1-10 scale"],
+          "justification": "A target mean should correspond to a meaningful verbal interpretation of the response scale."
+        }
+      },
+      "strata_definition": {
+        "help": "Define the demographic classes that should be represented. Use JSON such as {\"age_8_10\": {\"label\": \"Age 8-10\", \"population_proportion\": 0.30}, \"age_11_13\": {\"label\": \"Age 11-13\", \"population_proportion\": 0.40}, \"age_14_16\": {\"label\": \"Age 14-16\", \"population_proportion\": 0.30}}. Strata should be mutually exclusive and cover the population you want to discuss."
+      },
+      "stratified_allocation_method": {
+        "help": "Choose how the overall valid-response target is split across strata. Proportional follows population shares. Equal gives every stratum the same target. Minimum per stratum protects small groups. Manual uses target_valid_n entered inside each stratum.",
+        "recommended": {
+          "min": 0,
+          "max": 1,
+          "typical": ["proportional", "minimum_per_stratum"],
+          "justification": "Proportional allocation is usually best for an overall descriptive claim; minimum-per-stratum is useful when subgroup visibility matters."
+        }
+      },
+      "stratified_min_per_stratum": {
+        "help": "Minimum valid responses desired in each stratum when using the minimum-per-stratum allocation. Around 20 to 30 is often a practical lower bound for a rough subgroup percentage, but stronger subgroup claims need more.",
+        "recommended": {
+          "min": 10,
+          "max": 100,
+          "typical": ["20", "30", "50"],
+          "justification": "Very small strata give unstable percentages and very wide confidence intervals; very large minimums can make the total sample infeasible."
+        }
+      },
+      "stratified_target_total": {
+        "help": "Optional override for the calculated overall valid-response target before allocation to strata. Leave blank to let the survey precision calculation choose the total.",
+        "recommended": {
+          "min": 20,
+          "max": 10000,
+          "typical": ["blank", "100", "200", "400"],
+          "justification": "An override is useful when a funder, school, or platform fixes the feasible valid sample. It should still be checked against the desired precision."
+        }
+      },
+      "stratified_population_known": {
+        "help": "Turn this on when the population shares or population counts in strata_definition are known and should define representation. Turn it off when strata are only balancing categories; the app then treats them as equally important."
+      },
+      "stratified_use_weights": {
+        "help": "When enabled, the app computes population-share divided by sample-share weights. Weights help diagnose representation gaps, but large weights can make estimates unstable."
+      },
       "response_rate": {
         "help": "Share of invited people expected to start or accept. In educational and survey-like studies, this can vary widely. Use pilot recruitment or previous projects when available.",
         "recommended": {
@@ -176,6 +319,27 @@
           "typical": ["0.20", "0.50", "0.80"],
           "justification": "Observed effects can be smaller or larger than planned effects. Values far outside this range should be checked for scale, coding, or denominator mistakes."
         }
+      },
+      "observed_survey_counts": {
+        "help": "Enter response counts as JSON. Example: {\"1\": 2, \"2\": 4, \"3\": 10, \"4\": 18, \"5\": 26, \"NA\": 3}. Numeric categories are valid responses. NA, N/A, missing, and nonnumeric categories are reported separately and excluded from the valid opinion denominator."
+      },
+      "observed_survey_favorable_count": {
+        "help": "If you do not want to enter a full histogram, enter the number of valid respondents whose answer met the favorable threshold. The denominator is observed_total_n.",
+        "recommended": {
+          "min": 0,
+          "max": 1000000,
+          "typical": ["count between 0 and observed total n"],
+          "justification": "Use a count, not a percentage. The app computes the favorable proportion and Wilson confidence interval."
+        }
+      },
+      "observed_survey_mean": {
+        "help": "Observed mean score for a post-intervention survey item or composite scale. Use this when the primary claim is about the mean and the full count distribution is not available."
+      },
+      "observed_survey_sd": {
+        "help": "Observed standard deviation of the survey score. It is required with observed_survey_mean to compute the mean confidence interval when response counts are not entered."
+      },
+      "observed_strata_counts": {
+        "help": "Enter achieved data by stratum as JSON. Example: {\"age_8_10\": {\"counts\": {\"1\": 1, \"3\": 4, \"4\": 12, \"5\": 18, \"NA\": 2}}, \"age_11_13\": {\"valid_n\": 40, \"favorable\": 31, \"missing\": 1}}. The app calculates representation ratio, weights, favorable percentages, and status for each stratum."
       },
       "observed_control_events": {
         "help": "For binary achieved-result analysis, enter how many control participants had the event, success, or desired outcome. Example: if 36 of 80 control students passed the post-test criterion, enter 36. When event counts are available, the app also calculates Fisher's exact p-value and uses it for small samples or sparse cells.",
@@ -291,6 +455,14 @@
         "label": "Pré-teste/pós-teste com um grupo",
         "description": "Use quando as mesmas pessoas são medidas antes e depois da intervenção e não há grupo de controle."
       },
+      "one_group_post_survey": {
+        "label": "Questionario pos-intervencao com um grupo",
+        "description": "Use quando os participantes respondem apenas a um questionario de opiniao ou experiencia depois da intervencao. Ele estima a precisao das opinioes dos respondentes, mas nao demonstra mudanca causal."
+      },
+      "stratified_post_survey": {
+        "label": "Questionario pos-intervencao estratificado",
+        "description": "Use quando uma declaracao de opiniao pos-intervencao deve representar classes demograficas conhecidas, como faixa etaria, regiao, tipo de escola, experiencia previa ou genero. O app planeja respostas validas por estrato e verifica se a amostra alcancada esta equilibrada para a populacao pretendida."
+      },
       "plan": {
         "label": "Planejar amostra necessária",
         "description": "Estime quantos participantes válidos, iniciados e convidados são necessários."
@@ -379,6 +551,141 @@
           "justification": "Taxas extremamente baixas ou altas são possíveis, mas devem vir de evidência prévia porque afetam fortemente a amostra."
         }
       },
+      "survey_analysis_goal": {
+        "help": "Escolha se a declaracao principal do questionario sera sobre a proporcao de respostas favoraveis ou sobre a media da escala. Para itens Likert, estrelas e questionarios no estilo MEEGA+, a proporcao favoravel costuma ser mais facil de explicar.",
+        "recommended": {
+          "min": 0,
+          "max": 1,
+          "typical": ["favorable_proportion"],
+          "justification": "Proporcoes favoraveis sustentam afirmacoes como 'pelo menos 70% dos usuarios concordaram'. Medias sao uteis para escalas numericas, mas podem esconder distribuicoes polarizadas."
+        }
+      },
+      "survey_scale_min": {
+        "help": "Menor valor numerico da escala. Exemplos: 1 em uma escala Likert 1-5, 0 em estrelas 0-5 ou 0 em nota normalizada 0-1.",
+        "recommended": {
+          "min": 0,
+          "max": 10,
+          "typical": ["0", "1"],
+          "justification": "A maioria das escalas de opiniao pos-intervencao usa escalas pequenas e limitadas, como 1-5, 0-5, 1-10 ou 0-1."
+        }
+      },
+      "survey_scale_max": {
+        "help": "Maior valor numerico da escala. Exemplos: 5 em Likert 1-5, 10 em nota 1-10 ou 1 em nota normalizada.",
+        "recommended": {
+          "min": 1,
+          "max": 10,
+          "typical": ["5", "10", "1"],
+          "justification": "O maximo e usado para checar limiares e, no planejamento por media, escolher um desvio padrao padrao quando nenhum for informado."
+        }
+      },
+      "survey_scale_points": {
+        "help": "Numero de pontos ordenados da escala, excluindo NA. Uma escala 1-5 tem 5 pontos; uma escala de estrelas 0-5 tem 6 pontos.",
+        "recommended": {
+          "min": 3,
+          "max": 11,
+          "typical": ["5", "6", "10"],
+          "justification": "A maioria dos questionarios de jogos educacionais e usabilidade usa entre 3 e 10 opcoes ordenadas."
+        }
+      },
+      "survey_favorable_threshold": {
+        "help": "Primeiro valor que conta como resposta favoravel. Em uma escala 1-5 de concordancia, 4 normalmente significa concordo e 5 concordo totalmente.",
+        "recommended": {
+          "min": 1,
+          "max": 10,
+          "typical": ["4 em escala 1-5", "4 em estrelas 0-5", "7 em escala 1-10"],
+          "justification": "O limiar deve seguir o significado verbal da escala, nao apenas o ponto medio numerico."
+        }
+      },
+      "survey_target_proportion": {
+        "help": "Proporcao favoravel minima necessaria para a declaracao. Use 0,70 para dizer que pelo menos 70% dos respondentes validos concordaram ou deram uma resposta favoravel.",
+        "recommended": {
+          "min": 0.5,
+          "max": 0.9,
+          "typical": ["0.60", "0.70", "0.80"],
+          "justification": "Alvos abaixo de 50% sao fracos para declaracoes positivas de opiniao. Alvos acima de 90% sao possiveis, mas muitas vezes pouco realistas."
+        }
+      },
+      "survey_expected_proportion": {
+        "help": "Proporcao favoravel esperada para planejamento. Use estudo anterior, piloto ou 0,50 quando estiver incerto; 0,50 e conservador para margem de erro.",
+        "recommended": {
+          "min": 0.3,
+          "max": 0.9,
+          "typical": ["0.50", "0.70", "0.80"],
+          "justification": "Planejar com 0,50 e conservador. Proporcoes esperadas maiores reduzem a amostra, mas devem vir de evidencia."
+        }
+      },
+      "survey_margin_of_error": {
+        "help": "Meia largura aceitavel do intervalo de confianca da proporcao favoravel. Use 0,05 para mais ou menos 5 pontos percentuais.",
+        "recommended": {
+          "min": 0.03,
+          "max": 0.15,
+          "typical": ["0.05", "0.10"],
+          "justification": "Questionarios de opiniao frequentemente usam 5 a 10 pontos percentuais. Margens menores podem exigir muitos respondentes."
+        }
+      },
+      "survey_expected_sd": {
+        "help": "Desvio padrao esperado do escore do questionario. Use quando planejar pela media da escala e houver piloto ou dados anteriores.",
+        "recommended": {
+          "min": 0.2,
+          "max": 3.0,
+          "typical": ["0.8 a 1.2 em escala 1-5"],
+          "justification": "A precisao da media depende diretamente do desvio padrao. Se ficar em branco, o app usa um quarto da amplitude da escala como valor aproximado."
+        }
+      },
+      "survey_mean_margin_of_error": {
+        "help": "Meia largura aceitavel do intervalo de confianca da media, em pontos da escala. Em uma escala 1-5, 0,20 significa mais ou menos 0,20 ponto.",
+        "recommended": {
+          "min": 0.05,
+          "max": 1.0,
+          "typical": ["0.20", "0.30", "0.50"],
+          "justification": "A margem deve ser pequena o suficiente para importar na escala, mas nao tao pequena que a amostra se torne inviavel."
+        }
+      },
+      "survey_target_mean": {
+        "help": "Media que sustentaria a declaracao descritiva. Em uma escala 1-5, alvo 4,0 significa que o limite inferior do intervalo ainda deveria estar em 'concordo'.",
+        "recommended": {
+          "min": 1,
+          "max": 10,
+          "typical": ["4.0 em escala de concordancia 1-5", "7.0 em escala 1-10"],
+          "justification": "A media alvo deve corresponder a uma interpretacao verbal significativa da escala."
+        }
+      },
+      "strata_definition": {
+        "help": "Defina as classes demograficas que devem estar representadas. Use JSON como {\"idade_8_10\": {\"label\": \"Idade 8-10\", \"population_proportion\": 0.30}, \"idade_11_13\": {\"label\": \"Idade 11-13\", \"population_proportion\": 0.40}, \"idade_14_16\": {\"label\": \"Idade 14-16\", \"population_proportion\": 0.30}}. Os estratos devem ser mutuamente exclusivos e cobrir a populacao sobre a qual voce quer falar."
+      },
+      "stratified_allocation_method": {
+        "help": "Escolha como o alvo total de respostas validas sera dividido entre estratos. Proporcional segue as participacoes populacionais. Igual da o mesmo alvo a cada estrato. Minimo por estrato protege grupos pequenos. Manual usa target_valid_n dentro de cada estrato.",
+        "recommended": {
+          "min": 0,
+          "max": 1,
+          "typical": ["proportional", "minimum_per_stratum"],
+          "justification": "A alocacao proporcional costuma ser melhor para a estimativa geral; minimo por estrato e util quando a visibilidade de subgrupos importa."
+        }
+      },
+      "stratified_min_per_stratum": {
+        "help": "Minimo de respostas validas desejado em cada estrato ao usar a alocacao por minimo. Algo entre 20 e 30 costuma ser um piso pratico para uma porcentagem aproximada de subgrupo, mas declaracoes fortes precisam de mais.",
+        "recommended": {
+          "min": 10,
+          "max": 100,
+          "typical": ["20", "30", "50"],
+          "justification": "Estratos muito pequenos geram porcentagens instaveis e intervalos muito largos; minimos muito grandes podem inviabilizar a coleta."
+        }
+      },
+      "stratified_target_total": {
+        "help": "Sobrescrita opcional do alvo total de respostas validas antes da alocacao aos estratos. Deixe em branco para deixar o calculo de precisao do questionario escolher o total.",
+        "recommended": {
+          "min": 20,
+          "max": 10000,
+          "typical": ["em branco", "100", "200", "400"],
+          "justification": "A sobrescrita e util quando uma escola, plataforma ou financiador fixa a amostra viavel. Mesmo assim, ela deve ser comparada com a precisao desejada."
+        }
+      },
+      "stratified_population_known": {
+        "help": "Ative quando as proporcoes ou contagens populacionais em strata_definition forem conhecidas e devem definir representacao. Desative quando os estratos forem apenas categorias de balanceamento; o app tratara os estratos como igualmente importantes."
+      },
+      "stratified_use_weights": {
+        "help": "Quando ativo, o app calcula pesos como participacao populacional dividida por participacao amostral. Pesos ajudam a diagnosticar lacunas de representacao, mas pesos grandes podem deixar estimativas instaveis."
+      },
       "response_rate": {
         "help": "Parcela dos convidados que deve iniciar ou aceitar. Em estudos educacionais e de survey isso pode variar muito. Use recrutamento piloto ou projetos anteriores quando houver.",
         "recommended": {
@@ -435,6 +742,21 @@
       },
       "observed_effect_size": {
         "help": "No modo de resultado alcançado, informe o efeito realmente observado. Para desenhos contínuos, é um efeito padronizado. Para desenho paralelo binário, é a diferença observada entre proporções."
+      },
+      "observed_survey_counts": {
+        "help": "Informe as contagens como JSON. Exemplo: {\"1\": 2, \"2\": 4, \"3\": 10, \"4\": 18, \"5\": 26, \"NA\": 3}. Categorias numericas entram no denominador valido; NA e categorias nao numericas sao relatadas separadamente."
+      },
+      "observed_survey_favorable_count": {
+        "help": "Se nao quiser informar o histograma completo, informe quantos respondentes validos atingiram o limiar favoravel. O denominador e observed_total_n."
+      },
+      "observed_survey_mean": {
+        "help": "Media observada do item ou escala composta no questionario pos-intervencao."
+      },
+      "observed_survey_sd": {
+        "help": "Desvio padrao observado do escore. E necessario junto com observed_survey_mean quando as contagens por resposta nao forem informadas."
+      },
+      "observed_strata_counts": {
+        "help": "Informe os dados alcancados por estrato como JSON. Exemplo: {\"idade_8_10\": {\"counts\": {\"1\": 1, \"3\": 4, \"4\": 12, \"5\": 18, \"NA\": 2}}, \"idade_11_13\": {\"valid_n\": 40, \"favorable\": 31, \"missing\": 1}}. O app calcula razao de representacao, pesos, porcentagens favoraveis e status de cada estrato."
       },
       "workflow_path": {
         "help": "Escolha a tarefa pratica antes dos detalhes estatisticos. Use planejar antes da coleta. Use analisar estudo realizado quando nao houve plano amostral formal. Use comparar com o plano quando quiser carregar ou digitar a amostra planejada original."

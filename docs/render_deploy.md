@@ -1,4 +1,4 @@
-<!-- File version: 2.2; date: 2026-05-17 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
 # Render Deployment Guide
 
@@ -80,7 +80,7 @@ Render normally supports automatic deploys from a linked branch. For this projec
 6. Paste the Render Deploy Hook URL as the value.
 7. Keep `.github/workflows/deploy-render-on-tag.yml` in the repository.
 
-When a tag such as `v2.2` is pushed, GitHub Actions:
+When a tag such as `v2.4` is pushed, GitHub Actions:
 
 - checks out the tagged commit
 - installs `requirements.txt`
@@ -108,14 +108,14 @@ python -m flask --app intervention_sample_planner.web_app run
 4. Tag the release:
 
 ```powershell
-git tag -a v2.2 -m "version 2.2"
+git tag -a v2.4 -m "version 2.4"
 ```
 
 5. Push the branch and the tag:
 
 ```powershell
 git push
-git push origin v2.2
+git push origin v2.4
 ```
 
 The tag push starts the GitHub Action, and the action starts the Render deployment.

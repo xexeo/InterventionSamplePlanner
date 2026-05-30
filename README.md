@@ -1,14 +1,16 @@
-<!-- File version: 2.2; date: 2026-05-17 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
 # Intervention Sample Planner
 
 Intervention Sample Planner, or `ISP`, is a local Python API with two interfaces: a Tkinter desktop app and a Flask web app for planning or evaluating intervention studies in human processes such as learning, training, usability, and workflow improvement.
 
-Version `2.2` supports:
+Version `2.4` supports:
 
 - `Two independent groups`
 - `Pre-test/post-test with control group`
 - `One-group pre-test/post-test`
+- `One-group post-intervention survey`
+- `Stratified post-intervention survey`
 - `Plan required sample`
 - `Evaluate achieved result`
 - three workflow choices at the start: plan a study, analyze a completed study, or compare a completed study with a previous plan
@@ -18,6 +20,8 @@ Version `2.2` supports:
 - a suggestions tab with design advice and caution flags
 - a dedicated `Plan / Benchmarks` results table for completed-study checks
 - sample-size-only reverse analysis for completed studies, with capacity tables when no observed effect is available
+- opinion survey planning and evaluation for Likert, stars, and bounded numeric scales
+- stratified opinion survey planning and evaluation for demographic representation
 - direct report export as text, HTML, or PDF from the app
 - exact McNemar evaluation for one-group paired binary outcomes
 - Fisher exact p-values for small or sparse two-group binary achieved results
@@ -40,8 +44,10 @@ The app helps answer questions such as:
 - How many people should be invited if some will not start or will not finish?
 - If a study already ran, what approximate p-value and achieved power correspond to the observed result?
 - If only the achieved sample size is known, what effects could that sample detect under common p-value and power standards?
+- For a post-intervention opinion survey, how many valid respondents are needed to say something like "with 95% confidence, at least X% of users gave a favorable answer"?
+- For a stratified opinion survey, how many valid responses are needed in each demographic class so the result is not dominated by one kind of respondent?
 
-The current implementation is strongest for transparent planning and educational interpretation. Binary planning is supported for `Two independent groups`; achieved-result binary evaluation is supported for `Two independent groups` and paired one-group pre/post cases.
+The current implementation is strongest for transparent planning and educational interpretation. Binary planning is supported for `Two independent groups`; achieved-result binary evaluation is supported for `Two independent groups` and paired one-group pre/post cases. Post-intervention surveys, including stratified surveys, are treated as descriptive estimation problems, not causal tests.
 
 ## Typical research paths
 
@@ -56,6 +62,14 @@ Use this when both groups are measured before and after. Example: one group comp
 ### 3. One-group pre-test/post-test
 
 Use this when the same participants are measured before and after and there is no control group. Example: a researcher wants a first estimate of the learning effect of Uno between a pre-test and a post-test before running a controlled trial.
+
+### 4. One-group post-intervention survey
+
+Use this when participants only answer an opinion or experience survey after using the intervention. Example: after a learning game session, students answer a MEEGA+-style Likert questionnaire about usability, confidence, fun, and perceived learning. `ISP` can plan the number of valid respondents needed for a confidence interval around a favorable-response proportion or mean score, and it can evaluate a completed histogram such as `{"1": 2, "2": 4, "3": 10, "4": 18, "5": 26, "NA": 3}`.
+
+### 5. Stratified post-intervention survey
+
+Use this when the opinion survey should represent demographic classes, not only the people who happened to answer. Example: after a learning game, the researcher wants responses from children in age bands `8-10`, `11-13`, and `14-16`, with targets based on the population composition or with a minimum per band. `ISP` plans valid responses, starters, and invitations per stratum, and it evaluates achieved JSON such as `{"age_8_10": {"counts": {"4": 12, "5": 18, "NA": 2}}, "age_11_13": {"valid_n": 40, "favorable": 31}}`.
 
 ## Completed-study and inverse workflows
 
@@ -76,11 +90,13 @@ If a previous plan exists, use `Compare completed study with plan`. You can type
 
 ## Effect size in plain language
 
-Effect size is the hardest input for many users, so `ISP v2.2` treats it explicitly.
+Effect size is the hardest input for many users, so `ISP v2.4` treats it explicitly.
 
 - In `Two independent groups`, the continuous effect size is the standardized difference between groups.
 - In `Pre-test/post-test with control group`, it is the standardized difference in gain, or the post-test effect after baseline is accounted for.
 - In `One-group pre-test/post-test`, it is the standardized mean change in the same participants.
+- In `One-group post-intervention survey`, the main planning target is usually not effect size. It is the desired confidence level and margin of error for a favorable-response proportion or mean survey score.
+- In `Stratified post-intervention survey`, the same survey precision target is split across strata, and representation quality is checked with observed shares, target counts, and optional weights.
 
 Traditional anchor values such as `0.2`, `0.5`, and `0.8` can be useful as orientation, but the best effect size is the smallest effect that would be meaningful in the real study.
 
@@ -121,7 +137,7 @@ See:
 The release executable SHA256 checksum is stored in `release/checksums.sha256`. Current Windows executable:
 
 ```text
-1AEF2A7C0ADE2065AC9A20CD12E51AA691901FD3047A79AA52B6BC1F2887A666  dist/InterventionSamplePlanner.exe
+6018D9075B643C9706A11B83FF1B66CD5CE28CECF394E887AD7185D80EC1FA7D  dist/InterventionSamplePlanner.exe
 ```
 
 ## Main documentation

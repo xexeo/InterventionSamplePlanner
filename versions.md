@@ -1,6 +1,24 @@
-<!-- File version: 2.2; date: 2026-05-17 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
 # Version History
+
+## 2.4
+
+- added `Stratified post-intervention survey` for opinion surveys with demographic representation targets
+- added stratified planning by population share, equal allocation, minimum-per-stratum allocation, or manual stratum targets
+- added achieved-result stratified evaluation with observed shares, representation ratios, optional weights, favorable proportions, and status flags
+- updated Tkinter, web, REST, schema, tests, help text, README files, changelogs, and operational theory summary for the stratified survey path
+- updated application metadata to `ISP v2.4`
+
+## 2.3
+
+- added `One-group post-intervention survey` for opinion-only studies after an intervention
+- added planning by favorable-response proportion with confidence level and margin of error
+- added planning by survey mean score with expected standard deviation and mean margin of error
+- added completed-survey evaluation from response histograms, favorable counts, or mean/SD summaries
+- added Wilson confidence intervals for favorable proportions and mean confidence intervals for survey scores
+- updated Tkinter, web, REST, schema, tests, help text, README files, and the educational manual for the survey path
+- updated application metadata to `ISP v2.3`
 
 ## 2.2
 

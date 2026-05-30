@@ -1,6 +1,6 @@
 """Intervention Sample Planner public API."""
 
-# File version: 2.2; date: 2026-05-17
+# File version: 2.4; date: 2026-05-30
 
 from .calculator import (
     CapacityRow,
@@ -8,6 +8,11 @@ from .calculator import (
     ObservedAnalysis,
     SamplePlan,
     StudyConfig,
+    StratifiedSurveyAnalysis,
+    StratumObservedRow,
+    StratumPlanRow,
+    SurveyAnalysis,
+    SurveyCategoryRow,
     calculate_plan,
     config_from_dict,
     config_to_dict,
@@ -26,6 +31,11 @@ __all__ = [
     "ObservedAnalysis",
     "SamplePlan",
     "StudyConfig",
+    "StratifiedSurveyAnalysis",
+    "StratumObservedRow",
+    "StratumPlanRow",
+    "SurveyAnalysis",
+    "SurveyCategoryRow",
     "calculate_plan",
     "config_from_dict",
     "config_to_dict",

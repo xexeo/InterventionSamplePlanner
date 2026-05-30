@@ -1,4 +1,4 @@
-# File version: 2.2; date: 2026-05-17
+# File version: 2.4; date: 2026-05-30
 
 import json
 from pathlib import Path
@@ -11,6 +11,7 @@ from intervention_sample_planner import (
     calculate_plan,
     config_from_dict,
     config_to_dict,
+    render_report,
     save_report_html,
     save_report_pdf,
 )
@@ -24,8 +25,8 @@ SCHEMA_PATH = REPO_ROOT / "schemas" / "study_config.schema.json"
 
 class CalculatorTests(unittest.TestCase):
     def test_application_version_metadata(self):
-        self.assertEqual(APP_VERSION, "2.2")
-        self.assertIn("ISP v2.2", APP_WINDOW_TITLE)
+        self.assertEqual(APP_VERSION, "2.4")
+        self.assertIn("ISP v2.4", APP_WINDOW_TITLE)
 
     def test_parallel_continuous_balanced_example(self):
         config = StudyConfig(effect_size_d=0.5, alpha=0.05, power=0.80)
@@ -155,6 +156,104 @@ class CalculatorTests(unittest.TestCase):
         self.assertEqual(plan.observed_analysis.p_value, plan.observed_analysis.exact_p_value)
         self.assertAlmostEqual(plan.observed_analysis.observed_effect_size, 9 / 40)
         self.assertTrue(plan.observed_analysis.benchmark_targets)
+
+    def test_one_group_post_survey_plans_favorable_precision(self):
+        plan = calculate_plan(
+            StudyConfig(
+                study_design="one_group_post_survey",
+                survey_analysis_goal="favorable_proportion",
+                alpha=0.05,
+                survey_expected_proportion=0.50,
+                survey_margin_of_error=0.10,
+            )
+        )
+        self.assertEqual(plan.initial_valid.control, 0)
+        self.assertGreaterEqual(plan.initial_valid.intervention, 96)
+        self.assertIn("survey", plan.method.lower())
+        self.assertEqual(plan.achieved_power_at_valid_target, 0.0)
+
+    def test_one_group_post_survey_evaluates_likert_histogram(self):
+        plan = calculate_plan(
+            StudyConfig(
+                study_design="one_group_post_survey",
+                workflow_path="evaluate_done",
+                observed_survey_counts='{"1": 1, "2": 3, "3": 6, "4": 20, "5": 30, "NA": 2}',
+                observed_total_n=62,
+                survey_favorable_threshold=4,
+                survey_target_proportion=0.70,
+            )
+        )
+        self.assertIsNotNone(plan.observed_analysis)
+        assert plan.observed_analysis is not None
+        self.assertIsNotNone(plan.observed_analysis.survey_analysis)
+        survey = plan.observed_analysis.survey_analysis
+        assert survey is not None
+        self.assertEqual(survey.valid_n, 60)
+        self.assertEqual(survey.missing_n, 2)
+        self.assertEqual(survey.favorable_count, 50)
+        self.assertAlmostEqual(survey.favorable_proportion, 50 / 60)
+        self.assertTrue(survey.category_rows)
+        self.assertIsNone(plan.observed_analysis.p_value)
+        self.assertIn("Survey response distribution", render_report(plan))
+
+    def test_stratified_post_survey_plans_representation_rows(self):
+        plan = calculate_plan(
+            StudyConfig(
+                study_design="stratified_post_survey",
+                survey_analysis_goal="favorable_proportion",
+                survey_expected_proportion=0.50,
+                survey_margin_of_error=0.10,
+                strata_definition=(
+                    '{"age_8_10": {"label": "Age 8-10", "population_proportion": 0.30}, '
+                    '"age_11_13": {"label": "Age 11-13", "population_proportion": 0.40}, '
+                    '"age_14_16": {"label": "Age 14-16", "population_proportion": 0.30}}'
+                ),
+                stratified_allocation_method="minimum_per_stratum",
+                stratified_min_per_stratum=30,
+                response_rate=0.80,
+                completion_rate=0.90,
+                usable_data_rate=0.95,
+            )
+        )
+        self.assertIsNotNone(plan.stratified_survey_analysis)
+        stratified = plan.stratified_survey_analysis
+        assert stratified is not None
+        self.assertEqual(len(stratified.plan_rows), 3)
+        self.assertGreaterEqual(stratified.target_total_valid, plan.design_adjusted_valid.total)
+        self.assertEqual(plan.assigned_needed.intervention, stratified.assigned_total)
+        self.assertTrue(all(row.invited_needed >= row.target_valid_n for row in stratified.plan_rows))
+
+    def test_stratified_post_survey_evaluates_representation(self):
+        plan = calculate_plan(
+            StudyConfig(
+                study_design="stratified_post_survey",
+                workflow_path="evaluate_done",
+                survey_favorable_threshold=4,
+                survey_target_proportion=0.70,
+                strata_definition=(
+                    '{"age_8_10": {"label": "Age 8-10", "population_proportion": 0.30}, '
+                    '"age_11_13": {"label": "Age 11-13", "population_proportion": 0.40}, '
+                    '"age_14_16": {"label": "Age 14-16", "population_proportion": 0.30}}'
+                ),
+                observed_strata_counts=(
+                    '{"age_8_10": {"counts": {"1": 1, "3": 4, "4": 12, "5": 18, "NA": 2}}, '
+                    '"age_11_13": {"valid_n": 40, "favorable": 31, "missing": 1}, '
+                    '"age_14_16": {"valid_n": 10, "favorable": 7}}'
+                ),
+            )
+        )
+        self.assertIsNotNone(plan.observed_analysis)
+        self.assertIsNotNone(plan.stratified_survey_analysis)
+        assert plan.observed_analysis is not None
+        assert plan.stratified_survey_analysis is not None
+        self.assertIsNotNone(plan.observed_analysis.survey_analysis)
+        survey = plan.observed_analysis.survey_analysis
+        assert survey is not None
+        self.assertEqual(survey.valid_n, 85)
+        self.assertEqual(survey.favorable_count, 68)
+        statuses = {row.label: row.status for row in plan.stratified_survey_analysis.observed_rows}
+        self.assertEqual(statuses["Age 14-16"], "under-represented")
+        self.assertIn("Stratified representation", render_report(plan))
 
     def test_evaluate_one_group_sample_size_only_returns_capacity_rows(self):
         plan = calculate_plan(

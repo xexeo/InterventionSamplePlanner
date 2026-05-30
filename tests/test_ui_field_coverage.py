@@ -1,4 +1,4 @@
-# File version: 2.2; date: 2026-05-17
+# File version: 2.4; date: 2026-05-30
 
 import ast
 import json
@@ -24,7 +24,13 @@ PACKAGE_ROOT = REPO_ROOT / "intervention_sample_planner"
 WEB_APP_JS = PACKAGE_ROOT / "web_static" / "app.js"
 DERIVED_OR_NON_FIELD_UI = {"analysis_mode", "had_planned_sample", "range_override_fields"}
 WORKFLOW_PATHS = ("plan_study", "evaluate_done", "evaluate_against_plan")
-STUDY_DESIGNS = ("parallel_two_group", "pretest_posttest_control", "one_group_pre_post")
+STUDY_DESIGNS = (
+    "parallel_two_group",
+    "pretest_posttest_control",
+    "one_group_pre_post",
+    "one_group_post_survey",
+    "stratified_post_survey",
+)
 
 
 def grouped_fields(groups) -> set[str]:
@@ -173,6 +179,18 @@ class UiFieldCoverageTests(unittest.TestCase):
         self.assertIn(
             "planned_effect_size",
             wizard_fields_for_path("evaluate_against_plan", "parallel_two_group", "continuous"),
+        )
+        self.assertIn(
+            "observed_survey_counts",
+            wizard_fields_for_path("evaluate_done", "one_group_post_survey", "continuous"),
+        )
+        self.assertIn(
+            "strata_definition",
+            wizard_fields_for_path("plan_study", "stratified_post_survey", "continuous"),
+        )
+        self.assertIn(
+            "observed_strata_counts",
+            wizard_fields_for_path("evaluate_done", "stratified_post_survey", "continuous"),
         )
 
     def test_every_configuration_tab_variable_is_used_by_runtime_functions(self):

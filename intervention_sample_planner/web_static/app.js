@@ -1,10 +1,26 @@
-// File version: 2.2; date: 2026-05-17
+// File version: 2.4; date: 2026-05-30
 
 const FIELD_GROUPS = [
   ["Research path", ["workflow_path", "study_name", "language", "study_design", "analysis_unit", "observation_unit", "outcome_type", "alternative"]],
-  ["Statistical target", ["alpha", "power", "primary_comparisons", "allocation_ratio", "effect_size_d", "mean_control", "mean_intervention", "sd_pooled", "pre_post_correlation", "proportion_control", "proportion_intervention"]],
+  ["Statistical target", [
+    "alpha", "power", "primary_comparisons", "allocation_ratio", "effect_size_d", "mean_control",
+    "mean_intervention", "sd_pooled", "pre_post_correlation", "proportion_control",
+    "proportion_intervention", "survey_analysis_goal", "survey_scale_min", "survey_scale_max",
+    "survey_scale_points", "survey_favorable_threshold", "survey_target_proportion",
+    "survey_expected_proportion", "survey_margin_of_error", "survey_expected_sd",
+    "survey_mean_margin_of_error", "survey_target_mean", "strata_definition",
+    "stratified_allocation_method", "stratified_min_per_stratum", "stratified_target_total",
+    "stratified_population_known", "stratified_use_weights"
+  ]],
   ["Corrections", ["apply_fpc", "finite_population", "cluster_average_size", "intraclass_correlation", "response_rate", "completion_rate", "usable_data_rate", "extra_buffer_rate"]],
-  ["Achieved result", ["planned_control_n", "planned_intervention_n", "planned_total_n", "planned_effect_size", "planned_alpha", "planned_power", "observed_control_n", "observed_intervention_n", "observed_total_n", "observed_control_events", "observed_intervention_events", "observed_pre_success_post_failure", "observed_pre_failure_post_success", "observed_effect_size"]],
+  ["Achieved result", [
+    "planned_control_n", "planned_intervention_n", "planned_total_n", "planned_effect_size",
+    "planned_alpha", "planned_power", "observed_control_n", "observed_intervention_n",
+    "observed_total_n", "observed_control_events", "observed_intervention_events",
+    "observed_pre_success_post_failure", "observed_pre_failure_post_success",
+    "observed_effect_size", "observed_survey_counts", "observed_survey_favorable_count",
+    "observed_survey_mean", "observed_survey_sd", "observed_strata_counts"
+  ]],
   ["Labels and notes", ["intervention_label", "control_label", "notes"]]
 ];
 
@@ -12,10 +28,16 @@ const FIELD_TYPES = {
   workflow_path: "workflow",
   language: "language",
   study_design: "design",
+  survey_analysis_goal: "survey_goal",
+  stratified_allocation_method: "stratified_allocation",
   outcome_type: "outcome",
   alternative: "alternative",
   notes: "textarea",
+  strata_definition: "textarea",
+  observed_strata_counts: "textarea",
   apply_fpc: "checkbox",
+  stratified_population_known: "checkbox",
+  stratified_use_weights: "checkbox",
   primary_comparisons: "int",
   finite_population: "optional_int",
   planned_control_n: "optional_int",
@@ -27,18 +49,27 @@ const FIELD_TYPES = {
   observed_control_events: "optional_int",
   observed_intervention_events: "optional_int",
   observed_pre_success_post_failure: "optional_int",
-  observed_pre_failure_post_success: "optional_int"
+  observed_pre_failure_post_success: "optional_int",
+  observed_survey_counts: "textarea",
+  observed_survey_favorable_count: "optional_int",
+  stratified_min_per_stratum: "int",
+  stratified_target_total: "optional_int"
 };
 
 const NUMERIC_FIELDS = new Set([
   "alpha", "power", "primary_comparisons", "allocation_ratio", "effect_size_d", "mean_control",
   "mean_intervention", "sd_pooled", "pre_post_correlation", "proportion_control",
   "proportion_intervention", "finite_population", "cluster_average_size", "intraclass_correlation",
+  "survey_scale_min", "survey_scale_max", "survey_scale_points", "survey_favorable_threshold",
+  "survey_target_proportion", "survey_expected_proportion", "survey_margin_of_error",
+  "survey_expected_sd", "survey_mean_margin_of_error", "survey_target_mean",
+  "stratified_min_per_stratum", "stratified_target_total",
   "response_rate", "completion_rate", "usable_data_rate", "extra_buffer_rate",
   "planned_control_n", "planned_intervention_n", "planned_total_n", "planned_effect_size",
   "planned_alpha", "planned_power", "observed_control_n", "observed_intervention_n",
   "observed_total_n", "observed_control_events", "observed_intervention_events",
-  "observed_pre_success_post_failure", "observed_pre_failure_post_success", "observed_effect_size"
+  "observed_pre_success_post_failure", "observed_pre_failure_post_success", "observed_effect_size",
+  "observed_survey_favorable_count", "observed_survey_mean", "observed_survey_sd"
 ]);
 
 const WEB_TEXT = {
@@ -196,6 +227,7 @@ function normalizeWorkflow() {
 }
 
 function validOutcomeValues() {
+  if (config.study_design === "one_group_post_survey" || config.study_design === "stratified_post_survey") return ["continuous"];
   if (config.study_design === "pretest_posttest_control") return ["continuous"];
   if (config.study_design === "one_group_pre_post" && config.analysis_mode === "plan") return ["continuous"];
   return ["continuous", "binary"];
@@ -271,7 +303,7 @@ function renderConfig() {
 function inputFor(field) {
   const type = FIELD_TYPES[field] || "text";
   let input;
-  if (type === "workflow" || type === "language" || type === "design" || type === "outcome" || type === "alternative") {
+  if (type === "workflow" || type === "language" || type === "design" || type === "outcome" || type === "alternative" || type === "survey_goal" || type === "stratified_allocation") {
     input = document.createElement("select");
     optionsFor(type).forEach(([value, label]) => {
       const option = document.createElement("option");
@@ -325,7 +357,23 @@ function optionsFor(type) {
     return [
       ["parallel_two_group", uiText.design_parallel_two_group || "Two independent groups"],
       ["pretest_posttest_control", uiText.design_pretest_posttest_control || "Pre-test/post-test with control"],
-      ["one_group_pre_post", uiText.design_one_group_pre_post || "One-group pre-test/post-test"]
+      ["one_group_pre_post", uiText.design_one_group_pre_post || "One-group pre-test/post-test"],
+      ["one_group_post_survey", uiText.design_one_group_post_survey || "One-group post-intervention survey"],
+      ["stratified_post_survey", uiText.design_stratified_post_survey || "Stratified post-intervention survey"]
+    ];
+  }
+  if (type === "stratified_allocation") {
+    return [
+      ["proportional", uiText.stratified_allocation_proportional || "Proportional"],
+      ["equal", uiText.stratified_allocation_equal || "Equal"],
+      ["minimum_per_stratum", uiText.stratified_allocation_minimum_per_stratum || "Minimum per stratum"],
+      ["manual", uiText.stratified_allocation_manual || "Manual"]
+    ];
+  }
+  if (type === "survey_goal") {
+    return [
+      ["favorable_proportion", uiText.survey_goal_favorable_proportion || "Favorable-response proportion"],
+      ["mean_score", uiText.survey_goal_mean_score || "Mean score"]
     ];
   }
   if (type === "outcome") {
@@ -343,12 +391,26 @@ function optionsFor(type) {
 }
 
 function wizardFields() {
-  const fields = ["workflow_path", "study_name", "study_design", "outcome_type", "alpha", "power"];
+  const fields = ["workflow_path", "study_name", "study_design"];
   const design = config.study_design;
   const mode = config.analysis_mode;
   const outcome = config.outcome_type;
   const hasPlan = config.workflow_path === "evaluate_against_plan";
+  const surveyDesign = design === "one_group_post_survey" || design === "stratified_post_survey";
+  if (surveyDesign) {
+    fields.push("survey_analysis_goal", "alpha", "primary_comparisons", "survey_scale_min", "survey_scale_max", "survey_scale_points");
+  } else {
+    fields.push("outcome_type", "alpha", "power");
+  }
   if (mode === "plan") {
+    if (surveyDesign) {
+      fields.push("survey_favorable_threshold", "survey_target_proportion", "survey_expected_proportion", "survey_margin_of_error", "survey_expected_sd", "survey_mean_margin_of_error", "survey_target_mean");
+      if (design === "stratified_post_survey") {
+        fields.push("strata_definition", "stratified_population_known", "stratified_allocation_method", "stratified_min_per_stratum", "stratified_target_total", "stratified_use_weights");
+      }
+      fields.push("response_rate", "completion_rate", "usable_data_rate", "extra_buffer_rate", "cluster_average_size", "intraclass_correlation");
+      return fields;
+    }
     if (design !== "one_group_pre_post") fields.push("allocation_ratio");
     if (design === "parallel_two_group" && outcome === "binary") {
       fields.push("proportion_control", "proportion_intervention");
@@ -359,9 +421,18 @@ function wizardFields() {
     fields.push("response_rate", "completion_rate", "usable_data_rate", "extra_buffer_rate", "primary_comparisons", "cluster_average_size", "intraclass_correlation");
   } else {
     if (hasPlan) {
-      if (design === "one_group_pre_post") fields.push("planned_total_n");
+      if (design === "one_group_pre_post" || design === "one_group_post_survey" || design === "stratified_post_survey") fields.push("planned_total_n");
       else fields.push("planned_control_n", "planned_intervention_n");
       fields.push("planned_effect_size", "planned_alpha", "planned_power");
+    }
+    if (surveyDesign) {
+      fields.push("survey_favorable_threshold", "survey_target_proportion", "survey_target_mean");
+      if (design === "stratified_post_survey") {
+        fields.push("strata_definition", "stratified_population_known", "stratified_allocation_method", "stratified_min_per_stratum", "stratified_use_weights");
+      }
+      fields.push("observed_total_n", "observed_survey_counts", "observed_survey_favorable_count", "observed_survey_mean", "observed_survey_sd");
+      if (design === "stratified_post_survey") fields.push("observed_strata_counts");
+      return fields;
     }
     if (design === "one_group_pre_post") {
       fields.push("observed_total_n");
@@ -384,20 +455,26 @@ function showField(field) {
   const mode = config.analysis_mode;
   const outcome = config.outcome_type;
   const hasPlan = config.workflow_path === "evaluate_against_plan";
-  if (field === "allocation_ratio") return design !== "one_group_pre_post";
+  const surveyDesign = design === "one_group_post_survey" || design === "stratified_post_survey";
+  if (field === "allocation_ratio") return design !== "one_group_pre_post" && !surveyDesign;
+  if (["survey_analysis_goal", "survey_scale_min", "survey_scale_max", "survey_scale_points", "survey_favorable_threshold", "survey_target_proportion", "survey_expected_proportion", "survey_margin_of_error", "survey_expected_sd", "survey_mean_margin_of_error", "survey_target_mean"].includes(field)) return surveyDesign;
+  if (["strata_definition", "stratified_allocation_method", "stratified_min_per_stratum", "stratified_target_total", "stratified_population_known", "stratified_use_weights"].includes(field)) return design === "stratified_post_survey";
+  if (["observed_survey_counts", "observed_survey_favorable_count", "observed_survey_mean", "observed_survey_sd"].includes(field)) return mode === "evaluate" && surveyDesign;
+  if (field === "observed_strata_counts") return mode === "evaluate" && design === "stratified_post_survey";
+  if (field === "power" || field === "alternative" || field === "outcome_type") return !surveyDesign;
   if (field === "pre_post_correlation") return design === "pretest_posttest_control";
-  if (["mean_control", "mean_intervention", "sd_pooled"].includes(field)) return mode === "plan" && outcome === "continuous" && design !== "one_group_pre_post";
-  if (field === "effect_size_d") return mode === "plan" && outcome === "continuous";
+  if (["mean_control", "mean_intervention", "sd_pooled"].includes(field)) return mode === "plan" && outcome === "continuous" && design !== "one_group_pre_post" && !surveyDesign;
+  if (field === "effect_size_d") return mode === "plan" && outcome === "continuous" && !surveyDesign;
   if (["proportion_control", "proportion_intervention"].includes(field)) return mode === "plan" && outcome === "binary" && design === "parallel_two_group";
-  if (["observed_control_n", "observed_intervention_n"].includes(field)) return mode === "evaluate" && design !== "one_group_pre_post";
+  if (["observed_control_n", "observed_intervention_n"].includes(field)) return mode === "evaluate" && design !== "one_group_pre_post" && design !== "stratified_post_survey";
   if (field === "observed_total_n") return mode === "evaluate";
   if (["observed_control_events", "observed_intervention_events"].includes(field)) return mode === "evaluate" && design === "parallel_two_group" && outcome === "binary";
   if (["observed_pre_success_post_failure", "observed_pre_failure_post_success"].includes(field)) return mode === "evaluate" && design === "one_group_pre_post" && outcome === "binary";
-  if (field === "observed_effect_size") return mode === "evaluate" && outcome === "continuous";
-  if (["planned_control_n", "planned_intervention_n"].includes(field)) return hasPlan && design !== "one_group_pre_post";
-  if (field === "planned_total_n") return hasPlan && design === "one_group_pre_post";
+  if (field === "observed_effect_size") return mode === "evaluate" && outcome === "continuous" && !surveyDesign;
+  if (["planned_control_n", "planned_intervention_n"].includes(field)) return hasPlan && design !== "one_group_pre_post" && !surveyDesign;
+  if (field === "planned_total_n") return hasPlan && (design === "one_group_pre_post" || surveyDesign);
   if (["planned_effect_size", "planned_alpha", "planned_power"].includes(field)) return hasPlan;
-  if (field === "control_label") return design !== "one_group_pre_post";
+  if (field === "control_label") return design !== "one_group_pre_post" && !surveyDesign;
   return true;
 }
 
@@ -524,7 +601,7 @@ function renderResults(plan) {
   $("resultState").textContent = `${plan.config.study_name} - ${plan.summary.method}`;
   $("summaryResult").innerHTML = summaryHtml(plan);
   $("sensitivityResult").innerHTML = sensitivityHtml(plan.sensitivity);
-  $("benchmarksResult").innerHTML = benchmarkHtml(plan.observed_analysis);
+  $("benchmarksResult").innerHTML = `${benchmarkHtml(plan.observed_analysis)}${stratifiedHtml(plan.stratified_survey_analysis)}`;
   $("suggestionsResult").innerHTML = notesHtml(plan);
   $("jsonResult").textContent = JSON.stringify(plan, null, 2);
 }
@@ -533,6 +610,21 @@ function summaryHtml(plan) {
   const summary = plan.summary;
   if (plan.config.analysis_mode === "evaluate" && plan.observed_analysis) {
     const obs = plan.observed_analysis;
+    if (obs.survey_analysis) {
+      const survey = obs.survey_analysis;
+      const fav = survey.favorable_proportion === null ? "not entered" : pct(survey.favorable_proportion);
+      const ci = survey.favorable_ci_low === null ? "not available" : `${pct(survey.favorable_ci_low)} - ${pct(survey.favorable_ci_high)}`;
+      const mean = survey.mean === null ? "not entered" : fmt(survey.mean, 3);
+      return `<div class="summary-grid">
+        ${metric("Valid responses", survey.valid_n)}
+        ${metric("Favorable", fav)}
+        ${metric("Favorable CI", ci)}
+        ${metric("Mean score", mean)}
+      </div>
+      ${surveyHtml(survey)}
+      ${stratifiedHtml(plan.stratified_survey_analysis)}
+      <pre class="code-panel">${escapeHtml(plan.report)}</pre>`;
+    }
     const effectMetric = obs.observed_effect_size === null ? "sample-size only" : fmt(obs.observed_effect_size, 4);
     const pMetric = obs.p_value === null ? "not unique" : fmt(obs.p_value, 6);
     const powerMetric = obs.achieved_power === null ? "see capacity table" : pct(obs.achieved_power);
@@ -550,6 +642,7 @@ function summaryHtml(plan) {
     ${metric("Assigned", summary.assigned_needed.total)}
     ${metric("Invited", summary.invited_needed.total)}
   </div>
+  ${stratifiedHtml(plan.stratified_survey_analysis)}
   <pre class="code-panel">${escapeHtml(plan.report)}</pre>`;
 }
 
@@ -593,8 +686,62 @@ function benchmarkHtml(observed) {
       row.note
     ])
   );
-  if (!targetTable && !capacityTable) return `<p class="muted">${escapeHtml(webText("noPlanRows"))}</p>`;
-  return `${targetTable}${capacityTable}`;
+  const surveyTable = observed.survey_analysis ? surveyHtml(observed.survey_analysis) : "";
+  if (!targetTable && !capacityTable && !surveyTable) return `<p class="muted">${escapeHtml(webText("noPlanRows"))}</p>`;
+  return `${targetTable}${capacityTable}${surveyTable}`;
+}
+
+function surveyHtml(survey) {
+  const rows = survey.category_rows || [];
+  const overview = [];
+  if (survey.favorable_proportion !== null) {
+    overview.push(["Favorable responses", survey.favorable_count, pct(survey.favorable_proportion), `${pct(survey.favorable_ci_low)} - ${pct(survey.favorable_ci_high)}`, survey.target_reached ? "Claim reached" : "Claim not reached"]);
+  }
+  if (survey.mean !== null) {
+    overview.push(["Mean score", survey.valid_n, fmt(survey.mean, 3), survey.mean_ci_low === null ? "" : `${fmt(survey.mean_ci_low, 3)} - ${fmt(survey.mean_ci_high, 3)}`, survey.target_mean_reached === null ? "" : survey.target_mean_reached ? "Claim reached" : "Claim not reached"]);
+  }
+  const overviewTable = overview.length ? table(["Measure", "N/count", "Estimate", "Confidence interval", "Status"], overview) : "";
+  const rowsTable = rows.length ? table(
+    ["Response", "Count", "Percent", "Confidence interval", "Flag"],
+    rows.map((row) => [
+      row.label,
+      row.count,
+      pct(row.proportion),
+      `${pct(row.ci_low)} - ${pct(row.ci_high)}`,
+      row.missing ? "NA/missing" : row.favorable ? "favorable" : ""
+    ])
+  ) : "";
+  return `${overviewTable}${rowsTable}`;
+}
+
+function stratifiedHtml(analysis) {
+  if (!analysis) return "";
+  const planRows = analysis.plan_rows || [];
+  const observedRows = analysis.observed_rows || [];
+  const planTable = planRows.length ? table(
+    ["Stratum", "Population share", "Target valid", "Assign/start", "Invite/contact", "Weight"],
+    planRows.map((row) => [
+      row.label,
+      pct(row.population_proportion),
+      row.target_valid_n,
+      row.assigned_needed,
+      row.invited_needed,
+      row.weight === null ? "" : fmt(row.weight, 3)
+    ])
+  ) : "";
+  const observedTable = observedRows.length ? table(
+    ["Stratum", "Expected share", "Observed valid", "Observed share", "Ratio", "Favorable", "Status"],
+    observedRows.map((row) => [
+      row.label,
+      pct(row.expected_proportion),
+      row.observed_valid_n,
+      row.observed_share === null ? "" : pct(row.observed_share),
+      row.representation_ratio === null ? "" : fmt(row.representation_ratio, 2),
+      row.favorable_proportion === null ? "" : pct(row.favorable_proportion),
+      row.status
+    ])
+  ) : "";
+  return `${planTable}${observedTable}`;
 }
 
 function notesHtml(plan) {

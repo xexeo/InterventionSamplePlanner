@@ -1,6 +1,6 @@
 # Source-Based Example Cases
 
-<!-- File version: 1.0; date: 2026-05-11 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
 Documentation policy: this English file is the canonical original. `README_pt.md` is its Portuguese translation.
 

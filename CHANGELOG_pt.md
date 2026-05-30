@@ -1,6 +1,38 @@
-<!-- File version: 2.2; date: 2026-05-17 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
 # Changelog
+
+## 2.4 - 2026-05-30
+
+### Adicionado
+
+- Tipo de estudo de questionario pos-intervencao estratificado para pesquisas de opiniao que precisam de representacao demografica.
+- Caminho no wizard, campos de configuracao, saida REST, schema, textos de ajuda e testes para survey estratificado.
+- Linhas de planejamento por estrato com participacao populacional, alvo valido, participantes para iniciar, convites e pesos opcionais.
+- Avaliacao de resultado por estrato com participacao observada, razao de representacao, proporcao favoravel e status.
+
+### Alterado
+
+- Metadados de versao agora informam `ISP v2.4`.
+- Interfaces Tkinter e web agora expõem as mesmas variaveis de survey estratificado e mostram linhas estratificadas nas tabelas de resultado.
+- Sugestoes agora alertam sobre estratos pequenos, sub-representacao e pesos instaveis.
+
+## 2.3 - 2026-05-18
+
+### Adicionado
+
+- Tipo de estudo de questionário pós-intervenção com um grupo para pesquisas de opinião no estilo MEEGA+, Likert, estrelas e escalas numéricas limitadas.
+- Planejamento de questionário por proporção de respostas favoráveis usando nível de confiança e margem de erro.
+- Planejamento de questionário por média da escala usando nível de confiança, desvio padrão esperado e margem de erro da média.
+- Avaliação de questionário realizado a partir de histogramas JSON, contagens favoráveis ou média mais desvio padrão.
+- Intervalos de confiança de Wilson para proporções favoráveis e intervalos descritivos para médias de escores de questionário.
+- Orientação específica de questionários no Tkinter, interface web, saída REST, schema, explicações, testes, READMEs e manual educacional.
+
+### Alterado
+
+- Metadados de versão agora informam `ISP v2.3`.
+- Fluxos de questionário escondem entradas de valor-p/poder quando a tarefa relevante é estimação descritiva, não teste causal de hipótese.
+- Sugestões agora alertam quando um questionário pós-intervenção está sendo usado como evidência de opinião dos usuários, não como evidência de efeito da intervenção.
 
 ## 2.2 - 2026-05-17
 

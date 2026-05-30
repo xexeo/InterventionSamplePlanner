@@ -1,4 +1,4 @@
-% File version: 2.2; date: 2026-05-17
+% File version: 2.4; date: 2026-05-30
 % !TeX TS-program = lualatex
 % !TeX encoding = UTF-8
 % !TeX spellcheck = en_US
@@ -50,7 +50,7 @@
   linkcolor=ispblue,
   citecolor=ispgreen,
   urlcolor=ispblue,
-  pdftitle={Educational Manual for ISP v2.2},
+  pdftitle={Educational Manual for ISP v2.4},
   pdfauthor={Geraldo Xexéo}
 }
 \urlstyle{same}
@@ -130,7 +130,7 @@
 }
 
 \newcommand{\code}[1]{\texttt{\detokenize{#1}}}
-\newcommand{\app}{\textsf{ISP v2.2}\index{ISP v2.2}}
+\newcommand{\app}{\textsf{ISP v2.4}\index{ISP v2.4}}
 \newcommand{\field}[1]{\code{#1}\index{configuration variables!#1@\code{#1}}}
 \newcommand{\term}[1]{\textbf{#1}\index{#1}}
 \newcommand{\wizard}[1]{\textbf{#1}\index{wizard!#1}}
@@ -145,7 +145,7 @@
   \vspace{0.45cm}
   {\Large Planning and evaluating intervention studies in human processes\par}
   \vspace{1cm}
-  {\large Manual version 2.1 \quad Date: 2026-05-12\par}
+  {\large Manual version 2.4 \quad Date: 2026-05-30\par}
   \vfill
   \begin{conceptbox}{Default problem family}
   This manual assumes studies of interventions in human processes: learning, training, usability, work procedures, decision support, classroom activities, and similar situations. The examples use an educational game, but the same logic applies to many non-clinical interventions. This is not a clinical-trial manual for medication, surgery, safety endpoints, or regulatory decisions.
@@ -208,7 +208,7 @@ Invited or contacted people & The number who must be approached before expected 
 
 When the app is used in \term{evaluation mode}, it asks for the achieved sample and observed effect. It then estimates approximate achieved power and approximate p-value. This does not replace a final statistical analysis, but it helps the researcher understand what the achieved study was able to show.
 
-\section{The three research paths}
+\section{The five research paths}
 
 The first wizard question asks for the research path. That decision controls which assumptions are meaningful.
 
@@ -224,6 +224,8 @@ The first wizard question asks for the research path. That decision controls whi
 \field{parallel_two_group} & Different people are in the intervention and control groups. & Comparing an intervention condition with a non-intervention or usual-practice condition.\\
 \field{pretest_posttest_control} & Both groups are measured before and after. & Comparing change while using the pre-test to improve precision and understand baseline status.\\
 \field{one_group_pre_post} & The same people are measured before and after, with no control group. & Pilot studies, feasibility studies, and early signal checks where causal claims must stay cautious.\\
+\field{one_group_post_survey} & The same post-intervention survey is answered once by one group. & Describing opinions, perceived learning, usability, or experience with confidence intervals, without making a causal effect claim.\\
+\field{stratified_post_survey} & The same post-intervention survey is answered once, but valid responses are planned and checked inside demographic strata. & Describing opinions while checking that age bands, regions, school types, experience levels, or other planned classes are represented.\\
 \bottomrule
 \end{longtable}
 
@@ -250,7 +252,7 @@ The \term{outcome} is the variable used to judge whether the intervention matter
   \item \term{binary}, such as success/failure, passed/not passed, completed/not completed.
 \end{itemize}
 
-Binary outcomes are supported for the two independent group path. For pre-test/post-test paths, the app currently supports continuous outcomes.
+Binary outcomes are supported for the two independent group path. For pre-test/post-test paths, the app currently supports continuous outcomes. For post-intervention surveys, including stratified surveys, the app treats the outcome as an ordered or numeric survey response and plans precision for either a favorable-response proportion or a mean score.
 
 \section{Unit of analysis and unit of observation}
 
@@ -312,7 +314,7 @@ A researcher in educational games wants to verify whether using Uno helps childr
 
 \subsection*{When it applies}
 
-This path applies when participants are distinct across groups and the main comparison is between groups. It fits post-test-only studies, survey-after-intervention studies, and binary success-rate comparisons.
+This path applies when participants are distinct across groups and the main comparison is between groups. It fits post-test-only studies, survey scores compared between intervention and control, and binary success-rate comparisons.
 
 \subsection*{What it cannot cover well}
 
@@ -353,6 +355,60 @@ This path applies to pilots, feasibility work, early classroom innovation studie
 \subsection*{What it cannot cover well}
 
 Without a control group, the study cannot strongly separate the intervention from practice effects, maturation, ordinary instruction, history, or repeated exposure to the test. If the goal is a strong causal claim, add a control group or use a stronger quasi-experimental design \parencite{shadish2002experimental}.
+
+\section{Path 4: One-group post-intervention survey}
+
+Choose \field{one_group_post_survey} when the only measurement is an opinion, usability, experience, or perceived-learning survey answered after the intervention. This path is useful for MEEGA+-style educational-game questionnaires, Likert agreement items, star ratings, and bounded numeric scores \parencite{petri2019meega}.
+
+\begin{examplebox}{Uno post-use questionnaire}
+After a guided Uno activity, students answer items such as "The game was easy to learn" and "The game helped me understand greater-than and less-than." The response scale is 1 to 5, where 4 and 5 count as favorable. The researcher wants to say how precisely the sample supports a statement about favorable opinions.
+\end{examplebox}
+
+\subsection*{When it applies}
+
+This path applies when the research question is descriptive: what users reported after using the intervention. A typical claim is:
+
+\begin{quote}
+With 95\% confidence, the favorable-response proportion is approximately between 68\% and 86\%.
+\end{quote}
+
+The app can plan the number of valid respondents needed for a desired margin of error, and it can evaluate a completed histogram of responses.
+
+\subsection*{What it cannot cover well}
+
+This path does not estimate causal learning gain. It has no pre-test, no control group, and no counterfactual comparison. If the researcher wants to show that the game improved learning, use \field{pretest_posttest_control} or another controlled design. If the researcher wants to validate a questionnaire psychometrically, use reliability, factor analysis, and measurement-validation methods beyond this app.
+
+\section{Path 5: Stratified post-intervention survey}
+
+Choose \field{stratified_post_survey} when the survey is still answered after the intervention only, but the researcher wants the result to represent planned demographic classes. A \term{stratum}\index{stratum} is a class such as age band, region, school type, prior experience, gender, or another demographic grouping defined before recruitment.
+
+\begin{examplebox}{Uno post-use questionnaire with age-band representation}
+After the same guided Uno activity, the researcher wants the opinion survey to represent three age bands: 8--10, 11--13, and 14--16. The intended population is about 30\%, 40\%, and 30\% in those bands. If older children answer faster, a simple overall survey could overstate their opinions. The stratified path plans valid responses inside each band and later checks whether any band was under-represented.
+\end{examplebox}
+
+\subsection*{When it applies}
+
+This path applies when the claim is descriptive and opinion-based, but the intended audience includes identifiable subgroups. It is useful when the researcher wants to say something like:
+
+\begin{quote}
+The opinion result represents the intended age bands reasonably well, and not only the easiest group to recruit.
+\end{quote}
+
+The main inputs are \field{strata_definition}, \field{stratified_allocation_method}, \field{stratified_min_per_stratum}, \field{stratified_target_total}, \field{stratified_population_known}, and \field{stratified_use_weights}. The \field{strata_definition} field is JSON. A minimal example is:
+
+\begin{verbatim}
+{
+  "age_8_10": {"label": "Age 8-10", "population_proportion": 0.30},
+  "age_11_13": {"label": "Age 11-13", "population_proportion": 0.40},
+  "age_14_16": {"label": "Age 14-16", "population_proportion": 0.30}
+}
+\end{verbatim}
+
+The app can allocate proportionally, equally, by a minimum per stratum, or manually using \field{target_valid_n} inside each stratum.
+
+\subsection*{What it cannot cover well}
+
+The stratified survey path does not make a causal claim. It also does not replace a full survey-sampling analysis for complex multistage designs, non-response modeling, calibration weighting, or post-stratification. If strata are crossed too aggressively, for example age by gender by region by school type, cells can become too small for stable interpretation.
 
 \chapter{Wizard Step-by-Step: Starting Decision}
 
@@ -399,7 +455,7 @@ Which research path should the study follow?
 
 \textbf{Configuration variable:} \field{study_design}.
 
-\textbf{Why the wizard asks:} the calculation changes depending on whether the comparison is between different people, between two groups over time, or within the same people over time.
+\textbf{Why the wizard asks:} the calculation changes depending on whether the comparison is between different people, between two groups over time, within the same people over time, or a descriptive post-intervention survey.
 
 \begin{longtable}{L{0.29\textwidth}L{0.29\textwidth}L{0.32\textwidth}}
 \toprule
@@ -413,6 +469,7 @@ Which research path should the study follow?
 \field{parallel_two_group} & Intervention and control are different participants. & Baseline scores are central to the claim.\\
 \field{pretest_posttest_control} & Both groups complete pre-test and post-test. & There is no control group or there are many repeated waves.\\
 \field{one_group_pre_post} & The same participants are measured twice and no control group exists. & The study must make a strong causal claim.\\
+\field{one_group_post_survey} & One group answers a post-use opinion survey. & The claim is about causal learning gain or change from baseline.\\
 \bottomrule
 \end{longtable}
 
@@ -449,10 +506,47 @@ What kind of primary outcome will be analyzed?
 \textbf{Outcome} & \textbf{Examples} & \textbf{App support}\\
 \midrule
 \endhead
-\field{continuous} & Test score, time, scale score, number correct, confidence rating. & Supported for all three research paths.\\
+\field{continuous} & Test score, time, scale score, number correct, confidence rating. & Supported for all comparison paths and used internally for survey scales.\\
 \field{binary} & Passed/not passed, completed/not completed, success/failure. & Supported for two independent groups.\\
 \bottomrule
 \end{longtable}
+
+\section{Step 3A: Survey target, scale, and favorable response}
+
+This step appears when \field{study_design} is \field{one_group_post_survey}.
+
+\begin{decisionbox}{Question}
+What kind of survey statement do you want to support?
+\end{decisionbox}
+
+\textbf{Configuration variables:} \field{survey_analysis_goal}, \field{survey_scale_min}, \field{survey_scale_max}, \field{survey_scale_points}, \field{survey_favorable_threshold}, \field{survey_target_proportion}, \field{survey_expected_proportion}, \field{survey_margin_of_error}, \field{survey_expected_sd}, \field{survey_mean_margin_of_error}, and \field{survey_target_mean}.
+
+\textbf{Why the wizard asks:} a post-intervention survey is usually an estimation problem. The app needs to know whether the main statement is about the percentage of favorable answers or the mean score, and it needs the scale definition so it can interpret a histogram.
+
+\begin{longtable}{L{0.26\textwidth}L{0.28\textwidth}L{0.36\textwidth}}
+\toprule
+\textbf{Variable} & \textbf{Example value} & \textbf{How it is used}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Variable} & \textbf{Example value} & \textbf{How it is used}\\
+\midrule
+\endhead
+\field{survey_analysis_goal} & \field{favorable_proportion} & Plans either a proportion confidence interval or a mean-score confidence interval.\\
+\field{survey_scale_min} & 1 & Lowest valid numeric response.\\
+\field{survey_scale_max} & 5 & Highest valid numeric response.\\
+\field{survey_scale_points} & 5 & Documents the number of ordered response options, excluding NA.\\
+\field{survey_favorable_threshold} & 4 & Scores at or above this value count as favorable.\\
+\field{survey_expected_proportion} & 0.50 & Planning value for the favorable proportion; 0.50 is conservative when uncertain.\\
+\field{survey_margin_of_error} & 0.10 & Desired half-width of the confidence interval, in proportion units.\\
+\field{survey_expected_sd} & 1.0 & Expected standard deviation for mean-score planning; can come from a pilot.\\
+\field{survey_mean_margin_of_error} & 0.20 & Desired half-width of the mean-score confidence interval.\\
+\bottomrule
+\end{longtable}
+
+\begin{examplebox}{MEEGA+-style Likert item}
+For a 1--5 agreement item, a researcher may define 4 and 5 as favorable, set \field{survey_favorable_threshold} to 4, and plan for \field{survey_margin_of_error} of 0.10. This means the app estimates how many valid respondents are needed for roughly plus or minus 10 percentage points around the favorable-response proportion.
+\end{examplebox}
 
 \section{Step 4: Alpha}
 
@@ -805,7 +899,7 @@ The Data / Configuration tab exposes all stored inputs. This tab is useful when 
 \field{study_name} & All modes & Human-readable study name. & Descriptive text.\\
 \field{language} & Interface and reports & App language. & \code{en} or \code{pt}.\\
 \field{workflow_path} & First wizard choice & Practical workflow to run. & \code{plan_study}, \code{evaluate_done}, \code{evaluate_against_plan}.\\
-\field{study_design} & All modes & Research path. & \code{parallel_two_group}, \code{pretest_posttest_control}, \code{one_group_pre_post}.\\
+\field{study_design} & All modes & Research path. & \code{parallel_two_group}, \code{pretest_posttest_control}, \code{one_group_pre_post}, \code{one_group_post_survey}.\\
 \field{analysis_mode} & Compatibility and API & Internal plan/evaluate mode set by \field{workflow_path}. & \code{plan} or \code{evaluate}.\\
 \field{analysis_unit} & Documentation and JSON & Unit treated as one analysis case. & Usually \code{person}.\\
 \field{observation_unit} & Documentation and JSON & Unit where data are recorded. & Usually \code{person}.\\
@@ -822,6 +916,17 @@ The Data / Configuration tab exposes all stored inputs. This tab is useful when 
 \field{pre_post_correlation} & Pre/post with control & Correlation between pre-test and post-test. & 0.30 to 0.80; often 0.50 or 0.60.\\
 \field{proportion_control} & Binary two-group planning & Expected control rate. & 0.05 to 0.95.\\
 \field{proportion_intervention} & Binary two-group planning & Expected intervention rate. & 0.05 to 0.95.\\
+\field{survey_analysis_goal} & Survey planning and evaluation & Whether the main survey claim uses favorable proportion or mean score. & \code{favorable_proportion} or \code{mean_score}.\\
+\field{survey_scale_min} & Survey planning and evaluation & Lowest numeric survey response. & Often 0 or 1.\\
+\field{survey_scale_max} & Survey planning and evaluation & Highest numeric survey response. & Often 5, 10, or 1 for normalized scales.\\
+\field{survey_scale_points} & Survey documentation & Number of ordered valid response points, excluding NA. & 3 to 11; often 5 or 6.\\
+\field{survey_favorable_threshold} & Survey evaluation & First response value counted as favorable. & 4 on a 1--5 agreement scale.\\
+\field{survey_target_proportion} & Survey evaluation & Desired minimum favorable share for interpretation. & 0.60, 0.70, or 0.80.\\
+\field{survey_expected_proportion} & Survey planning & Expected favorable share for precision planning. & 0.50 if uncertain; 0.70 or 0.80 with prior evidence.\\
+\field{survey_margin_of_error} & Survey proportion planning & Desired confidence-interval half-width. & 0.05 to 0.10 is common.\\
+\field{survey_expected_sd} & Survey mean planning & Expected standard deviation of survey score. & Pilot value, or blank for rough scale-based default.\\
+\field{survey_mean_margin_of_error} & Survey mean planning & Desired mean confidence-interval half-width. & 0.20 to 0.50 scale points.\\
+\field{survey_target_mean} & Survey evaluation & Mean score target for interpretation. & 4.0 on a 1--5 agreement scale.\\
 \field{apply_fpc} & Optional correction & Whether to apply finite-population correction. & Usually false unless inference is limited to a closed population.\\
 \field{finite_population} & FPC & Size of the closed population. & Positive integer when \field{apply_fpc} is true.\\
 \field{cluster_average_size} & Cluster correction & Average people per natural group. & 1 to 50; use 1 if independent.\\
@@ -836,6 +941,10 @@ The Data / Configuration tab exposes all stored inputs. This tab is useful when 
 \field{observed_control_events} & Binary evaluation & Control participants with the event or success. & Count from 0 to \field{observed_control_n}.\\
 \field{observed_intervention_events} & Binary evaluation & Intervention participants with the event or success. & Count from 0 to \field{observed_intervention_n}.\\
 \field{observed_effect_size} & Evaluation mode & Effect actually observed. & Standardized effect or binary proportion difference; may be blank for sample-capacity analysis.\\
+\field{observed_survey_counts} & Survey evaluation & JSON histogram of response counts. & Example: \code{\{"1":2,"2":4,"3":10,"4":18,"5":26,"NA":3\}}.\\
+\field{observed_survey_favorable_count} & Survey evaluation & Favorable valid responses when no full histogram is entered. & Count from 0 to \field{observed_total_n}.\\
+\field{observed_survey_mean} & Survey evaluation & Observed mean survey score when no histogram is entered. & Within the survey scale.\\
+\field{observed_survey_sd} & Survey evaluation & Observed survey score standard deviation. & Positive number.\\
 \field{planned_control_n} & Plan comparison & Planned valid control sample. & Integer at least 2.\\
 \field{planned_intervention_n} & Plan comparison & Planned valid intervention sample. & Integer at least 2.\\
 \field{planned_total_n} & One-group plan comparison & Planned valid paired sample. & Integer at least 2.\\
@@ -877,6 +986,14 @@ Recommended ranges are not laws. A researcher may have a legitimate reason to us
 \field{pre_post_correlation} & 0.30--0.80 & 0.50, 0.60 & Common range for many learning, attitude, and usability measures.\\
 \field{proportion_control} & 0.05--0.95 & 0.30, 0.50, 0.70 & Extreme rates may require specialized planning.\\
 \field{proportion_intervention} & 0.05--0.95 & 0.40, 0.60, 0.80 & Extreme rates should come from prior evidence.\\
+\field{survey_scale_min} & 0--10 & 0, 1 & Most opinion scales use small bounded values.\\
+\field{survey_scale_max} & 1--10 & 5, 10, 1 & The maximum anchors thresholds and mean-score planning defaults.\\
+\field{survey_scale_points} & 3--11 & 5, 6, 10 & Most Likert, star, and numeric rating scales fall in this range.\\
+\field{survey_target_proportion} & 0.50--0.90 & 0.60, 0.70, 0.80 & Positive opinion claims below 50\% are usually weak; above 90\% is strict.\\
+\field{survey_expected_proportion} & 0.30--0.90 & 0.50, 0.70, 0.80 & 0.50 is conservative for margin-of-error planning.\\
+\field{survey_margin_of_error} & 0.03--0.15 & 0.05, 0.10 & Opinion surveys commonly use 5 to 10 percentage points.\\
+\field{survey_expected_sd} & 0.20--3.00 & 0.8--1.2 on a 1--5 scale & Mean precision depends directly on the score SD.\\
+\field{survey_mean_margin_of_error} & 0.05--1.00 & 0.20, 0.30, 0.50 & The margin should be meaningful on the response scale.\\
 \field{response_rate} & 0.40--1.00 & 0.60, 0.80, 0.90 & Low response makes recruitment fragile.\\
 \field{completion_rate} & 0.70--1.00 & 0.85, 0.90, 0.95 & Low completion indicates attrition risk and may bias results.\\
 \field{usable_data_rate} & 0.80--1.00 & 0.90, 0.95, 0.98 & Low usable-data rates often indicate measurement or data-pipeline problems.\\
@@ -933,11 +1050,15 @@ A one-group pre/post effect can describe change, but it cannot prove that the in
 
 \section{Post-only opinion and usability studies}
 
-Some studies collect only a post-use opinion or usability scale. If there is a control group, use the two independent group path. If there is no control group, sample-size planning requires a different target, such as estimating a mean with a margin of error, testing against a known benchmark, or using a one-sample method. \app{} is centered on intervention comparisons and simple pre/post change, so the researcher should be clear about what "effect" means.
+Some studies collect only a post-use opinion or usability scale. If there is a control group, use the two independent group path and compare groups. If there is no control group, use \field{one_group_post_survey}. In that path, the app does not ask for \field{effect_size_d}; it asks for the desired precision of a descriptive survey statement.
 
-\begin{examplebox}{Usability rating}
-Suppose a game tutorial is rated from 1 to 5. A difference of 0.4 points would justify adopting the new tutorial, and the expected standard deviation is 0.8. The standardized difference is \(0.4/0.8=0.50\). If the comparison is between old tutorial and new tutorial, the two independent group path is appropriate.
+\begin{examplebox}{MEEGA+-style agreement item}
+Suppose a game questionnaire uses a 1--5 agreement scale. Scores 4 and 5 mean the respondent agreed or strongly agreed. A practical survey claim might be: "at least 70\% of valid respondents were favorable." The relevant planning variables are the confidence level, \field{survey_expected_proportion}, and \field{survey_margin_of_error}; the result is a number of valid survey respondents, not a p-value.
 \end{examplebox}
+
+\begin{warningbox}{Survey evidence is not causal evidence}
+A post-intervention survey can say that participants reported positive experience, perceived learning, or usability. It cannot by itself show that learning improved because there is no baseline and no comparison group.
+\end{warningbox}
 
 \section{When the desired effect is not found}
 
@@ -997,6 +1118,30 @@ n = \frac{(z_{\alpha}+z_{\text{power}})^2}{d_{\text{change}}^2}.
 
 The result is a total number of complete pre/post pairs.
 
+\section{One-group post-intervention survey}
+
+For a favorable-response proportion, the app plans a descriptive confidence interval:
+
+\[
+n = \frac{z_{\alpha}^{2}p(1-p)}{e^{2}},
+\]
+
+where \(p\) is \field{survey_expected_proportion} and \(e\) is \field{survey_margin_of_error}. The value \(p=0.50\) is conservative because it produces the largest sample for a fixed margin of error.
+
+For a mean survey score, the app uses:
+
+\[
+n = \left(\frac{z_{\alpha}s}{e_{\bar{x}}}\right)^2,
+\]
+
+where \(s\) is \field{survey_expected_sd} and \(e_{\bar{x}}\) is \field{survey_mean_margin_of_error}. If no expected standard deviation is entered, the app uses one quarter of the scale range as a rough planning value.
+
+In completed-survey evaluation, numeric categories in \field{observed_survey_counts} are treated as valid response options. Labels such as \code{NA}, \code{N/A}, or other nonnumeric labels are reported separately and excluded from the valid opinion denominator. The app reports the favorable proportion and a Wilson confidence interval \parencite{wilson1927probable}. If a histogram or mean/standard deviation is available, it also reports a mean-score confidence interval.
+
+\begin{statbox}{Why no p-value or power appears here}
+The post-intervention survey path estimates a proportion or mean from one sample. Without a pre-intervention measure, control group, known benchmark, or planned hypothesis test, p-value and power would invite an overclaim. The key result is the confidence interval, especially its lower bound for favorable-response claims.
+\end{statbox}
+
 \section{Operational corrections}
 
 After the statistical target is calculated, the app applies design and missing-data corrections:
@@ -1051,6 +1196,8 @@ When an observed effect is available, this table is not a promise that adding ex
 
 When only sample size is entered, the table becomes a sample-capacity table. For example, a one-group pre/post pilot with 40 complete pairs may show that \(p<0.05\) with 80\% power requires about \(d=0.44\), while \(d=0.50\) would have about 89\% power. This does not say that the study found \(d=0.44\); it says that effects smaller than that would be hard for that sample to detect under the selected assumptions.
 
+For \field{one_group_post_survey}, the table reports descriptive survey evidence instead of p-value or power benchmarks. With only a valid respondent count, it shows the approximate current margin of error. With a response histogram, it shows valid responses, missing or NA responses, favorable responses, favorable proportion, confidence interval, and the mean score when it can be computed.
+
 \section{JSON tab}
 
 The JSON tab shows the saved machine-readable configuration. This is useful for reproducibility, later editing, and developer work. A JSON Schema is provided in the project so saved configurations can be validated.
@@ -1063,6 +1210,7 @@ The Suggestions tab turns methodological concerns into practical advice. It can 
   \item no-control-group designs;
   \item low response, completion, or usable-data rates;
   \item clustering;
+  \item post-intervention survey designs where the evidence is descriptive rather than causal;
   \item out-of-range values accepted with overrides;
   \item achieved results that remain underpowered.
 \end{itemize}
@@ -1203,7 +1351,51 @@ Instead of analyzing a test score, the researcher defines success as correctly s
 
 The effect is a 15-percentage-point improvement. The app calculates the sample needed for that difference, then inflates for operational losses.
 
-\section{Example 5: Inverse problem after a pilot}
+\section{Example 5: Post-intervention survey after Uno}
+
+\subsection*{Scenario}
+
+After a guided Uno activity, the researcher wants to evaluate player experience and perceived learning with a MEEGA+-style questionnaire. One item is: "The game helped me understand greater-than and less-than." The response scale is 1 to 5, with 1 = strongly disagree, 3 = neutral, 4 = agree, and 5 = strongly agree. Scores 4 and 5 are considered favorable.
+
+The researcher wants a descriptive claim, not a causal claim: how precisely can the study describe students' favorable opinions after the activity? Because there is no prior pilot, the researcher uses \field{survey_expected_proportion}=0.50 for conservative planning and accepts a margin of error of 0.10.
+
+\subsection*{Wizard choices}
+
+\begin{longtable}{L{0.30\textwidth}L{0.28\textwidth}L{0.32\textwidth}}
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Wizard field} & \textbf{Value} & \textbf{Reason}\\
+\midrule
+\endhead
+\field{study_design} & \field{one_group_post_survey} & The only measurement is a post-use questionnaire.\\
+\field{workflow_path} & \field{plan_study} & The survey has not been collected.\\
+\field{survey_analysis_goal} & \field{favorable_proportion} & The main claim is about the share of favorable responses.\\
+\field{alpha} & 0.05 & This corresponds to a 95\% confidence interval.\\
+\field{survey_scale_min} & 1 & Lowest valid response.\\
+\field{survey_scale_max} & 5 & Highest valid response.\\
+\field{survey_scale_points} & 5 & Five ordered Likert response options.\\
+\field{survey_favorable_threshold} & 4 & Agree and strongly agree are favorable.\\
+\field{survey_expected_proportion} & 0.50 & Conservative when no pilot exists.\\
+\field{survey_margin_of_error} & 0.10 & About plus or minus 10 percentage points.\\
+\field{completion_rate} & 0.90 & Some invited students may not answer all items.\\
+\field{usable_data_rate} & 0.95 & Some answers may be invalid or unusable.\\
+\bottomrule
+\end{longtable}
+
+\subsection*{Completed-survey evaluation}
+
+After collection, suppose the item produces this histogram:
+
+\begin{verbatim}
+{"1": 2, "2": 4, "3": 10, "4": 18, "5": 26, "NA": 3}
+\end{verbatim}
+
+The app treats 60 numeric responses as valid, excludes the 3 NA responses from the valid opinion denominator, counts 44 favorable responses, and reports the favorable proportion with a Wilson confidence interval. The conservative interpretation should use the lower confidence bound: if the lower bound is below the desired target, the study may still be positive descriptively, but it does not justify the stronger statement that the target was reached with high confidence.
+
+\section{Example 6: Inverse problem after a pilot}
 
 \subsection*{Scenario}
 
@@ -1232,7 +1424,7 @@ The researcher runs a one-group Uno pilot. Thirty-five children start. Twenty-ei
 
 The app estimates an approximate z statistic, p-value, and achieved power for the observed effect. If the p-value is not below alpha and achieved power is low, the best interpretation is not "the game failed." A better interpretation is: the pilot observed a modest effect with limited precision; a larger controlled study may be needed if the effect is still educationally meaningful.
 
-\section{Example 6: Completed study compared with a previous plan}
+\section{Example 7: Completed study compared with a previous plan}
 
 \subsection*{Scenario}
 

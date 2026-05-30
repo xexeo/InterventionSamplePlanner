@@ -1,6 +1,24 @@
-<!-- File version: 2.2; date: 2026-05-17 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
 # Histórico de Versões
+
+## 2.4
+
+- adiciona `Questionario pos-intervencao estratificado` para pesquisas de opiniao com metas de representacao demografica
+- adiciona planejamento estratificado por participacao populacional, alocacao igual, minimo por estrato ou metas manuais por estrato
+- adiciona avaliacao estratificada de estudo realizado com participacoes observadas, razoes de representacao, pesos opcionais, proporcoes favoraveis e status
+- atualiza Tkinter, web, REST, schema, testes, textos de ajuda, READMEs, changelogs e resumo teorico operacional para o caminho de survey estratificado
+- atualiza os metadados do aplicativo para `ISP v2.4`
+
+## 2.3
+
+- adiciona `Questionário pós-intervenção com um grupo` para estudos apenas de opinião depois de uma intervenção
+- adiciona planejamento por proporção de respostas favoráveis com nível de confiança e margem de erro
+- adiciona planejamento por média do questionário com desvio padrão esperado e margem de erro da média
+- adiciona avaliação de questionário realizado a partir de histogramas de respostas, contagens favoráveis ou resumos de média/desvio padrão
+- adiciona intervalos de confiança de Wilson para proporções favoráveis e intervalos de confiança para médias de escores de questionário
+- atualiza Tkinter, web, REST, schema, testes, textos de ajuda, READMEs e manual educacional para o caminho de questionário
+- atualiza os metadados do aplicativo para `ISP v2.3`
 
 ## 2.2
 

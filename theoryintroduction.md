@@ -1,16 +1,18 @@
-<!-- File version: 2.2; date: 2026-05-17 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
-# Operational Theory Summary for ISP v2.2
+# Operational Theory Summary for ISP v2.4
 
-This operational manual explains how to use `ISP v2.2` in a practical way. It is shorter than the educational LaTeX manual, but it is written to support real decisions in the app.
+This operational manual explains how to use `ISP v2.4` in a practical way. It is shorter than the educational LaTeX manual, but it is written to support real decisions in the app.
 
-## 1. Current capabilities in v2.2
+## 1. Current capabilities in v2.4
 
-`ISP v2.2` supports the original two-group planning workflow and the newer completed-study workflows:
+`ISP v2.4` supports the original two-group planning workflow, completed-study workflows, and post-intervention opinion survey workflows:
 
 - `Two independent groups`
 - `Pre-test/post-test with control group`
 - `One-group pre-test/post-test`
+- `One-group post-intervention survey`
+- `Stratified post-intervention survey`
 - `Plan required sample`
 - `Evaluate achieved result`
 - `Compare completed study with plan`
@@ -18,6 +20,8 @@ This operational manual explains how to use `ISP v2.2` in a practical way. It is
 - explanations in `intervention_sample_planner/explanations.json`
 - a dedicated `Suggestions` tab
 - sample-capacity reverse analysis when only the achieved sample size is available
+- survey precision planning and completed-survey evaluation for Likert, star, and bounded numeric opinion scales
+- stratified survey planning and evaluation for demographic representation
 
 ## 2. Start by choosing the research path
 
@@ -43,6 +47,20 @@ Use this when there is no control group and the same participants are measured b
 
 Educational-games example:
 A researcher wants a first estimate of whether playing Uno between two measurements improves understanding of greater-than and less-than. The same children complete a pre-test, play Uno in a guided session, and then complete a post-test. This can be a useful pilot design, but it is weaker for causal inference because change over time may come from factors other than the game.
+
+### Path D. One-group post-intervention survey
+
+Use this when participants only answer an opinion, experience, usability, or perceived-learning questionnaire after the intervention. This is common in MEEGA+-style educational-game evaluations, Likert questionnaires, star ratings, and post-use usability forms.
+
+Educational-games example:
+After a guided Uno learning session, a researcher asks students whether the activity was easy to learn, fun, useful, and whether it helped them understand greater-than and less-than. There is no pre-test and no control group in this path. The result can support a descriptive statement such as "with 95% confidence, at least about 70% of valid respondents gave a favorable answer," but it cannot prove that Uno caused learning.
+
+### Path E. Stratified post-intervention survey
+
+Use this when the same post-intervention opinion survey should represent demographic classes. A stratum is a planned class such as age band, school type, region, prior experience, or gender. The point is not to prove causality; it is to avoid a descriptive claim being dominated by the easiest respondents to recruit.
+
+Educational-games example:
+After a guided Uno learning session, a researcher wants the opinion survey to represent children aged `8-10`, `11-13`, and `14-16`. If the population is 30%, 40%, and 30% in those bands, proportional allocation follows those shares. If the researcher also wants each band to be visible, the minimum-per-stratum option can require at least 30 valid responses per band. In the achieved-result workflow, the app checks whether each band is under target, under-represented, or over-represented.
 
 ## 3. Then choose the workflow
 
@@ -102,6 +120,12 @@ The app now checks recommended or typical ranges. You can explicitly allow a val
 | `extra_buffer_rate` | `0.00` to `0.20` | `0.00`, `0.05`, `0.10` | Small buffers are common; large ones may indicate weak planning assumptions. |
 | `cluster_average_size` | `1` to `50` | `1`, `20`, `30` | Larger clusters make the ICC much more important. |
 | `intraclass_correlation` | `0.00` to `0.20` | `0.01`, `0.05`, `0.10` | Small ICC values are common, but even `0.05` can greatly inflate sample needs. |
+| `survey_expected_proportion` | `0.30` to `0.90` | `0.50`, `0.70`, `0.80` | `0.50` is conservative for margin-of-error planning; higher values should come from a pilot or previous evidence. |
+| `survey_margin_of_error` | `0.03` to `0.15` | `0.05`, `0.10` | Opinion surveys often report precision in percentage points. Smaller margins require many more respondents. |
+| `survey_favorable_threshold` | inside the scale | `4` on a 1-to-5 scale | The threshold should match the verbal meaning of the scale, such as "agree" or better. |
+| `survey_mean_margin_of_error` | `0.05` to `1.00` scale points | `0.20`, `0.30`, `0.50` | Mean precision should be small enough to matter on the scale but feasible for the expected sample. |
+| `stratified_min_per_stratum` | `10` to `100` | `20`, `30`, `50` | Very small strata produce unstable subgroup percentages; very large minimums can make recruitment infeasible. |
+| `stratified_target_total` | blank or feasible total | blank, `100`, `200`, `400` | Leave blank when precision should determine the total; enter a value when the feasible sample is externally fixed. |
 
 ## 5. The difficult variable: effect size
 
@@ -139,16 +163,16 @@ This is useful for pilots, usability learning, or early classroom innovation stu
 
 ### 5.4 In post-only opinion or usability research
 
-Sometimes there is only a survey after exposure to a system, game, or lesson. In that case, the effect size should still come from a meaningful difference, but the interpretation is often harder because there is no baseline measurement.
+Sometimes there is only a survey after exposure to a system, game, or lesson. In `one_group_post_survey`, the app does not ask for `effect_size_d`, because the main output is not a causal comparison. The practical decision is usually the desired precision of a descriptive claim.
 
 For example:
-- if satisfaction is measured on a 1-to-5 scale
-- and a difference of `0.4` points would justify changing the interface
-- and the pooled standard deviation is expected to be `0.8`
+- if agreement is measured on a 1-to-5 Likert scale
+- and scores `4` and `5` mean favorable responses
+- and the researcher wants a margin of error of about `0.10`
 
-then:
+then the planning question is how many valid respondents are needed so the confidence interval around the favorable-response proportion is narrow enough. If the researcher instead wants to report a mean score, the app uses the expected standard deviation and desired mean margin of error.
 
-`d = 0.4 / 0.8 = 0.5`
+This path should not be interpreted as "the intervention worked." It supports statements about what respondents reported after the intervention.
 
 ## 6. Traditional numbers and why they appear so often
 
@@ -161,6 +185,8 @@ These values appear in the software because they are common in real research:
 - `completion_rate = 0.85` or `0.90`
 - `usable_data_rate = 0.95`
 - `ICC = 0.05`
+- `survey_margin_of_error = 0.05` or `0.10`
+- `survey_expected_proportion = 0.50` when no better prior estimate exists
 
 They are common because they are often practical, not because they are mandatory.
 
@@ -223,6 +249,49 @@ Wizard choices:
 Why this wizard:
 There is no control group and the outcome is the change in the same participants.
 
+### Example 4. Uno post-intervention opinion survey
+
+Scenario:
+After a classroom activity using Uno, the researcher asks children to answer a short questionnaire about the game. One item says: "The game helped me understand greater-than and less-than." The response scale is 1 to 5, where `1` means strongly disagree, `3` means neither agree nor disagree, `4` means agree, and `5` means strongly agree. The researcher wants to plan enough valid respondents to describe the favorable-response proportion with a 95% confidence interval and about 10 percentage points of margin of error.
+
+Wizard choices:
+
+- path: `One-group post-intervention survey`
+- run type: `Plan required sample`
+- survey analysis goal: `Favorable-response proportion`
+- alpha: `0.05`
+- survey scale minimum: `1`
+- survey scale maximum: `5`
+- survey scale points: `5`
+- favorable threshold: `4`
+- expected favorable proportion: `0.50` if there is no pilot
+- margin of error: `0.10`
+- completion rate: `0.90`
+- usable data rate: `0.95`
+
+Why this wizard:
+There is no control group and no before/after measurement. The claim is about the precision of reported opinions after the activity.
+
+### Example 5. Uno stratified post-intervention opinion survey
+
+Scenario:
+The same Uno activity will be used in a mixed school program. The researcher knows that the intended population is about 30% children aged `8-10`, 40% aged `11-13`, and 30% aged `14-16`. A simple overall survey could accidentally over-sample older children if they answer faster. The researcher therefore wants the opinion claim to be checked by age band.
+
+Wizard choices:
+
+- path: `Stratified post-intervention survey`
+- run type: `Plan required sample`
+- survey analysis goal: `Favorable-response proportion`
+- alpha: `0.05`
+- margin of error: `0.10`
+- strata definition: `{"age_8_10": {"label": "Age 8-10", "population_proportion": 0.30}, "age_11_13": {"label": "Age 11-13", "population_proportion": 0.40}, "age_14_16": {"label": "Age 14-16", "population_proportion": 0.30}}`
+- allocation method: `minimum_per_stratum` when each age band must be visible, or `proportional` when the overall estimate is the main goal
+- minimum per stratum: `30`
+- use weights: `true`
+
+Why this wizard:
+The study is still descriptive, but the claim is meant to represent a population with known classes. The app plans valid responses per stratum and later checks whether each class was under target or under-represented.
+
 ## 8. The inverse problem
 
 The app can also do the reverse calculation.
@@ -245,6 +314,10 @@ The app then estimates:
 - approximate achieved power for the observed effect
 
 If the pilot has only the achieved sample size and no defensible observed effect yet, the app now gives a capacity table instead of pretending there is one unique answer. For example, with `28` complete one-group pre/post pairs it can report the minimum detectable effect for `p < 0.05` with `80%` power, the power for common effects such as `d = 0.20`, `0.50`, and `0.80`, and the approximate alpha threshold needed for common effect/power targets. For two-group studies with only a total `n`, it also compares common allocations such as `1:1`, `2:1`, and `1:2`.
+
+For a post-intervention survey, the inverse interpretation is different. If the researcher enters only the achieved number of valid respondents, the app estimates the approximate current margin of error for a favorable proportion. If the researcher enters a histogram such as `{"1": 2, "2": 4, "3": 10, "4": 18, "5": 26, "NA": 3}`, the app reports the valid denominator, NA count, favorable count, favorable proportion, Wilson confidence interval, and mean score. This supports a descriptive conclusion such as: "Most valid respondents were favorable, but the lower confidence bound is the conservative part of the claim."
+
+For a stratified survey, the inverse interpretation adds representation. If the researcher enters achieved stratum data, the app reports the overall survey result and a stratum table with expected share, observed share, representation ratio, optional weight, and a status such as `under target`, `under-represented`, `over-represented`, or `ok`. This helps decide whether the overall opinion claim can be stated broadly or should be qualified, for example: "The younger age band was under-represented, so the result mainly reflects older respondents."
 
 This is useful when the desired effect was not found. A non-significant result may mean:
 
@@ -278,6 +351,7 @@ It highlights things such as:
 - low usable-data rate
 - cluster inflation
 - no-control-group limitations
+- post-intervention survey limitations when the evidence is descriptive rather than causal
 - values accepted outside recommended ranges
 
 The goal is not to block the study, but to make the tradeoffs explicit.

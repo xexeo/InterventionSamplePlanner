@@ -1,6 +1,6 @@
 # Casos de Exemplo Baseados em Fontes
 
-<!-- File version: 1.0; date: 2026-05-11 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
 Política de documentação: `README.md` é o original canônico em inglês. Este arquivo é sua tradução em português.
 

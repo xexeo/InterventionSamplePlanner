@@ -1,6 +1,6 @@
 """Tkinter interface for Intervention Sample Planner."""
 
-# File version: 2.2; date: 2026-05-17
+# File version: 2.4; date: 2026-05-30
 
 from __future__ import annotations
 
@@ -53,6 +53,23 @@ FIELD_GROUPS = [
             "sd_pooled",
             "proportion_control",
             "proportion_intervention",
+            "survey_analysis_goal",
+            "survey_scale_min",
+            "survey_scale_max",
+            "survey_scale_points",
+            "survey_favorable_threshold",
+            "survey_target_proportion",
+            "survey_expected_proportion",
+            "survey_margin_of_error",
+            "survey_expected_sd",
+            "survey_mean_margin_of_error",
+            "survey_target_mean",
+            "strata_definition",
+            "stratified_allocation_method",
+            "stratified_min_per_stratum",
+            "stratified_target_total",
+            "stratified_population_known",
+            "stratified_use_weights",
         ],
     ),
     (
@@ -85,6 +102,11 @@ FIELD_GROUPS = [
             "observed_pre_success_post_failure",
             "observed_pre_failure_post_success",
             "observed_effect_size",
+            "observed_survey_counts",
+            "observed_survey_favorable_count",
+            "observed_survey_mean",
+            "observed_survey_sd",
+            "observed_strata_counts",
         ],
     ),
     ("labels_notes", ["intervention_label", "control_label", "notes"]),
@@ -111,6 +133,23 @@ FIELD_TYPES = {
     "sd_pooled": "optional_float",
     "proportion_control": "rate",
     "proportion_intervention": "rate",
+    "survey_analysis_goal": "survey_goal",
+    "survey_scale_min": "float",
+    "survey_scale_max": "float",
+    "survey_scale_points": "int",
+    "survey_favorable_threshold": "float",
+    "survey_target_proportion": "rate",
+    "survey_expected_proportion": "rate",
+    "survey_margin_of_error": "rate",
+    "survey_expected_sd": "optional_float",
+    "survey_mean_margin_of_error": "float",
+    "survey_target_mean": "optional_float",
+    "strata_definition": "multiline",
+    "stratified_allocation_method": "stratified_allocation",
+    "stratified_min_per_stratum": "int",
+    "stratified_target_total": "optional_int",
+    "stratified_population_known": "bool",
+    "stratified_use_weights": "bool",
     "apply_fpc": "bool",
     "finite_population": "optional_int",
     "cluster_average_size": "float",
@@ -127,6 +166,11 @@ FIELD_TYPES = {
     "observed_pre_success_post_failure": "optional_int",
     "observed_pre_failure_post_success": "optional_int",
     "observed_effect_size": "optional_float",
+    "observed_survey_counts": "multiline",
+    "observed_survey_favorable_count": "optional_int",
+    "observed_survey_mean": "optional_float",
+    "observed_survey_sd": "optional_float",
+    "observed_strata_counts": "multiline",
     "planned_control_n": "optional_int",
     "planned_intervention_n": "optional_int",
     "planned_total_n": "optional_int",
@@ -145,6 +189,8 @@ def analysis_mode_for_workflow(workflow_path: str) -> str:
 
 def valid_outcome_types(study_design: str, workflow_path: str) -> list[str]:
     mode = analysis_mode_for_workflow(workflow_path)
+    if study_design in {"one_group_post_survey", "stratified_post_survey"}:
+        return ["continuous"]
     if study_design == "pretest_posttest_control":
         return ["continuous"]
     if study_design == "one_group_pre_post" and mode == "plan":
@@ -161,18 +207,67 @@ def is_config_field_visible(field: str, workflow_path: str, study_design: str, o
     mode = analysis_mode_for_workflow(workflow_path)
     outcome = normalize_outcome_type(study_design, workflow_path, outcome_type)
     has_plan = workflow_path == "evaluate_against_plan"
+    survey_design = study_design in {"one_group_post_survey", "stratified_post_survey"}
     if field == "allocation_ratio":
-        return study_design != "one_group_pre_post"
+        return study_design not in {"one_group_pre_post", "one_group_post_survey", "stratified_post_survey"}
+    if field in {
+        "survey_analysis_goal",
+        "survey_scale_min",
+        "survey_scale_max",
+        "survey_scale_points",
+        "survey_favorable_threshold",
+        "survey_target_proportion",
+        "survey_expected_proportion",
+        "survey_margin_of_error",
+        "survey_expected_sd",
+        "survey_mean_margin_of_error",
+        "survey_target_mean",
+    }:
+        if not survey_design:
+            return False
+        if field in {"survey_expected_proportion", "survey_margin_of_error", "survey_target_proportion"}:
+            return True if outcome == "continuous" else False
+        if field in {"survey_expected_sd", "survey_mean_margin_of_error", "survey_target_mean"}:
+            return True
+        return True
+    if field in {
+        "observed_survey_counts",
+        "observed_survey_favorable_count",
+        "observed_survey_mean",
+        "observed_survey_sd",
+    }:
+        if not (mode == "evaluate" and survey_design):
+            return False
+        if field in {"observed_survey_mean", "observed_survey_sd"}:
+            return True
+        return True
+    if field in {
+        "strata_definition",
+        "stratified_allocation_method",
+        "stratified_min_per_stratum",
+        "stratified_target_total",
+        "stratified_population_known",
+        "stratified_use_weights",
+    }:
+        return study_design == "stratified_post_survey"
+    if field == "observed_strata_counts":
+        return mode == "evaluate" and study_design == "stratified_post_survey"
+    if field == "power":
+        return not survey_design
+    if field == "alternative":
+        return not survey_design
+    if field == "outcome_type":
+        return not survey_design
     if field == "pre_post_correlation":
         return study_design == "pretest_posttest_control"
     if field in {"mean_control", "mean_intervention", "sd_pooled"}:
-        return mode == "plan" and outcome == "continuous" and study_design != "one_group_pre_post"
+        return mode == "plan" and outcome == "continuous" and study_design not in {"one_group_pre_post", "one_group_post_survey", "stratified_post_survey"}
     if field == "effect_size_d":
-        return mode == "plan" and outcome == "continuous"
+        return mode == "plan" and outcome == "continuous" and not survey_design
     if field in {"proportion_control", "proportion_intervention"}:
         return mode == "plan" and study_design == "parallel_two_group" and outcome == "binary"
     if field in {"observed_control_n", "observed_intervention_n"}:
-        return mode == "evaluate" and study_design != "one_group_pre_post"
+        return mode == "evaluate" and study_design not in {"one_group_pre_post", "stratified_post_survey"}
     if field == "observed_total_n":
         return mode == "evaluate"
     if field in {"observed_control_events", "observed_intervention_events"}:
@@ -180,15 +275,15 @@ def is_config_field_visible(field: str, workflow_path: str, study_design: str, o
     if field in {"observed_pre_success_post_failure", "observed_pre_failure_post_success"}:
         return mode == "evaluate" and study_design == "one_group_pre_post" and outcome == "binary"
     if field == "observed_effect_size":
-        return mode == "evaluate" and outcome == "continuous"
+        return mode == "evaluate" and outcome == "continuous" and not survey_design
     if field in {"planned_control_n", "planned_intervention_n"}:
-        return has_plan and study_design != "one_group_pre_post"
+        return has_plan and study_design not in {"one_group_pre_post", "one_group_post_survey", "stratified_post_survey"}
     if field == "planned_total_n":
-        return has_plan and study_design == "one_group_pre_post"
+        return has_plan and study_design in {"one_group_pre_post", "one_group_post_survey", "stratified_post_survey"}
     if field in {"planned_effect_size", "planned_alpha", "planned_power"}:
         return has_plan
     if field == "control_label":
-        return study_design != "one_group_pre_post"
+        return study_design not in {"one_group_pre_post", "one_group_post_survey", "stratified_post_survey"}
     return True
 
 
@@ -206,14 +301,50 @@ def wizard_fields_for_path(workflow_path: str, study_design: str, outcome_type: 
         "workflow_path",
         "study_name",
         "study_design",
-        "outcome_type",
-        "alpha",
-        "power",
     ]
+    survey_design = study_design in {"one_group_post_survey", "stratified_post_survey"}
+    if survey_design:
+        fields.extend(["survey_analysis_goal", "alpha", "primary_comparisons", "survey_scale_min", "survey_scale_max", "survey_scale_points"])
+    else:
+        fields.extend(["outcome_type", "alpha", "power"])
     mode = analysis_mode_for_workflow(workflow_path)
     outcome = normalize_outcome_type(study_design, workflow_path, outcome_type)
     has_plan = workflow_path == "evaluate_against_plan"
     if mode == "plan":
+        if survey_design:
+            fields.append("survey_favorable_threshold")
+            fields.extend(
+                [
+                    "survey_target_proportion",
+                    "survey_expected_proportion",
+                    "survey_margin_of_error",
+                    "survey_expected_sd",
+                    "survey_mean_margin_of_error",
+                    "survey_target_mean",
+                ]
+            )
+            if study_design == "stratified_post_survey":
+                fields.extend(
+                    [
+                        "strata_definition",
+                        "stratified_population_known",
+                        "stratified_allocation_method",
+                        "stratified_min_per_stratum",
+                        "stratified_target_total",
+                        "stratified_use_weights",
+                    ]
+                )
+            fields.extend(
+                [
+                    "response_rate",
+                    "completion_rate",
+                    "usable_data_rate",
+                    "extra_buffer_rate",
+                    "cluster_average_size",
+                    "intraclass_correlation",
+                ]
+            )
+            return fields
         if study_design != "one_group_pre_post":
             fields.append("allocation_ratio")
         if study_design == "parallel_two_group" and outcome == "binary":
@@ -235,11 +366,41 @@ def wizard_fields_for_path(workflow_path: str, study_design: str, outcome_type: 
         )
     else:
         if has_plan:
-            if study_design == "one_group_pre_post":
+            if study_design in {"one_group_pre_post", "one_group_post_survey", "stratified_post_survey"}:
                 fields.append("planned_total_n")
             else:
                 fields.extend(["planned_control_n", "planned_intervention_n"])
             fields.extend(["planned_effect_size", "planned_alpha", "planned_power"])
+        if survey_design:
+            fields.extend(
+                [
+                    "survey_favorable_threshold",
+                    "survey_target_proportion",
+                    "survey_target_mean",
+                ]
+            )
+            if study_design == "stratified_post_survey":
+                fields.extend(
+                    [
+                        "strata_definition",
+                        "stratified_population_known",
+                        "stratified_allocation_method",
+                        "stratified_min_per_stratum",
+                        "stratified_use_weights",
+                    ]
+                )
+            fields.extend(
+                [
+                    "observed_total_n",
+                    "observed_survey_counts",
+                    "observed_survey_favorable_count",
+                    "observed_survey_mean",
+                    "observed_survey_sd",
+                ]
+            )
+            if study_design == "stratified_post_survey":
+                fields.append("observed_strata_counts")
+            return fields
         if study_design == "one_group_pre_post":
             fields.append("observed_total_n")
             if outcome == "binary":
@@ -562,6 +723,12 @@ class PlannerApp(tk.Tk):
             widget = ttk.Combobox(parent, textvariable=var, values=self._outcome_values(), state="readonly")
             widget.bind("<<ComboboxSelected>>", lambda _event, field=field: self._on_config_driver_change(field))
             return widget
+        if kind == "survey_goal":
+            widget = ttk.Combobox(parent, textvariable=var, values=self._survey_goal_values(), state="readonly")
+            widget.bind("<<ComboboxSelected>>", lambda _event, field=field: self._on_config_driver_change(field))
+            return widget
+        if kind == "stratified_allocation":
+            return ttk.Combobox(parent, textvariable=var, values=self._stratified_allocation_values(), state="readonly")
         if kind == "alternative":
             return ttk.Combobox(parent, textvariable=var, values=self._alternative_values(), state="readonly")
         return ttk.Entry(parent, textvariable=var)
@@ -586,6 +753,8 @@ class PlannerApp(tk.Tk):
             data["study_design"] = self._current_study_design()
         elif field == "outcome_type":
             data["outcome_type"] = self._current_outcome_type()
+        elif field == "survey_analysis_goal":
+            data["survey_analysis_goal"] = self._current_survey_goal()
         elif field == "language":
             var = self.vars.get("language")
             data["language"] = str(var.get()) if var else self.config_model.language
@@ -610,6 +779,8 @@ class PlannerApp(tk.Tk):
             t(self.language, "design_parallel_two_group"),
             t(self.language, "design_pretest_posttest_control"),
             t(self.language, "design_one_group_pre_post"),
+            t(self.language, "design_one_group_post_survey"),
+            t(self.language, "design_stratified_post_survey"),
         ]
 
     def _workflow_values(self) -> list[str]:
@@ -629,6 +800,20 @@ class PlannerApp(tk.Tk):
             "binary": t(self.language, "outcome_binary"),
         }
         return [labels[value] for value in values]
+
+    def _survey_goal_values(self) -> list[str]:
+        return [
+            t(self.language, "survey_goal_favorable_proportion"),
+            t(self.language, "survey_goal_mean_score"),
+        ]
+
+    def _stratified_allocation_values(self) -> list[str]:
+        return [
+            t(self.language, "stratified_allocation_proportional"),
+            t(self.language, "stratified_allocation_equal"),
+            t(self.language, "stratified_allocation_minimum_per_stratum"),
+            t(self.language, "stratified_allocation_manual"),
+        ]
 
     def _alternative_values(self) -> list[str]:
         return [
@@ -661,9 +846,13 @@ class PlannerApp(tk.Tk):
             t(self.language, "design_parallel_two_group"): "parallel_two_group",
             t(self.language, "design_pretest_posttest_control"): "pretest_posttest_control",
             t(self.language, "design_one_group_pre_post"): "one_group_pre_post",
+            t(self.language, "design_one_group_post_survey"): "one_group_post_survey",
+            t(self.language, "design_stratified_post_survey"): "stratified_post_survey",
             "parallel_two_group": "parallel_two_group",
             "pretest_posttest_control": "pretest_posttest_control",
             "one_group_pre_post": "one_group_pre_post",
+            "one_group_post_survey": "one_group_post_survey",
+            "stratified_post_survey": "stratified_post_survey",
         }
         return mapping.get(text, self.config_model.study_design)
 
@@ -706,6 +895,36 @@ class PlannerApp(tk.Tk):
         if text in {t(self.language, "outcome_binary"), "binary"}:
             return "binary"
         return "continuous"
+
+    def _current_survey_goal(self) -> str:
+        var = self.vars.get("survey_analysis_goal")
+        if not var:
+            return self.config_model.survey_analysis_goal
+        text = str(var.get())
+        mapping = {
+            t(self.language, "survey_goal_favorable_proportion"): "favorable_proportion",
+            t(self.language, "survey_goal_mean_score"): "mean_score",
+            "favorable_proportion": "favorable_proportion",
+            "mean_score": "mean_score",
+        }
+        return mapping.get(text, self.config_model.survey_analysis_goal)
+
+    def _current_stratified_allocation(self) -> str:
+        var = self.vars.get("stratified_allocation_method")
+        if not var:
+            return self.config_model.stratified_allocation_method
+        text = str(var.get())
+        mapping = {
+            t(self.language, "stratified_allocation_proportional"): "proportional",
+            t(self.language, "stratified_allocation_equal"): "equal",
+            t(self.language, "stratified_allocation_minimum_per_stratum"): "minimum_per_stratum",
+            t(self.language, "stratified_allocation_manual"): "manual",
+            "proportional": "proportional",
+            "equal": "equal",
+            "minimum_per_stratum": "minimum_per_stratum",
+            "manual": "manual",
+        }
+        return mapping.get(text, self.config_model.stratified_allocation_method)
 
     def _render_wizard_step(self) -> None:
         for child in self.wizard_input.winfo_children():
@@ -762,6 +981,10 @@ class PlannerApp(tk.Tk):
             return ttk.Combobox(parent, textvariable=self.vars[field], values=self._mode_values(), state="readonly")
         if kind == "outcome":
             return ttk.Combobox(parent, textvariable=self.vars[field], values=self._outcome_values(), state="readonly")
+        if kind == "survey_goal":
+            return ttk.Combobox(parent, textvariable=self.vars[field], values=self._survey_goal_values(), state="readonly")
+        if kind == "stratified_allocation":
+            return ttk.Combobox(parent, textvariable=self.vars[field], values=self._stratified_allocation_values(), state="readonly")
         if kind == "alternative":
             return ttk.Combobox(parent, textvariable=self.vars[field], values=self._alternative_values(), state="readonly")
         return ttk.Entry(parent, textvariable=self.vars[field])
@@ -807,7 +1030,7 @@ class PlannerApp(tk.Tk):
     def _sync_config_to_vars(self) -> None:
         for field in FIELD_TYPES:
             value = getattr(self.config_model, field)
-            if field == "notes" and field in self.text_widgets:
+            if FIELD_TYPES[field] == "multiline" and field in self.text_widgets:
                 self.text_widgets[field].delete("1.0", tk.END)
                 self.text_widgets[field].insert("1.0", value or "")
             elif field in self.vars:
@@ -823,6 +1046,20 @@ class PlannerApp(tk.Tk):
                 "parallel_two_group": t(self.language, "design_parallel_two_group"),
                 "pretest_posttest_control": t(self.language, "design_pretest_posttest_control"),
                 "one_group_pre_post": t(self.language, "design_one_group_pre_post"),
+                "one_group_post_survey": t(self.language, "design_one_group_post_survey"),
+                "stratified_post_survey": t(self.language, "design_stratified_post_survey"),
+            }[str(value)]
+        if field == "survey_analysis_goal":
+            return {
+                "favorable_proportion": t(self.language, "survey_goal_favorable_proportion"),
+                "mean_score": t(self.language, "survey_goal_mean_score"),
+            }[str(value)]
+        if field == "stratified_allocation_method":
+            return {
+                "proportional": t(self.language, "stratified_allocation_proportional"),
+                "equal": t(self.language, "stratified_allocation_equal"),
+                "minimum_per_stratum": t(self.language, "stratified_allocation_minimum_per_stratum"),
+                "manual": t(self.language, "stratified_allocation_manual"),
             }[str(value)]
         if field == "analysis_mode":
             return {"plan": t(self.language, "mode_plan"), "evaluate": t(self.language, "mode_evaluate")}[str(value)]
@@ -874,6 +1111,10 @@ class PlannerApp(tk.Tk):
                 data[field] = self._current_analysis_mode()
             elif kind == "outcome":
                 data[field] = self._current_outcome_type()
+            elif kind == "survey_goal":
+                data[field] = self._current_survey_goal()
+            elif kind == "stratified_allocation":
+                data[field] = self._current_stratified_allocation()
             elif kind == "alternative":
                 data[field] = self._internal_alternative(str(raw))
             else:
@@ -1028,6 +1269,92 @@ class PlannerApp(tk.Tk):
                         row.note,
                     ),
                 )
+            if obs.survey_analysis:
+                survey = obs.survey_analysis
+                if survey.favorable_proportion is not None:
+                    self.evaluation_table.insert(
+                        "",
+                        tk.END,
+                        values=(
+                            t(self.language, "eval_category_survey"),
+                            "Favorable responses",
+                            survey.favorable_count,
+                            f"{survey.favorable_proportion:.1%}",
+                            f"{survey.favorable_ci_low:.1%} - {survey.favorable_ci_high:.1%}",
+                            f"target {survey.target_proportion:.1%}",
+                            t(self.language, "eval_status_reached") if survey.target_reached else t(self.language, "eval_status_missing"),
+                        ),
+                    )
+                if survey.mean is not None:
+                    self.evaluation_table.insert(
+                        "",
+                        tk.END,
+                        values=(
+                            t(self.language, "eval_category_survey"),
+                            "Mean score",
+                            survey.valid_n,
+                            f"{survey.mean:.3f}",
+                            (
+                                f"{survey.mean_ci_low:.3f} - {survey.mean_ci_high:.3f}"
+                                if survey.mean_ci_low is not None and survey.mean_ci_high is not None
+                                else ""
+                            ),
+                            f"target {survey.target_mean:.3f}" if survey.target_mean is not None else "",
+                            (
+                                t(self.language, "eval_status_reached")
+                                if survey.target_mean_reached
+                                else t(self.language, "eval_status_missing")
+                                if survey.target_mean_reached is False
+                                else ""
+                            ),
+                        ),
+                    )
+                for row in survey.category_rows:
+                    self.evaluation_table.insert(
+                        "",
+                        tk.END,
+                        values=(
+                            t(self.language, "eval_category_survey"),
+                            row.label,
+                            row.count,
+                            f"{row.proportion:.1%}",
+                            f"{row.ci_low:.1%} - {row.ci_high:.1%}",
+                            "",
+                            "NA" if row.missing else ("favorable" if row.favorable else ""),
+                        ),
+                    )
+        if self.current_plan.stratified_survey_analysis:
+            stratified = self.current_plan.stratified_survey_analysis
+            for row in stratified.plan_rows:
+                self.evaluation_table.insert(
+                    "",
+                    tk.END,
+                    values=(
+                        "Strata plan",
+                        row.label,
+                        f"pop {row.population_proportion:.1%}",
+                        f"valid {row.target_valid_n}",
+                        f"assign {row.assigned_needed}",
+                        f"invite {row.invited_needed}",
+                        f"weight {row.weight:.3f}" if row.weight is not None else "",
+                    ),
+                )
+            for row in stratified.observed_rows:
+                share = f"{row.observed_share:.1%}" if row.observed_share is not None else ""
+                ratio = f"{row.representation_ratio:.2f}" if row.representation_ratio is not None else ""
+                self.evaluation_table.insert(
+                    "",
+                    tk.END,
+                    values=(
+                        "Strata observed",
+                        row.label,
+                        f"expected {row.expected_proportion:.1%}",
+                        f"valid {row.observed_valid_n}",
+                        f"share {share}",
+                        f"ratio {ratio}",
+                        row.status,
+                    ),
+                )
         suggestion_lines = list(self.current_plan.suggestions)
         if self.range_issues:
             suggestion_lines.append("")
@@ -1105,7 +1432,7 @@ class PlannerApp(tk.Tk):
                 "control_label": source_config.control_label,
             }
         )
-        if source_config.study_design == "one_group_pre_post":
+        if source_config.study_design in {"one_group_pre_post", "one_group_post_survey", "stratified_post_survey"}:
             current["planned_total_n"] = int(planned_sizes.get("intervention", source_plan.design_adjusted_valid.total))
             current["planned_control_n"] = None
             current["planned_intervention_n"] = None

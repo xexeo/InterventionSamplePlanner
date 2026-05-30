@@ -1,4 +1,4 @@
-# File version: 2.2; date: 2026-05-17
+# File version: 2.4; date: 2026-05-30
 
 """Capture Windows screenshots of the Tkinter app without external packages."""
 

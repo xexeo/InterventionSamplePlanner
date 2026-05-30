@@ -1,4 +1,4 @@
-# File version: 2.2; date: 2026-05-17
+# File version: 2.4; date: 2026-05-30
 
 [build-system]
 requires = ["setuptools>=68"]
@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "intervention-sample-planner"
-version = "2.2.0"
+version = "2.4.0"
 description = "Local API, Tkinter app, and Flask web interface for planning or evaluating several intervention-study designs."
 readme = "README.md"
 requires-python = ">=3.10"

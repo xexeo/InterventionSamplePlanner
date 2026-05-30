@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# File version: 2.2; date: 2026-05-17
+# File version: 2.4; date: 2026-05-30
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

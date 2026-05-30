@@ -1,4 +1,4 @@
-<!-- File version: 2.2; date: 2026-05-17 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
 # Guia de Build
 
@@ -12,7 +12,7 @@ python run_app.py
 
 ## Executável para Windows
 
-O executável é gerado com PyInstaller. Como o `ISP v2.2` depende de `intervention_sample_planner/explanations.json`, o comando de build precisa incluir esse arquivo.
+O executável é gerado com PyInstaller. Como o `ISP v2.4` depende de `intervention_sample_planner/explanations.json` e dos arquivos da interface web, o comando de build precisa incluir esses arquivos.
 
 Exemplo:
 

@@ -1,6 +1,6 @@
 """Flask web interface and REST API for Intervention Sample Planner."""
 
-# File version: 2.2; date: 2026-05-17
+# File version: 2.4; date: 2026-05-30
 
 from __future__ import annotations
 
@@ -144,6 +144,7 @@ def _config_from_request() -> StudyConfig:
 
 def _plan_payload(plan) -> dict:
     observed = asdict(plan.observed_analysis) if plan.observed_analysis else None
+    stratified = asdict(plan.stratified_survey_analysis) if plan.stratified_survey_analysis else None
     return {
         "version": APP_VERSION,
         "config": config_to_dict(plan.config),
@@ -166,6 +167,7 @@ def _plan_payload(plan) -> dict:
         "formulas": plan.formulas,
         "sensitivity": [asdict(row) for row in plan.sensitivity],
         "observed_analysis": observed,
+        "stratified_survey_analysis": stratified,
     }
 
 

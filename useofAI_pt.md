@@ -1,4 +1,4 @@
-<!-- File version: 1.0; date: 2026-05-11 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
 # Uso de IA
 
@@ -11,4 +11,3 @@ A presença de assistência de IA não significa que o trabalho foi produzido se
 Usuários ainda devem ler, testar e avaliar criticamente o software e a documentação. A produção assistida por IA pode acelerar o desenvolvimento, mas não elimina a necessidade de julgamento humano, revisão metodológica e responsabilidade por parte de qualquer pessoa que decida usar o material em um projeto real.
 
 IA usada: OpenAI Codex com GPT 5.5 inteligência Altíssima
-

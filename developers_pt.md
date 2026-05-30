@@ -1,4 +1,4 @@
-<!-- File version: 2.2; date: 2026-05-17 -->
+<!-- File version: 2.4; date: 2026-05-30 -->
 
 # Notas para Desenvolvedores
 
@@ -22,13 +22,15 @@
 `intervention_sample_planner/content.py`
 : funções auxiliares para carregar `explanations.json`.
 
-## Caminhos de estudo na versão 2.1
+## Caminhos de estudo na versão 2.4
 
 - `parallel_two_group`
 - `pretest_posttest_control`
 - `one_group_pre_post`
+- `one_group_post_survey`
+- `stratified_post_survey`
 
-O planejamento binário é suportado em `parallel_two_group`. A avaliação binária de resultado alcançado é suportada em `parallel_two_group` e em casos pareados de pré/pós com um grupo por meio dos campos de McNemar.
+O planejamento binário é suportado em `parallel_two_group`. A avaliação binária de resultado alcançado é suportada em `parallel_two_group` e em casos pareados de pré/pós com um grupo por meio dos campos de McNemar. O planejamento e a avaliação de questionário pós-intervenção são descritivos: trabalham com proporções favoráveis, médias de escala, histogramas JSON, contagens favoráveis e resumos de média/desvio padrão. Questionários pós-intervenção estratificados acrescentam estratos demográficos, métodos de alocação, planejamento de convites por estrato, razões de representação e pesos opcionais; eles continuam sendo estimação descritiva, não testes causais.
 
 ## Verificação de faixas
 
@@ -44,16 +46,20 @@ O fluxo inverso é representado por:
 - `had_planned_sample`
 - campos `planned_*` para o plano anterior
 - campos `observed_*` para os dados alcançados
+- campos `observed_survey_*` para histogramas, contagens favoráveis, média e desvio padrão de questionários pós-intervenção
+- campos `stratified_*` e `observed_strata_counts` para planejamento e avaliação por estratos
 
-A interface pode carregar um JSON de planejamento salvo. O objeto de resultado inclui `observed_analysis` com `z`, `p_value`, `achieved_power`, taxas binárias observadas quando disponíveis, `exact_p_value` opcional, metas de benchmark, metas do plano anterior e linhas de capacidade da amostra quando apenas o tamanho da amostra alcançada é informado.
+A interface pode carregar um JSON de planejamento salvo. O objeto de resultado inclui `observed_analysis` com `z`, `p_value`, `achieved_power`, taxas binárias observadas quando disponíveis, `exact_p_value` opcional, metas de benchmark, metas do plano anterior, linhas de capacidade da amostra quando apenas o tamanho da amostra alcançada é informado, `survey_analysis` opcional para resumos de questionário pós-intervenção e `stratified_survey_analysis` opcional para planos por estrato e representação alcançada.
 
-## Métodos estatísticos da v2.2
+## Métodos estatísticos da v2.4
 
 - A avaliação binária de dois grupos usa valor-p exato de Fisher quando as contagens são pequenas ou esparsas.
 - A avaliação binária pareada com um grupo usa o teste exato de McNemar/binomial a partir das células discordantes antes/depois.
 - O desenho pré-teste/pós-teste com controle continua sendo uma aproximação de planejamento e avaliação no espírito de ANCOVA, não um modelo ANCOVA ajustado.
 - O suporte a clusters continua sendo uma aproximação por efeito de desenho. Trabalho futuro pode adicionar número explícito de clusters, alocação por cluster e rotinas de poder para modelos mistos.
 - Fluxos de estudo realizado podem rodar sem efeito observado. Nesse caso apenas com tamanho da amostra, `capacity_rows` relata efeitos mínimos detectáveis para combinações comuns de alpha/poder, poder para efeitos comuns, limiares aproximados de alpha e cenários de alocação quando só se conhece a amostra total de dois grupos.
+- O planejamento de questionário pós-intervenção com um grupo usa precisão de intervalo de confiança por aproximação normal para proporções favoráveis ou médias. A avaliação usa intervalos de confiança de Wilson para proporções favoráveis e intervalos descritivos para médias. Ela propositalmente não relata valor-p ou poder alcançado porque não há grupo de comparação nem linha de base pré-intervenção.
+- O planejamento de questionário pós-intervenção estratificado parte do mesmo alvo de precisão do questionário e distribui respondentes válidos entre estratos por alocação proporcional, igual, mínimo por estrato ou manual. A avaliação compara participações observadas com participações esperadas e relata sub-representação, sobre-representação, estratos ausentes, pesos opcionais e proporções favoráveis por estrato quando disponíveis.
 
 ## Exportação de relatórios
 

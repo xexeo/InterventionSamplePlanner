@@ -1,4 +1,4 @@
-% File version: 1.0; date: 2026-05-11
+% File version: 2.4; date: 2026-05-30
 
 This software, its documentation, examples, educational manual, and supporting texts were generated with substantial assistance from artificial intelligence under the guidance, review, and direction of the author.
 

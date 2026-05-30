@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.local/intervention-sample-planner/schemas/study_config.schema.json",
   "title": "Intervention Sample Planner Study Configuration",
-  "description": "JSON Schema for Intervention Sample Planner v2.2. File version 2.2; date 2026-05-17.",
+  "description": "JSON Schema for Intervention Sample Planner v2.4. File version 2.4; date 2026-05-30.",
   "type": "object",
   "additionalProperties": true,
   "properties": {
@@ -11,12 +11,12 @@
     },
     "_file_version": {
       "type": "string",
-      "default": "2.2"
+      "default": "2.4"
     },
     "_file_date": {
       "type": "string",
       "format": "date",
-      "default": "2026-05-17"
+      "default": "2026-05-30"
     },
     "study_name": {
       "type": "string",
@@ -34,7 +34,7 @@
     },
     "study_design": {
       "type": "string",
-      "enum": ["parallel_two_group", "pretest_posttest_control", "one_group_pre_post"],
+      "enum": ["parallel_two_group", "pretest_posttest_control", "one_group_pre_post", "one_group_post_survey", "stratified_post_survey"],
       "default": "parallel_two_group"
     },
     "analysis_mode": {
@@ -117,6 +117,88 @@
       "exclusiveMinimum": 0,
       "exclusiveMaximum": 1,
       "default": 0.6
+    },
+    "survey_analysis_goal": {
+      "type": "string",
+      "enum": ["favorable_proportion", "mean_score"],
+      "default": "favorable_proportion"
+    },
+    "survey_scale_min": {
+      "type": "number",
+      "default": 1.0
+    },
+    "survey_scale_max": {
+      "type": "number",
+      "default": 5.0
+    },
+    "survey_scale_points": {
+      "type": "integer",
+      "minimum": 2,
+      "default": 5
+    },
+    "survey_favorable_threshold": {
+      "type": "number",
+      "default": 4.0
+    },
+    "survey_target_proportion": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1,
+      "default": 0.7
+    },
+    "survey_expected_proportion": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1,
+      "default": 0.5
+    },
+    "survey_margin_of_error": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1,
+      "default": 0.05
+    },
+    "survey_expected_sd": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0,
+      "default": null
+    },
+    "survey_mean_margin_of_error": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "default": 0.2
+    },
+    "survey_target_mean": {
+      "type": ["number", "null"],
+      "default": null
+    },
+    "strata_definition": {
+      "type": "string",
+      "default": "",
+      "description": "JSON object or list defining demographic strata with labels, population_n or population_proportion, and optional target_valid_n."
+    },
+    "stratified_allocation_method": {
+      "type": "string",
+      "enum": ["proportional", "equal", "minimum_per_stratum", "manual"],
+      "default": "proportional"
+    },
+    "stratified_min_per_stratum": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 30
+    },
+    "stratified_target_total": {
+      "type": ["integer", "null"],
+      "minimum": 1,
+      "default": null
+    },
+    "stratified_population_known": {
+      "type": "boolean",
+      "default": true
+    },
+    "stratified_use_weights": {
+      "type": "boolean",
+      "default": true
     },
     "apply_fpc": {
       "type": "boolean",
@@ -203,6 +285,29 @@
       "type": ["number", "null"],
       "default": null
     },
+    "observed_survey_counts": {
+      "type": "string",
+      "default": ""
+    },
+    "observed_survey_favorable_count": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "default": null
+    },
+    "observed_survey_mean": {
+      "type": ["number", "null"],
+      "default": null
+    },
+    "observed_survey_sd": {
+      "type": ["number", "null"],
+      "exclusiveMinimum": 0,
+      "default": null
+    },
+    "observed_strata_counts": {
+      "type": "string",
+      "default": "",
+      "description": "JSON object or list containing achieved valid_n, missing_n, favorable count, mean/SD, or response-count histogram per stratum."
+    },
     "had_planned_sample": {
       "type": "boolean",
       "default": false
@@ -278,6 +383,11 @@
     "pre_post_correlation",
     "proportion_control",
     "proportion_intervention",
+    "strata_definition",
+    "stratified_allocation_method",
+    "stratified_min_per_stratum",
+    "stratified_population_known",
+    "stratified_use_weights",
     "apply_fpc",
     "cluster_average_size",
     "intraclass_correlation",
